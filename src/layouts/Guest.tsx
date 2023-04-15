@@ -1,12 +1,9 @@
 import React from "react";
-import reactImage from "./assets/img/react.jpg";
-import profileImage from "./assets/img/profile.jpg";
+import reactImage from "../assets/img/react.jpg";
+import profileImage from "../assets/img/profile.jpg";
+import { Outlet } from "react-router";
 
-interface GuestLayoutProps {
-  children: React.ReactElement | string;
-}
-
-const GuestLayout: React.FC<GuestLayoutProps> = ({ children }) => {
+const GuestLayout: React.FC = () => {
   return (
     <>
       <nav className="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
@@ -63,8 +60,8 @@ const GuestLayout: React.FC<GuestLayoutProps> = ({ children }) => {
       </aside>
 
       <div className="p-4 sm:ml-64">
-        <div className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 mt-14">
-          {children}
+        <div className="p-4 mt-14">
+          <Outlet />
         </div>
       </div>
     </>
