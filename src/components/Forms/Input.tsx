@@ -1,17 +1,15 @@
 import React from "react";
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label: string;
-  defaultValue: string;
-  name: string;
+  label?: string;
+  defaultValue?: string;
+  name?: string;
   type: "text" | "password" | "number" | "email";
 }
 
 export const Input: React.FC<InputProps> = ({
   label,
-  defaultValue,
   name,
-  type,
   ...rest
 }) => {
   return (
@@ -23,10 +21,7 @@ export const Input: React.FC<InputProps> = ({
         {label}
       </label>
       <input
-        type={type} // use the type property as the type value
         className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
-        id={name}
-        defaultValue={defaultValue}
         name={name}
         {...rest}
       />

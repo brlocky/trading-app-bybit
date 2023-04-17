@@ -6,16 +6,18 @@ import App from "./App";
 
 import "./index.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
-
+import { ApiProvider } from "./providers/ApiProvider";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <ApiProvider>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </ApiProvider>
   </React.StrictMode>
 );
 

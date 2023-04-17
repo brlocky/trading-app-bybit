@@ -1,1 +1,2 @@
-export * from "./settings";
+export * from "./settingsService";
+export * from "./apiService";
