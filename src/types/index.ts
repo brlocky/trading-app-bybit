@@ -1,25 +1,27 @@
-import { PositionIdx, TPSLModeV5, TradeModeV5 } from "bybit-api";
+import {
+  AccountOrderV5,
+  ContractSymbolTicker,
+  PositionIdx,
+  TPSLModeV5,
+  TradeModeV5,
+} from "bybit-api";
 
-export interface WsConfig {
+export interface IWsConfig {
   key: string;
   secret: string;
 }
 
-export interface WsResponseData<T> {
+export interface IWsResponseData<T> {
   topic: string;
   id: string;
   creationTime: number;
   data: T;
 }
 
-export interface TickerV5 {
-  symbol: string;
-  lastPrice: string;
-  indexPrice?: string;
-  markPrice?: string;
+export interface ITicker extends ContractSymbolTicker {
 }
 
-export interface PositionWSV5 {
+export interface IPosition {
   bustPrice?: string;
   createdTime: string;
   cumRealisedPnl: string;
@@ -45,3 +47,5 @@ export interface PositionWSV5 {
   trailingStop?: string;
   unrealisedPnl: string;
 }
+
+export interface IOrder extends AccountOrderV5 {}

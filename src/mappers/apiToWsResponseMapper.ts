@@ -1,8 +1,8 @@
 import { PositionV5 } from "bybit-api";
-import { PositionWSV5 } from "../types";
+import { IPosition } from "../types";
 
 // Mapper function to convert ApiResponse to WsResponse
-export const mapApiToWsPositionV5Response = (response: PositionV5): PositionWSV5 => {
+export const mapApiToWsPositionV5Response = (response: PositionV5): IPosition => {
     return {
         bustPrice: response.bustPrice,
         createdTime: response.createdTime,

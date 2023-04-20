@@ -1,37 +1,17 @@
 import React from "react";
 import { Card } from "./Card";
-import { IPosition, ITicker } from "../../types";
+import { IOrder } from "../../types";
+import Button from "../Button/Button";
 
-interface ICardPositionsProps {
-  positions: IPosition[];
-  price: ITicker;
+interface ICardOrdersProps {
+  orders: IOrder[];
+  cancelOrder: (o: IOrder) => void;
 }
 
-export default function CardPositions({
-  positions,
-  price,
-}: ICardPositionsProps) {
-  const formatCurrency = (value: string) => {
-    return parseFloat(value).toFixed(2);
-  };
-
-  const calculatePL = (position: IPosition, price: ITicker) => {
-    let diff = 0;
-    if (position.side === "Sell") {
-      diff = parseFloat(position.entryPrice) - parseFloat(price.lastPrice);
-    }
-    if (position.side === "Buy") {
-      diff = parseFloat(price.lastPrice) - parseFloat(position.entryPrice);
-    }
-
-    const pl = diff * parseFloat(position.size);
-
-    return pl.toFixed(4);
-  };
-
+export default function CardOrders({ orders, cancelOrder }: ICardOrdersProps) {
   return (
     <>
-      <Card header={"Positions"}>
+      <Card header={"Orders"}>
         <div className="flex flex-col w-full">
           <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
             <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
@@ -43,13 +23,7 @@ export default function CardPositions({
                         scope="col"
                         className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase"
                       >
-                        Ticker
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase"
-                      >
-                        Side
+                        Order Id
                       </th>
                       <th
                         scope="col"
@@ -61,53 +35,47 @@ export default function CardPositions({
                         scope="col"
                         className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase"
                       >
-                        Value
+                        Order Price
                       </th>
                       <th
                         scope="col"
                         className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase"
                       >
-                        Entry Price
+                        Trade Type
                       </th>
                       <th
                         scope="col"
                         className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase"
                       >
-                        Mark Price
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase"
-                      >
-                        P&amp;L
+                        Action
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {positions
-                      .filter((p) => parseFloat(p.size) > 0)
-                      .map((row) => (
-                        <tr key={row.positionIdx}>
+                    {orders
+                      .filter((o) => o.cancelType !== null)
+                      .sort(
+                        (a: IOrder, b: IOrder) =>
+                          parseFloat(b.price) - parseFloat(a.price)
+                      )
+                      .map((order: IOrder) => (
+                        <tr key={order.orderId}>
                           <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
-                            {row.symbol}
+                            {order.orderId}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
-                            {row.side}
+                            {order.qty}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
-                            {row.size}
+                            {order.price}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
-                            {formatCurrency(row.positionValue)} USDT
+                            {order.side}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
-                            {formatCurrency(row.entryPrice)} USDT
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
-                            {price.lastPrice !== "0" ? price.lastPrice : row.markPrice}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
-                            {calculatePL(row, price)} USDT
+                            <Button onClick={() => cancelOrder(order)}>
+                              Cancel
+                            </Button>
                           </td>
                         </tr>
                       ))}

@@ -1,12 +1,12 @@
 import React from "react";
-interface SliderPickerProps {
+interface ISliderPickerProps {
   value: number;
   min: number;
   max: number;
   step: number;
   onValueChange?: (value: number) => void;
 }
-const SlidePicker = ({ value, min, max, step, onValueChange }: SliderPickerProps) => {
+const SlidePicker = ({ value, min, max, step, onValueChange }: ISliderPickerProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (onValueChange) onValueChange(parseFloat(value));

@@ -2,11 +2,11 @@ import React from "react";
 import { Card } from "./Card";
 import { WalletBalanceV5 } from "bybit-api";
 
-interface CardWalletsProps {
+interface ICardWalletsProps {
   wallet?: WalletBalanceV5;
 }
 
-export default function CardWallets({ wallet }: CardWalletsProps) {
+export default function CardWallets({ wallet }: ICardWalletsProps) {
   const formatCurrency = (value: string) => {
     return parseFloat(value).toFixed(4);
   };

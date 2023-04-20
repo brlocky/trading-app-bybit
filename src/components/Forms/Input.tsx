@@ -1,13 +1,13 @@
 import React from "react";
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface IInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   defaultValue?: string;
   name?: string;
   type: "text" | "password" | "number" | "email";
 }
 
-export const Input: React.FC<InputProps> = ({
+export const Input: React.FC<IInputProps> = ({
   label,
   name,
   ...rest
@@ -15,13 +15,13 @@ export const Input: React.FC<InputProps> = ({
   return (
     <div className="relative w-full mb-3">
       <label
-        className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
+        className="block mb-2 text-xs font-bold uppercase text-blueGray-600"
         htmlFor={name}
       >
         {label}
       </label>
       <input
-        className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
+        className="w-full px-3 py-3 text-sm transition-all duration-150 ease-linear bg-white border-0 rounded shadow placeholder-blueGray-300 text-blueGray-600 focus:outline-none focus:ring"
         name={name}
         {...rest}
       />

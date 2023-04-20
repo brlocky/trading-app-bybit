@@ -17,11 +17,11 @@ export default function CardSettings() {
 
   const renderHeader = () => (
     <>
-      <h6 className="text-blueGray-700 text-xl font-bold">
+      <h6 className="text-xl font-bold text-blueGray-700">
         Account Information
       </h6>
       <button
-        className="bg-lightBlue-500 text-white active:bg-lightBlue-600 font-bold uppercase text-xs px-4 py-2 rounded shadow hover:shadow-md outline-none focus:outline-none mr-1 ease-linear transition-all duration-150"
+        className="px-4 py-2 mr-1 text-xs font-bold text-white uppercase rounded shadow outline-none bg-lightBlue-500 active:bg-lightBlue-600 hover:shadow-md focus:outline-none ease-linear transition-all duration-150"
         type="submit"
       >
         Save
@@ -35,7 +35,7 @@ export default function CardSettings() {
       <form onSubmit={handleSubmit}>
         <Card header={renderHeader()}>
           <div className="flex flex-wrap">
-            <div className="w-full lg:w-6/12 px-4">
+            <div className="w-full px-4 lg:w-6/12">
               <Input
                 label="API Key"
                 type="text"
@@ -43,7 +43,7 @@ export default function CardSettings() {
                 defaultValue={apiKey}
               />
             </div>
-            <div className="w-full lg:w-6/12 px-4">
+            <div className="w-full px-4 lg:w-6/12">
               <Input
                 label="API Secret"
                 type="text"

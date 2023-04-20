@@ -10,16 +10,16 @@ import {
 } from "bybit-api";
 import SlidePicker from "../Forms/SlidePicker";
 import CardWallets from "./CardWallets";
-import { TickerV5 } from "../../types";
+import { ITicker } from "../../types";
 import { Input } from "../Forms";
 
-interface CardSymbolProps {
+interface ICardSymbolProps {
   symbolInfo?: InstrumentInfoResponseV5;
   wallet?: WalletBalanceV5;
-  price?: TickerV5;
+  price?: ITicker;
 }
 
-interface SymbolProps {
+interface ISymbolProps {
   priceFilter: {
     minPrice: number;
     maxPrice: number;
@@ -34,14 +34,14 @@ interface SymbolProps {
 
 const symbolTick = "BTCUSDT";
 
-const CardSymbol: React.FC<CardSymbolProps> = ({
+const CardSymbol: React.FC<ICardSymbolProps> = ({
   symbolInfo,
   wallet,
   price,
-}: CardSymbolProps) => {
+}: ICardSymbolProps) => {
   const [positionSize, setPositionSize] = useState<number>(0);
   const [coin, setCoin] = useState<WalletBalanceV5Coin | null>(null);
-  const [symbolProps, setSymbolProps] = useState<SymbolProps>({
+  const [symbolProps, setSymbolProps] = useState<ISymbolProps>({
     priceFilter: {
       minPrice: 0,
       maxPrice: 0,
@@ -139,8 +139,8 @@ const CardSymbol: React.FC<CardSymbolProps> = ({
       <Card header={"Symbol"}>
         <div className="flex flex-col w-full">
           <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-            <div className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-              <div className="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+            <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+              <div className="overflow-hidden border-b border-gray-200 shadow sm:rounded-lg">
                 <h1>{symbolTick}</h1>
                 <h2>Price Tick - {tickSize} </h2>
                 <h2>Contract Size - {qtyStep} </h2>

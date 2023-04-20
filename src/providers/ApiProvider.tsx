@@ -5,11 +5,11 @@ import { SettingsService } from "../services";
 // Define the API context
 const ApiContext = React.createContext<RestClientV5 | null>(null);
 
-interface ApiProviderProps {
+interface IApiProviderProps {
   children: ReactNode;
 }
 // Create the API provider component
-export const ApiProvider: React.FC<ApiProviderProps> = ({
+export const ApiProvider: React.FC<IApiProviderProps> = ({
   children,
 }: {
   children: ReactNode;
