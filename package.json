@@ -1,7 +1,7 @@
 {
   "name": "trading-app-bybit",
   "homepage": "https://brlocky.github.io/trading-app-bybit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "dependencies": {
     "@babel/core": "^7.16.0",
