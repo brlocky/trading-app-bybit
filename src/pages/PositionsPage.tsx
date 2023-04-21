@@ -4,15 +4,12 @@ import {
   InstrumentInfoResponseV5,
   LinearPositionIdx,
   WalletBalanceV5,
-  WebsocketClient,
 } from "bybit-api";
 import { IOrder, IPosition, ITicker, IWsResponseData } from "../types";
 import { useApi, useWebSocket } from "../providers";
 import { mapApiToWsPositionV5Response } from "../mappers";
 import CardTrade from "../components/Cards/CardTrade";
 import CardSymbol from "../components/Cards/CardSymbol";
-import CardOrders from "../components/Cards/CardOrders";
-import Button from "../components/Button/Button";
 
 const symbol = "BTCUSDT";
 const accountType = "CONTRACT";
@@ -22,6 +19,7 @@ const PositionsPage: React.FC = () => {
   const [openOrders, setOpenOrders] = useState<IOrder[]>([]);
   const [wallet, setWallet] = useState<WalletBalanceV5>();
   const [price, setPrice] = useState<ITicker>();
+  const [positionSize, setPositionSize] = useState<number>(0);
 
   const [instrumentInfo, setInstrumentInfo] =
     useState<InstrumentInfoResponseV5>();
@@ -159,7 +157,7 @@ const PositionsPage: React.FC = () => {
     if (!price) {
       return;
     }
-    const nearPrice = parseFloat(price.lastPrice) - 5;
+    const nearPrice = parseFloat(price.lastPrice) - 1;
     apiClient
       .submitOrder({
         positionIdx: LinearPositionIdx.BuySide,
@@ -167,7 +165,7 @@ const PositionsPage: React.FC = () => {
         symbol: symbol,
         side: "Buy",
         orderType: "Limit",
-        qty: "0.001",
+        qty: positionSize.toString(),
         price: nearPrice.toString(),
         timeInForce: "PostOnly",
       })
@@ -185,7 +183,7 @@ const PositionsPage: React.FC = () => {
     if (!price) {
       return;
     }
-    const nearPrice = parseFloat(price.lastPrice) + 5;
+    const nearPrice = parseFloat(price.lastPrice) + 1;
     apiClient
       .submitOrder({
         positionIdx: LinearPositionIdx.BuySide,
@@ -193,7 +191,7 @@ const PositionsPage: React.FC = () => {
         symbol: symbol,
         side: "Sell",
         orderType: "Limit",
-        qty: "0.001",
+        qty: positionSize.toString(),
         price: nearPrice.toString(),
         timeInForce: "PostOnly",
       })
@@ -211,7 +209,7 @@ const PositionsPage: React.FC = () => {
     if (!price) {
       return;
     }
-    const nearPrice = parseFloat(price.lastPrice) + 5;
+    const nearPrice = parseFloat(price.lastPrice) + 1;
     apiClient
       .submitOrder({
         positionIdx: LinearPositionIdx.SellSide,
@@ -219,7 +217,7 @@ const PositionsPage: React.FC = () => {
         symbol: symbol,
         side: "Sell",
         orderType: "Limit",
-        qty: "0.001",
+        qty: positionSize.toString(),
         price: nearPrice.toString(),
         timeInForce: "PostOnly",
       })
@@ -237,7 +235,7 @@ const PositionsPage: React.FC = () => {
     if (!price) {
       return;
     }
-    const nearPrice = parseFloat(price.lastPrice) - 15;
+    const nearPrice = parseFloat(price.lastPrice) - 1;
     apiClient
       .submitOrder({
         positionIdx: LinearPositionIdx.SellSide,
@@ -245,7 +243,7 @@ const PositionsPage: React.FC = () => {
         symbol: symbol,
         side: "Buy",
         orderType: "Limit",
-        qty: "0.001",
+        qty: positionSize.toString(),
         price: nearPrice.toString(),
         timeInForce: "PostOnly",
       })
@@ -320,7 +318,12 @@ const PositionsPage: React.FC = () => {
 
   return (
     <>
-      <CardSymbol symbolInfo={instrumentInfo} wallet={wallet} price={price} />
+      <CardSymbol
+        symbolInfo={instrumentInfo}
+        wallet={wallet}
+        price={price}
+        positionSizeUpdated={(s) => setPositionSize(s)}
+      />
       <CardPositions positions={positions} price={price} />
       {/* <CardOrders orders={openOrders} cancelOrder={cancelOrder} /> */}
       <CardTrade

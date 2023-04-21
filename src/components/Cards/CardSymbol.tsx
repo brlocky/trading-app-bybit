@@ -17,6 +17,7 @@ interface ICardSymbolProps {
   symbolInfo?: InstrumentInfoResponseV5;
   wallet?: WalletBalanceV5;
   price?: ITicker;
+  positionSizeUpdated: (size:number) => void;
 }
 
 interface ISymbolProps {
@@ -38,6 +39,7 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
   symbolInfo,
   wallet,
   price,
+  positionSizeUpdated,
 }: ICardSymbolProps) => {
   const [positionSize, setPositionSize] = useState<number>(0);
   const [coin, setCoin] = useState<WalletBalanceV5Coin | null>(null);
@@ -120,6 +122,7 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
 
   const orderQtyChanged = (value: number) => {
     setPositionSize(value);
+    positionSizeUpdated(value);
   };
 
   const getMaxOrderQty = (): number => {
