@@ -19,7 +19,7 @@ const PositionsPage: React.FC = () => {
   const [openOrders, setOpenOrders] = useState<IOrder[]>([]);
   const [wallet, setWallet] = useState<WalletBalanceV5>();
   const [price, setPrice] = useState<ITicker>();
-  const [positionSize, setPositionSize] = useState<number>(0);
+  const [positionSize, setPositionSize] = useState<number>(0.001);
 
   const [instrumentInfo, setInstrumentInfo] =
     useState<InstrumentInfoResponseV5>();
