@@ -3,6 +3,7 @@ import {
   ContractSymbolTicker,
   PositionIdx,
   TPSLModeV5,
+  TickerLinearInverseV5,
   TradeModeV5,
 } from "bybit-api";
 
@@ -18,7 +19,7 @@ export interface IWsResponseData<T> {
   data: T;
 }
 
-export interface ITicker extends ContractSymbolTicker {
+export interface ITicker extends TickerLinearInverseV5 {
 }
 
 export interface IPosition {

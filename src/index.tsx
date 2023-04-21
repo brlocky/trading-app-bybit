@@ -6,7 +6,8 @@ import App from "./App";
 
 import "./index.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
-import { ApiProvider, WebSocketProvider } from "./providers";
+import { ApiProvider } from "./providers";
+import SocketContextComponent from "./contexts/SocketContextComponent";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -14,11 +15,13 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
     <HashRouter>
-      <WebSocketProvider>
-        <ApiProvider>
+      {/* <WebSocketProvider> */}
+      <ApiProvider>
+        <SocketContextComponent>
           <App />
-        </ApiProvider>
-      </WebSocketProvider>
+        </SocketContextComponent>
+      </ApiProvider>
+      {/* </WebSocketProvider> */}
     </HashRouter>
   </React.StrictMode>
 );

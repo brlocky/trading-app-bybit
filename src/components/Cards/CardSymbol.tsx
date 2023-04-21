@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Card } from "./Card";
 import {
-  InstrumentInfoResponseV5,
   LinearInverseInstrumentInfoV5,
-  OptionInstrumentInfoV5,
-  SpotInstrumentInfoV5,
   WalletBalanceV5,
   WalletBalanceV5Coin,
 } from "bybit-api";
@@ -12,12 +9,16 @@ import SlidePicker from "../Forms/SlidePicker";
 import CardWallets from "./CardWallets";
 import { ITicker } from "../../types";
 import { Input } from "../Forms";
+import Button from "../Button/Button";
 
 interface ICardSymbolProps {
-  symbolInfo?: InstrumentInfoResponseV5;
+  symbolInfo?: LinearInverseInstrumentInfoV5;
   wallet?: WalletBalanceV5;
   price?: ITicker;
-  positionSizeUpdated: (size:number) => void;
+  positionSizeUpdated: (size: number) => void;
+  longTrade: () => void;
+  shortTrade: () => void;
+  closeAll: () => void;
 }
 
 interface ISymbolProps {
@@ -40,6 +41,9 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
   wallet,
   price,
   positionSizeUpdated,
+  longTrade,
+  shortTrade,
+  closeAll,
 }: ICardSymbolProps) => {
   const [positionSize, setPositionSize] = useState<number>(0);
   const [coin, setCoin] = useState<WalletBalanceV5Coin | null>(null);
@@ -58,9 +62,8 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
 
   useEffect(() => {
     // Optional: Cleanup the websocket connection on component unmount
-    const symbol = symbolInfo?.list[0];
 
-    loadSymbolProps(symbol);
+    loadSymbolProps(symbolInfo);
     setCoin(wallet?.coin[0] || null);
     setPositionSize(symbolProps.lotSizeFilter.minOrderQty);
     return () => {
@@ -74,47 +77,39 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
   };
 
   const loadSymbolProps = (
-    symbol:
-      | LinearInverseInstrumentInfoV5
-      | OptionInstrumentInfoV5
-      | SpotInstrumentInfoV5
-      | undefined
+    symbol: LinearInverseInstrumentInfoV5 | undefined
   ) => {
     if (!symbol) {
       return;
     }
 
     const props = { ...symbolProps };
-    if ("priceFilter" in symbol) {
-      if ("minPrice" in symbol.priceFilter) {
-        props.priceFilter.minPrice = convertToNumber(
-          symbol.priceFilter["minPrice"]
-        );
-      }
-      if ("maxPrice" in symbol.priceFilter) {
-        props.priceFilter.maxPrice = convertToNumber(
-          symbol.priceFilter["maxPrice"]
-        );
-      }
-      props.priceFilter.tickSize = convertToNumber(symbol.priceFilter.tickSize);
+    if ("minPrice" in symbol.priceFilter) {
+      props.priceFilter.minPrice = convertToNumber(
+        symbol.priceFilter["minPrice"]
+      );
     }
+    if ("maxPrice" in symbol.priceFilter) {
+      props.priceFilter.maxPrice = convertToNumber(
+        symbol.priceFilter["maxPrice"]
+      );
+    }
+    props.priceFilter.tickSize = convertToNumber(symbol.priceFilter.tickSize);
 
-    if ("lotSizeFilter" in symbol) {
-      if ("maxOrderQty" in symbol.lotSizeFilter) {
-        props.lotSizeFilter.maxOrderQty = convertToNumber(
-          symbol.lotSizeFilter["maxOrderQty"]
-        );
-      }
-      if ("minOrderQty" in symbol.lotSizeFilter) {
-        props.lotSizeFilter.minOrderQty = convertToNumber(
-          symbol.lotSizeFilter["minOrderQty"]
-        );
-      }
-      if ("qtyStep" in symbol.lotSizeFilter) {
-        props.lotSizeFilter.qtyStep = convertToNumber(
-          symbol.lotSizeFilter.qtyStep
-        );
-      }
+    if ("maxOrderQty" in symbol.lotSizeFilter) {
+      props.lotSizeFilter.maxOrderQty = convertToNumber(
+        symbol.lotSizeFilter["maxOrderQty"]
+      );
+    }
+    if ("minOrderQty" in symbol.lotSizeFilter) {
+      props.lotSizeFilter.minOrderQty = convertToNumber(
+        symbol.lotSizeFilter["minOrderQty"]
+      );
+    }
+    if ("qtyStep" in symbol.lotSizeFilter) {
+      props.lotSizeFilter.qtyStep = convertToNumber(
+        symbol.lotSizeFilter.qtyStep
+      );
     }
 
     setSymbolProps(props);
@@ -151,7 +146,12 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
             </div>
           </div>
 
-          <Input type="text" value={positionSize} label="Position Size" onChange={e => orderQtyChanged(parseFloat(e.target.value))} />
+          <Input
+            type="text"
+            value={positionSize}
+            label="Position Size"
+            onChange={(e) => orderQtyChanged(parseFloat(e.target.value))}
+          />
           <SlidePicker
             min={minOrderQty}
             value={positionSize}
@@ -159,6 +159,10 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
             step={qtyStep}
             onValueChange={orderQtyChanged}
           />
+
+          <Button onClick={longTrade}>Long</Button>
+          <Button onClick={shortTrade}>Short</Button>
+          <Button onClick={closeAll}>Close All Orders</Button>
           {/* <pre>{JSON.stringify(wallet, null, 2)}</pre> */}
           {/* <pre>{JSON.stringify(symbolProps, null, 2)}</pre> */}
           {/* <pre>{JSON.stringify(symbolInfo, null, 2)}</pre> */}

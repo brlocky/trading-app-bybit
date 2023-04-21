@@ -64,7 +64,7 @@
     "stream-browserify": "^3.0.0",
     "style-loader": "^3.3.1",
     "styled-components": "^5.3.9",
-    "tailwindcss": "^3.0.2",
+    "tailwind.macro": "^0.5.10",
     "terser-webpack-plugin": "^5.2.5",
     "twin.macro": "^3.3.1",
     "web-vitals": "^2.1.4",
@@ -168,6 +168,7 @@
   },
   "babelMacros": {
     "twin": {
+      "config": "./src/tailwind.config.js",
       "preset": "styled-components"
     }
   }
