@@ -179,7 +179,7 @@ const PositionsPage: React.FC = () => {
         orderType: 'Limit',
         qty: positionSize.toString(),
         price: nearPrice.toString(),
-        timeInForce: 'GTC',
+        timeInForce: 'PostOnly',
       })
       .catch((e) => {
         console.log(e);
