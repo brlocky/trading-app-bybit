@@ -49,4 +49,6 @@ export interface IPosition {
   unrealisedPnl: string;
 }
 
-export interface IOrder extends AccountOrderV5 {}
+export interface IOrder extends AccountOrderV5 {
+  chase?: boolean;
+}

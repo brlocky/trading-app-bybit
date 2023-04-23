@@ -62,7 +62,10 @@ const PositionsPage: React.FC = () => {
       return;
     }
 
-    const order = [...orders].pop();
+    const order = [...orders.filter(o => o.chase)].pop();
+
+    console.log('order to chase');
+    console.log(order);
     if (!order) {
       return;
     }
@@ -174,6 +177,11 @@ const PositionsPage: React.FC = () => {
       });
   };
 
+  const toggleChase = async (order: IOrder) => {
+    SocketDispatch({type: "update_order", payload: {...order, chase: !order.chase}})
+  };
+  
+
   const closeAllOrders = () => {
     orders.map(cancelOrder);
   };
@@ -192,7 +200,7 @@ const PositionsPage: React.FC = () => {
         orderType: "Limit",
         qty: positionSize.toString(),
         price: nearPrice.toString(),
-        timeInForce: "PostOnly",
+        timeInForce: "GTC",
       })
       .then((orderResult) => {
         loadOrders();
@@ -280,7 +288,7 @@ const PositionsPage: React.FC = () => {
         price={ticker}
         closeTrade={closeTrade}
       />
-      <CardOrders orders={orders} cancelOrder={cancelOrder} />
+      <CardOrders orders={orders} cancelOrder={cancelOrder} toggleChase={toggleChase} />
 
       {/* <pre>{JSON.stringify(ticker, null, 2)}</pre> */}
       {/* <pre>{JSON.stringify(tickerInfo, null, 2)}</pre> */}
@@ -289,8 +297,8 @@ const PositionsPage: React.FC = () => {
       {/* <pre>{JSON.stringify(orders, null, 2)}</pre> */}
 
       {/*<pre>{JSON.stringify(executions, null, 2)}</pre>
-      <pre>{JSON.stringify(wallet, null, 2)}</pre>
-      <pre>{JSON.stringify(positions, null, 2)}</pre> */}
+      <pre>{JSON.stringify(wallet, null, 2)}</pre>*/}
+      {/* <pre>{JSON.stringify(positions, null, 2)}</pre>  */}
     </>
   );
 };

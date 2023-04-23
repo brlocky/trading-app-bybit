@@ -1,10 +1,8 @@
 import {
   ExecutionV5,
   LinearInverseInstrumentInfoV5,
-  OrderCancelTypeV5,
   WalletBalanceV5,
   WebsocketClient,
-  OrderStatusV5,
 } from "bybit-api";
 import { createContext } from "react";
 import { IOrder, IPosition, ITicker } from "../types";
@@ -34,6 +32,7 @@ export type TSocketContextActions =
   | "update_ticker"
   | "update_ticker_info"
   | "update_wallet"
+  | "update_order"
   | "update_orders"
   | "update_executions"
   | "update_positions";
@@ -44,6 +43,7 @@ export type TSocketContextPayload =
   | ITicker
   | LinearInverseInstrumentInfoV5
   | IOrder[]
+  | IOrder
   | WalletBalanceV5
   | IPosition[]
   | ExecutionV5[];
@@ -94,7 +94,8 @@ export const SocketReducer = (
           }
         } else {
           if (index !== -1) {
-            currentOrders[index] = newOrder;
+            const currentOrder = { ...currentOrders[index] };
+            currentOrders[index] = { ...currentOrder, ...newOrder };
           } else {
             currentOrders.push(newOrder);
           }
@@ -102,6 +103,20 @@ export const SocketReducer = (
       });
 
       return { ...state, orders: currentOrders };
+
+    case "update_order":
+      const updateOrder = action.payload as IOrder;
+      const index = state.orders.findIndex(
+        (o) => o.orderId === updateOrder.orderId
+      );
+
+      if (index !== -1) {
+        const currentOrders = [...state.orders];
+        currentOrders[index] = updateOrder;
+        return { ...state, orders: currentOrders };
+      }
+      return { ...state };
+
     case "update_executions":
       const currentExecutionOrders = [...state.orders];
 

@@ -1,5 +1,5 @@
-import React from 'react';
-import tw from 'twin.macro';
+import React from "react";
+import tw from "twin.macro";
 
 export interface TableProps {
   headers: string[];
@@ -58,13 +58,18 @@ export const Table: React.FC<TableProps> = ({ headers, data }) => {
         </TableRow>
       </TableHead>
       <TableBody>
-        {data.map((row, index) => (
-          <TableRow key={index}>
-            {row.map((cell, index) => (
-              <TableCell key={index}>{cell}</TableCell>
-            ))}
-          </TableRow>
-        ))}
+        {data.length
+          ? data.map((row, index) => (
+              <TableRow key={index}>
+                {row.map((cell, index) => (
+                  <TableCell key={index}>{cell}</TableCell>
+                ))}
+              </TableRow>
+            ))
+          :
+          (<TableRow>
+              <TableCell colSpan={headers.length}> - </TableCell>
+          </TableRow>)}
       </TableBody>
     </TableWrapper>
   );
