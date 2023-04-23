@@ -42,6 +42,7 @@ const SocketContextComponent: React.FunctionComponent<
       true
     );
     socket.subscribeV5('tickers.BTCUSDT', 'linear');
+
   };
 
   const StartListeners = () => {
