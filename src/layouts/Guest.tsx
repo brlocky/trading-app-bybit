@@ -1,22 +1,14 @@
 import React from 'react';
-import reactImage from '../assets/img/react.jpg';
-import profileImage from '../assets/img/profile.jpg';
-import { Outlet, useNavigate } from 'react-router';
-import Button from '../components/Button/Button';
+import { Outlet } from 'react-router';
 import NavBar from '../components/Navbars/NavBar';
 
 const GuestLayout: React.FC = () => {
-
-  const navigate = useNavigate();
-
   return (
     <>
-    <NavBar />
-     
-
+      <NavBar />
 
       <div className="p-4 sm:ml-64">
-        <div className="p-4 mt-14">
+        <div className="mt-14 p-4">
           <Outlet />
         </div>
       </div>
