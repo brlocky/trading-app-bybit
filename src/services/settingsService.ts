@@ -5,14 +5,14 @@ interface ISettingsData {
 
 export const SettingsService = {
   saveSettings(data: ISettingsData) {
-    localStorage.setItem("settings", JSON.stringify(data));
+    localStorage.setItem('settings', JSON.stringify(data));
   },
   loadSettings(): ISettingsData {
-    const data = localStorage.getItem("settings");
+    const data = localStorage.getItem('settings');
     if (!data) {
       return {
-        apiKey: "some-key",
-        apiSecret: "some-secret",
+        apiKey: 'some-key',
+        apiSecret: 'some-secret',
       };
     }
     return JSON.parse(data);

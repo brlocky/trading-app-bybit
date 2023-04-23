@@ -1,5 +1,5 @@
-import React, { ReactNode } from "react";
-import tw from "twin.macro";
+import React, { ReactNode } from 'react';
+import tw from 'twin.macro';
 
 // Card component prop types
 type CardProps = {

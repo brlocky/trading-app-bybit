@@ -1,6 +1,6 @@
-import { RestClientV5 } from "bybit-api";
-import React, { ReactNode, useContext, useState } from "react";
-import { SettingsService } from "../services";
+import { RestClientV5 } from 'bybit-api';
+import React, { ReactNode, useContext, useState } from 'react';
+import { SettingsService } from '../services';
 
 // Define the API context
 const ApiContext = React.createContext<RestClientV5 | null>(null);
@@ -34,7 +34,7 @@ export const useApi = () => {
   const apiClient = useContext(ApiContext);
 
   if (!apiClient) {
-    throw new Error("useApi must be used within an ApiProvider");
+    throw new Error('useApi must be used within an ApiProvider');
   }
 
   return apiClient;

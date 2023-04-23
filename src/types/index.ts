@@ -1,11 +1,10 @@
 import {
   AccountOrderV5,
-  ContractSymbolTicker,
   PositionIdx,
   TPSLModeV5,
   TickerLinearInverseV5,
   TradeModeV5,
-} from "bybit-api";
+} from 'bybit-api';
 
 export interface IWsConfig {
   key: string;
@@ -19,8 +18,7 @@ export interface IWsResponseData<T> {
   data: T;
 }
 
-export interface ITicker extends TickerLinearInverseV5 {
-}
+export type ITicker = TickerLinearInverseV5
 
 export interface IPosition {
   bustPrice?: string;
@@ -34,7 +32,7 @@ export interface IPosition {
   positionIdx: PositionIdx;
   positionMM?: string;
   positionIM?: string;
-  positionStatus: "Normal" | "Liq" | "Adl";
+  positionStatus: 'Normal' | 'Liq' | 'Adl';
   positionValue: string;
   riskId: number;
   riskLimitValue: string;

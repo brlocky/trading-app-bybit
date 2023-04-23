@@ -1,15 +1,15 @@
-import React, { useContext, useEffect, useState } from "react";
-import CardPositions from "../components/Cards/CardPositions";
-import { LinearInverseInstrumentInfoV5, LinearPositionIdx } from "bybit-api";
-import { IOrder, IPosition } from "../types";
-import { useApi } from "../providers";
-import { mapApiToWsPositionV5Response } from "../mappers";
-import CardSymbol from "../components/Cards/CardSymbol";
-import CardOrders from "../components/Cards/CardOrders";
-import SocketContext from "../contexts/SocketContext";
+import React, { useContext, useEffect, useState } from 'react';
+import CardPositions from '../components/Cards/CardPositions';
+import { LinearInverseInstrumentInfoV5, LinearPositionIdx } from 'bybit-api';
+import { IOrder, IPosition } from '../types';
+import { useApi } from '../providers';
+import { mapApiToWsPositionV5Response } from '../mappers';
+import CardSymbol from '../components/Cards/CardSymbol';
+import CardOrders from '../components/Cards/CardOrders';
+import SocketContext from '../contexts/SocketContext';
 
-const symbol = "BTCUSDT";
-const accountType = "CONTRACT";
+const symbol = 'BTCUSDT';
+const accountType = 'CONTRACT';
 
 const PositionsPage: React.FC = () => {
   const [positionSize, setPositionSize] = useState<number>(0.001);
@@ -29,12 +29,12 @@ const PositionsPage: React.FC = () => {
     // Symbol ticker and step
     apiClient
       .getInstrumentsInfo({
-        category: "linear",
+        category: 'linear',
         symbol: symbol,
       })
       .then((info) => {
         SocketDispatch({
-          type: "update_ticker_info",
+          type: 'update_ticker_info',
           payload: info.result.list[0] as LinearInverseInstrumentInfoV5,
         });
       });
@@ -43,13 +43,13 @@ const PositionsPage: React.FC = () => {
     apiClient
       .getWalletBalance({
         accountType: accountType,
-        coin: "USDT",
+        coin: 'USDT',
       })
       .then((res) => {
         const usdtWallet = res.result.list[0];
         if (usdtWallet) {
           SocketDispatch({
-            type: "update_wallet",
+            type: 'update_wallet',
             payload: usdtWallet,
           });
         }
@@ -57,7 +57,7 @@ const PositionsPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    let workingAmendOrder: boolean = false;
+    let workingAmendOrder = false;
     if (workingAmendOrder || !ticker) {
       return;
     }
@@ -73,9 +73,9 @@ const PositionsPage: React.FC = () => {
     let nearPrice = ticker.markPrice;
     if (
       order.positionIdx === LinearPositionIdx.BuySide &&
-      order.side === "Buy"
+      order.side === 'Buy'
     ) {
-      console.log("Open Long");
+      console.log('Open Long');
       nearPrice = ticker.bid1Price;
       if (parseFloat(nearPrice) <= parseFloat(order.price)) {
         return;
@@ -84,9 +84,9 @@ const PositionsPage: React.FC = () => {
 
     if (
       order.positionIdx === LinearPositionIdx.BuySide &&
-      order.side === "Sell"
+      order.side === 'Sell'
     ) {
-      console.log("Close Long");
+      console.log('Close Long');
       nearPrice = ticker.ask1Price;
       if (parseFloat(nearPrice) >= parseFloat(order.price)) {
         return;
@@ -95,9 +95,9 @@ const PositionsPage: React.FC = () => {
 
     if (
       order.positionIdx === LinearPositionIdx.SellSide &&
-      order.side === "Sell"
+      order.side === 'Sell'
     ) {
-      console.log("Open Short");
+      console.log('Open Short');
       nearPrice = ticker.ask1Price;
       if (parseFloat(nearPrice) >= parseFloat(order.price)) {
         return;
@@ -106,9 +106,9 @@ const PositionsPage: React.FC = () => {
 
     if (
       order.positionIdx === LinearPositionIdx.SellSide &&
-      order.side === "Buy"
+      order.side === 'Buy'
     ) {
-      console.log("Close Short");
+      console.log('Close Short');
       nearPrice = ticker.bid1Price;
       if (parseFloat(nearPrice) <= parseFloat(order.price)) {
         return;
@@ -119,12 +119,12 @@ const PositionsPage: React.FC = () => {
     apiClient
       .amendOrder({
         orderId: order.orderId,
-        category: "linear",
+        category: 'linear',
         symbol: symbol,
         price: nearPrice,
       })
       .then((i) => {
-        console.log("order changed ", i.retMsg);
+        console.log('order changed ', i.retMsg);
       })
       .catch((e) => {
         console.log(e);
@@ -141,12 +141,12 @@ const PositionsPage: React.FC = () => {
     // Get current orders Info
     apiClient
       .getActiveOrders({
-        category: "linear",
+        category: 'linear',
         symbol: symbol,
       })
       .then((orderInfo) => {
         SocketDispatch({
-          type: "update_orders",
+          type: 'update_orders',
           payload: orderInfo.result.list,
         });
       });
@@ -154,12 +154,12 @@ const PositionsPage: React.FC = () => {
     // Get current positions Info
     apiClient
       .getPositionInfo({
-        category: "linear",
+        category: 'linear',
         symbol: symbol,
       })
       .then((positionInfo) => {
         SocketDispatch({
-          type: "update_positions",
+          type: 'update_positions',
           payload: positionInfo.result.list.map(mapApiToWsPositionV5Response),
         });
       });
@@ -168,7 +168,7 @@ const PositionsPage: React.FC = () => {
   const cancelOrder = async (order: IOrder) => {
     apiClient
       .cancelOrder({
-        category: "linear",
+        category: 'linear',
         symbol: order.symbol,
         orderId: order.orderId,
       })
@@ -178,7 +178,7 @@ const PositionsPage: React.FC = () => {
   };
 
   const toggleChase = async (order: IOrder) => {
-    SocketDispatch({type: "update_order", payload: {...order, chase: !order.chase}})
+    SocketDispatch({type: 'update_order', payload: {...order, chase: !order.chase}})
   };
   
 
@@ -194,21 +194,20 @@ const PositionsPage: React.FC = () => {
     apiClient
       .submitOrder({
         positionIdx: LinearPositionIdx.BuySide,
-        category: "linear",
+        category: 'linear',
         symbol: symbol,
-        side: "Buy",
-        orderType: "Limit",
+        side: 'Buy',
+        orderType: 'Limit',
         qty: positionSize.toString(),
         price: nearPrice.toString(),
-        timeInForce: "GTC",
+        timeInForce: 'GTC',
       })
       .then((orderResult) => {
         loadOrders();
       })
       .catch((e) => {
         console.log(e);
-      })
-      .finally(() => {});
+      });
   };
 
   const openShortTrade = async () => {
@@ -218,21 +217,20 @@ const PositionsPage: React.FC = () => {
     apiClient
       .submitOrder({
         positionIdx: LinearPositionIdx.SellSide,
-        category: "linear",
+        category: 'linear',
         symbol: symbol,
-        side: "Sell",
-        orderType: "Limit",
+        side: 'Sell',
+        orderType: 'Limit',
         qty: positionSize.toString(),
         price: ticker.ask1Price,
-        timeInForce: "PostOnly",
+        timeInForce: 'PostOnly',
       })
       .then((orderResult) => {
         loadOrders();
       })
       .catch((e) => {
         console.log(e);
-      })
-      .finally(() => {});
+      });
   };
 
   const closeTrade = async (position: IPosition, qty: number) => {
@@ -240,7 +238,7 @@ const PositionsPage: React.FC = () => {
       return;
     }
 
-    console.log("Close", qty.toFixed(3));
+    console.log('Close', qty.toFixed(3));
     const nearPrice =
       position.positionIdx === LinearPositionIdx.BuySide
         ? ticker.ask1Price
@@ -248,14 +246,14 @@ const PositionsPage: React.FC = () => {
     apiClient
       .submitOrder({
         positionIdx: position.positionIdx,
-        category: "linear",
+        category: 'linear',
         symbol: position.symbol,
         side:
-          position.positionIdx === LinearPositionIdx.BuySide ? "Sell" : "Buy",
-        orderType: "Limit",
+          position.positionIdx === LinearPositionIdx.BuySide ? 'Sell' : 'Buy',
+        orderType: 'Limit',
         qty: qty.toFixed(3),
         price: nearPrice,
-        timeInForce: "PostOnly",
+        timeInForce: 'PostOnly',
       })
       .then((orderResult) => {
         console.log(orderResult);
@@ -296,7 +294,7 @@ const PositionsPage: React.FC = () => {
       {/* <pre>{JSON.stringify(wallets, null, 2)}</pre> */}
       {/* <pre>{JSON.stringify(orders, null, 2)}</pre> */}
 
-      {/*<pre>{JSON.stringify(executions, null, 2)}</pre>
+      {/* <pre>{JSON.stringify(executions, null, 2)}</pre>
       <pre>{JSON.stringify(wallet, null, 2)}</pre>*/}
       {/* <pre>{JSON.stringify(positions, null, 2)}</pre>  */}
     </>

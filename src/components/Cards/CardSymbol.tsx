@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { Card } from "./Card";
+import React, { useEffect, useState } from 'react';
+import { Card } from './Card';
 import {
   LinearInverseInstrumentInfoV5,
   WalletBalanceV5,
   WalletBalanceV5Coin,
-} from "bybit-api";
-import SlidePicker from "../Forms/SlidePicker";
-import CardWallets from "./CardWallets";
-import { ITicker } from "../../types";
-import { Input } from "../Forms";
-import Button from "../Button/Button";
+} from 'bybit-api';
+import SlidePicker from '../Forms/SlidePicker';
+import CardWallets from './CardWallets';
+import { ITicker } from '../../types';
+import { Input } from '../Forms';
+import Button from '../Button/Button';
 
 interface ICardSymbolProps {
   symbolInfo?: LinearInverseInstrumentInfoV5;
@@ -34,7 +34,7 @@ interface ISymbolProps {
   };
 }
 
-const symbolTick = "BTCUSDT";
+const symbolTick = 'BTCUSDT';
 
 const CardSymbol: React.FC<ICardSymbolProps> = ({
   symbolInfo,
@@ -84,29 +84,29 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
     }
 
     const props = { ...symbolProps };
-    if ("minPrice" in symbol.priceFilter) {
+    if ('minPrice' in symbol.priceFilter) {
       props.priceFilter.minPrice = convertToNumber(
-        symbol.priceFilter["minPrice"]
+        symbol.priceFilter['minPrice']
       );
     }
-    if ("maxPrice" in symbol.priceFilter) {
+    if ('maxPrice' in symbol.priceFilter) {
       props.priceFilter.maxPrice = convertToNumber(
-        symbol.priceFilter["maxPrice"]
+        symbol.priceFilter['maxPrice']
       );
     }
     props.priceFilter.tickSize = convertToNumber(symbol.priceFilter.tickSize);
 
-    if ("maxOrderQty" in symbol.lotSizeFilter) {
+    if ('maxOrderQty' in symbol.lotSizeFilter) {
       props.lotSizeFilter.maxOrderQty = convertToNumber(
-        symbol.lotSizeFilter["maxOrderQty"]
+        symbol.lotSizeFilter['maxOrderQty']
       );
     }
-    if ("minOrderQty" in symbol.lotSizeFilter) {
+    if ('minOrderQty' in symbol.lotSizeFilter) {
       props.lotSizeFilter.minOrderQty = convertToNumber(
-        symbol.lotSizeFilter["minOrderQty"]
+        symbol.lotSizeFilter['minOrderQty']
       );
     }
-    if ("qtyStep" in symbol.lotSizeFilter) {
+    if ('qtyStep' in symbol.lotSizeFilter) {
       props.lotSizeFilter.qtyStep = convertToNumber(
         symbol.lotSizeFilter.qtyStep
       );
@@ -122,8 +122,8 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
 
   const getMaxOrderQty = (): number => {
     const maxWalletOrderAmmount =
-      parseFloat(coin?.availableToWithdraw || "0") /
-      parseFloat(price?.lastPrice || "0");
+      parseFloat(coin?.availableToWithdraw || '0') /
+      parseFloat(price?.lastPrice || '0');
     return maxWalletOrderAmmount || 0;
   };
 
@@ -134,7 +134,7 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
   return (
     <div className="inline-flex">
       <CardWallets wallet={wallet} />
-      <Card header={"Symbol"}>
+      <Card header={'Symbol'}>
         <div className="flex flex-col w-full">
           <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
             <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">

@@ -1,10 +1,10 @@
-import React from "react";
+import React from 'react';
 
 interface IInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   defaultValue?: string;
   name?: string;
-  type: "text" | "password" | "number" | "email";
+  type: 'text' | 'password' | 'number' | 'email';
 }
 
 export const Input: React.FC<IInputProps> = ({

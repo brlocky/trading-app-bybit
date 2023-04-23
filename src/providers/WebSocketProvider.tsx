@@ -1,7 +1,7 @@
-import React, { createContext, useState } from "react";
-import { WebsocketClient } from "bybit-api";
-import { SettingsService } from "../services";
-import { IWsResponseData } from "../types";
+import React, { createContext, useState } from 'react';
+import { WebsocketClient } from 'bybit-api';
+import { SettingsService } from '../services';
+import { IWsResponseData } from '../types';
 
 const WebSocketContext = createContext<WebsocketClient | null>(null);
 
@@ -22,15 +22,15 @@ export const WebSocketProvider: React.FC<IWebSocketProviderProps> = ({
     const client = new WebsocketClient({
       key: apiKey,
       secret: apiSecret,
-      market: "v5",
+      market: 'v5',
     });
 
     client.subscribeV5(
-      ["position", "wallet", "order", "execution"],
-      "linear",
+      ['position', 'wallet', 'order', 'execution'],
+      'linear',
       true
     )
-    client.subscribeV5(`tickers.BTCUSDT`, "linear");
+    client.subscribeV5('tickers.BTCUSDT', 'linear');
 
 
     setWsClient(client);
@@ -47,7 +47,7 @@ export const useWebSocket = () => {
   const wsClient = React.useContext(WebSocketContext);
 
   if (!wsClient) {
-    throw new Error("useWebSocket must be used within a WebSocketProvider");
+    throw new Error('useWebSocket must be used within a WebSocketProvider');
   }
 
   return wsClient;

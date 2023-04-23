@@ -1,7 +1,7 @@
-import React from "react";
-import { Input } from "../Forms/Input";
-import { Card } from "./Card";
-import { SettingsService } from "../../services";
+import React from 'react';
+import { Input } from '../Forms/Input';
+import { Card } from './Card';
+import { SettingsService } from '../../services';
 
 // components
 

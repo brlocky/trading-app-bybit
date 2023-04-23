@@ -1,8 +1,8 @@
-import React from "react";
-import reactImage from "../assets/img/react.jpg";
-import profileImage from "../assets/img/profile.jpg";
-import { Outlet, useNavigate } from "react-router";
-import Button from "../components/Button/Button";
+import React from 'react';
+import reactImage from '../assets/img/react.jpg';
+import profileImage from '../assets/img/profile.jpg';
+import { Outlet, useNavigate } from 'react-router';
+import Button from '../components/Button/Button';
 
 const GuestLayout: React.FC = () => {
 

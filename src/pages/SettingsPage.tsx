@@ -1,5 +1,5 @@
-import React from "react";
-import CardSettings from "../components/Cards/CardSettings";
+import React from 'react';
+import CardSettings from '../components/Cards/CardSettings';
 
 
 

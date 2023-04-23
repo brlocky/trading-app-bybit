@@ -1,7 +1,7 @@
-import React from "react";
-import { IPosition, ITicker } from "../../types";
-import { Table } from "../Tables/Table";
-import Button from "../Button/Button";
+import React from 'react';
+import { IPosition, ITicker } from '../../types';
+import { Table } from '../Tables/Table';
+import Button from '../Button/Button';
 
 interface ICardPositionsProps {
   positions: IPosition[];
@@ -15,15 +15,15 @@ export default function CardPositions({
   closeTrade,
 }: ICardPositionsProps) {
   const formatCurrency = (value: string) => {
-    return parseFloat(value).toFixed(2) + " USDT";
+    return parseFloat(value).toFixed(2) + ' USDT';
   };
 
   const calculatePL = (position: IPosition, price: ITicker) => {
     let diff = 0;
-    if (position.side === "Sell") {
+    if (position.side === 'Sell') {
       diff = parseFloat(position.entryPrice) - parseFloat(price.lastPrice);
     }
-    if (position.side === "Buy") {
+    if (position.side === 'Buy') {
       diff = parseFloat(price.lastPrice) - parseFloat(position.entryPrice);
     }
 
@@ -40,14 +40,14 @@ export default function CardPositions({
   };
 
   const headers = [
-    "Ticker",
-    "Side",
-    "Qty",
-    "Value",
-    "Entry Price",
-    "Mark Price",
-    "P&L",
-    "Actions",
+    'Ticker',
+    'Side',
+    'Qty',
+    'Value',
+    'Entry Price',
+    'Mark Price',
+    'P&L',
+    'Actions',
   ];
 
   const tableData = positions

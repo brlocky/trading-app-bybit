@@ -1,5 +1,5 @@
-import React from "react";
-import tw from "twin.macro";
+import React from 'react';
+import tw from 'twin.macro';
 
 export interface TableProps {
   headers: string[];

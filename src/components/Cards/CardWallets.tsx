@@ -1,6 +1,6 @@
-import React from "react";
-import { Card } from "./Card";
-import { WalletBalanceV5 } from "bybit-api";
+import React from 'react';
+import { Card } from './Card';
+import { WalletBalanceV5 } from 'bybit-api';
 
 interface ICardWalletsProps {
   wallet?: WalletBalanceV5;
@@ -15,13 +15,13 @@ export default function CardWallets({ wallet }: ICardWalletsProps) {
 
   return (
     <>
-      <Card header={"Wallets"}>
+      <Card header={'Wallets'}>
         <h1>
           {wallet?.accountType} / {coin?.coin}
         </h1>
-        <h2>Equity {formatCurrency(coin?.equity || "0")} USDT </h2>
+        <h2>Equity {formatCurrency(coin?.equity || '0')} USDT </h2>
         <h2>
-          Available Balance {formatCurrency(coin?.availableToWithdraw || "0")}{" "}
+          Available Balance {formatCurrency(coin?.availableToWithdraw || '0')}{' '}
           USDT
         </h2>
         {/* <pre>{JSON.stringify(wallet, null, 2)}</pre> */}
