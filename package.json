@@ -84,6 +84,9 @@
     "lint-staged": "npm run lint && npm run format",
     "prepare": "husky install"
   },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": "eslint"
+  },
   "eslintConfig": {
     "extends": [
       "react-app",

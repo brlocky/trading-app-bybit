@@ -57,6 +57,9 @@ export const SocketReducer = (
   state: ISocketContextState,
   action: ISocketContextActions
 ) => {
+
+  const currentOrders = [...state.orders];
+
   switch (action.type) {
     case 'update_socket':
       return { ...state, socket: action.payload as WebsocketClient };
@@ -76,7 +79,6 @@ export const SocketReducer = (
       if (!(action.payload as []).length) {
         return { ...state };
       }
-      const currentOrders = [...state.orders];
 
       (action.payload as IOrder[]).forEach((newOrder) => {
         const index = currentOrders.findIndex(
@@ -105,35 +107,36 @@ export const SocketReducer = (
       return { ...state, orders: currentOrders };
 
     case 'update_order':
-      const updateOrder = action.payload as IOrder;
-      const index = state.orders.findIndex(
-        (o) => o.orderId === updateOrder.orderId
-      );
-
-      if (index !== -1) {
-        const currentOrders = [...state.orders];
-        currentOrders[index] = updateOrder;
-        return { ...state, orders: currentOrders };
+      if (action.payload) {
+        const updateOrder = action.payload as IOrder
+        const indexOrderToUpdate = currentOrders.findIndex(
+          (o) => o.orderId === updateOrder.orderId
+        );
+  
+        if (indexOrderToUpdate !== -1) {
+          currentOrders[indexOrderToUpdate] = updateOrder;
+          return { ...state, orders: currentOrders };
+        }
       }
+     
       return { ...state };
 
     case 'update_executions':
-      const currentExecutionOrders = [...state.orders];
 
       (action.payload as ExecutionV5[]).forEach((execution) => {
-        const index = currentExecutionOrders.findIndex(
+        const index = currentOrders.findIndex(
           (o) => o.orderId === execution.orderId
         );
 
         // remove Order
         if (index !== -1) {
-          currentExecutionOrders.splice(index, 1);
+          currentOrders.splice(index, 1);
         }
       });
 
       return {
         ...state,
-        orders: currentExecutionOrders,
+        orders: currentOrders,
       };
     case 'update_positions':
       return {
@@ -153,7 +156,9 @@ export interface ISocketContextProps {
 
 const SocketContext = createContext<ISocketContextProps>({
   SocketState: defaultSocketContextState,
-  SocketDispatch: () => {},
+  SocketDispatch: () => (action: ISocketContextActions) => {
+    console.log(`Dispatching action ${action.type} with payload ${action.payload}`);
+  },
 });
 
 export const SocketContextConsumer = SocketContext.Consumer;

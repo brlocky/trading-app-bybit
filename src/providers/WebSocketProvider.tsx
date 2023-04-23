@@ -1,7 +1,6 @@
 import React, { createContext, useState } from 'react';
 import { WebsocketClient } from 'bybit-api';
 import { SettingsService } from '../services';
-import { IWsResponseData } from '../types';
 
 const WebSocketContext = createContext<WebsocketClient | null>(null);
 

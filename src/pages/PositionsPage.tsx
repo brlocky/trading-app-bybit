@@ -262,7 +262,6 @@ const PositionsPage: React.FC = () => {
       .catch((e) => {
         console.log(e);
       })
-      .finally(() => {});
   };
 
   if (!ticker) {
