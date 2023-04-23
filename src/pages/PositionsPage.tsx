@@ -62,79 +62,76 @@ const PositionsPage: React.FC = () => {
       return;
     }
 
-    const order = [...orders.filter(o => o.chase)].pop();
+    const ammendOrders = [...orders.filter(o => o.chase)];
 
-    console.log('order to chase');
-    console.log(order);
-    if (!order) {
+    if (!ammendOrders.length) {
       return;
     }
 
-    let nearPrice = ticker.markPrice;
-    if (
-      order.positionIdx === LinearPositionIdx.BuySide &&
-      order.side === 'Buy'
-    ) {
-      console.log('Open Long');
-      nearPrice = ticker.bid1Price;
-      if (parseFloat(nearPrice) <= parseFloat(order.price)) {
-        return;
+    ammendOrders.forEach(order => {
+      let nearPrice = ticker.markPrice;
+      if (
+        order.positionIdx === LinearPositionIdx.BuySide &&
+        order.side === 'Buy'
+      ) {
+        nearPrice = ticker.bid1Price;
+        if (parseFloat(nearPrice) <= parseFloat(order.price)) {
+          return;
+        }
       }
-    }
-
-    if (
-      order.positionIdx === LinearPositionIdx.BuySide &&
-      order.side === 'Sell'
-    ) {
-      console.log('Close Long');
-      nearPrice = ticker.ask1Price;
-      if (parseFloat(nearPrice) >= parseFloat(order.price)) {
-        return;
+  
+      if (
+        order.positionIdx === LinearPositionIdx.BuySide &&
+        order.side === 'Sell'
+      ) {
+        nearPrice = ticker.ask1Price;
+        if (parseFloat(nearPrice) >= parseFloat(order.price)) {
+          return;
+        }
       }
-    }
-
-    if (
-      order.positionIdx === LinearPositionIdx.SellSide &&
-      order.side === 'Sell'
-    ) {
-      console.log('Open Short');
-      nearPrice = ticker.ask1Price;
-      if (parseFloat(nearPrice) >= parseFloat(order.price)) {
-        return;
+  
+      if (
+        order.positionIdx === LinearPositionIdx.SellSide &&
+        order.side === 'Sell'
+      ) {
+        nearPrice = ticker.ask1Price;
+        if (parseFloat(nearPrice) >= parseFloat(order.price)) {
+          return;
+        }
       }
-    }
-
-    if (
-      order.positionIdx === LinearPositionIdx.SellSide &&
-      order.side === 'Buy'
-    ) {
-      console.log('Close Short');
-      nearPrice = ticker.bid1Price;
-      if (parseFloat(nearPrice) <= parseFloat(order.price)) {
-        return;
+  
+      if (
+        order.positionIdx === LinearPositionIdx.SellSide &&
+        order.side === 'Buy'
+      ) {
+        nearPrice = ticker.bid1Price;
+        if (parseFloat(nearPrice) <= parseFloat(order.price)) {
+          return;
+        }
       }
-    }
-
-    workingAmendOrder = true;
-    apiClient
-      .amendOrder({
-        orderId: order.orderId,
-        category: 'linear',
-        symbol: symbol,
-        price: nearPrice,
-      })
-      .then((i) => {
-        console.log('order changed ', i.retMsg);
-      })
-      .catch((e) => {
-        console.log(e);
-      })
-      .finally(() => {
-        setTimeout(() => {
-          workingAmendOrder = false;
-          loadOrders();
-        }, 1000);
-      });
+  
+      workingAmendOrder = true;
+      apiClient
+        .amendOrder({
+          orderId: order.orderId,
+          category: 'linear',
+          symbol: symbol,
+          price: nearPrice,
+        })
+        .then((i) => {
+          console.log('order changed ', i.retMsg);
+        })
+        .catch((e) => {
+          console.log(e);
+        })
+        .finally(() => {
+          setTimeout(() => {
+            workingAmendOrder = false;
+            loadOrders();
+          }, 100);
+        });
+    })
+    
   }, [ticker]);
 
   const loadOrders = () => {
@@ -171,9 +168,6 @@ const PositionsPage: React.FC = () => {
         category: 'linear',
         symbol: order.symbol,
         orderId: order.orderId,
-      })
-      .then((_) => {
-        loadOrders();
       });
   };
 
@@ -202,9 +196,6 @@ const PositionsPage: React.FC = () => {
         price: nearPrice.toString(),
         timeInForce: 'GTC',
       })
-      .then((orderResult) => {
-        loadOrders();
-      })
       .catch((e) => {
         console.log(e);
       });
@@ -225,9 +216,6 @@ const PositionsPage: React.FC = () => {
         price: ticker.ask1Price,
         timeInForce: 'PostOnly',
       })
-      .then((orderResult) => {
-        loadOrders();
-      })
       .catch((e) => {
         console.log(e);
       });
@@ -238,7 +226,6 @@ const PositionsPage: React.FC = () => {
       return;
     }
 
-    console.log('Close', qty.toFixed(3));
     const nearPrice =
       position.positionIdx === LinearPositionIdx.BuySide
         ? ticker.ask1Price
@@ -264,7 +251,7 @@ const PositionsPage: React.FC = () => {
       })
   };
 
-  if (!ticker) {
+  if (!ticker || !wallet || !tickerInfo) {
     return <></>;
   }
 
