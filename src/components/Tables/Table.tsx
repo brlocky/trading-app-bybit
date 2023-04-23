@@ -3,7 +3,7 @@ import tw from 'twin.macro';
 
 export interface TableProps {
   headers: string[];
-  data: unknown[][];
+  data: string[][];
 }
 
 const TableWrapper = tw.table`
