@@ -19,7 +19,7 @@ const PositionsPage: React.FC = () => {
   // const webSocketClient = useWebSocket();
 
   const {
-    SocketState: { orders, positions, ticker, tickerInfo, executions, wallet },
+    SocketState: { orders, positions, ticker, tickerInfo, wallet },
     SocketDispatch,
   } = useContext(SocketContext);
 
