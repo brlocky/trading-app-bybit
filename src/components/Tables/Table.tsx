@@ -3,7 +3,7 @@ import tw from 'twin.macro';
 
 export interface TableProps {
   headers: string[];
-  data: string[][];
+  data: (string| React.ReactNode)[][];
 }
 
 const TableWrapper = tw.table`

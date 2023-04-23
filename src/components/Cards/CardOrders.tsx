@@ -1,21 +1,17 @@
-import React from 'react'
-import { LinearPositionIdx } from 'bybit-api'
-import { type IOrder } from '../../types'
-import Button from '../Button/Button'
-import { Table } from '../Tables/Table'
+import React from 'react';
+import { LinearPositionIdx } from 'bybit-api';
+import { type IOrder } from '../../types';
+import Button from '../Button/Button';
+import { Table } from '../Tables/Table';
 
 interface ICardOrdersProps {
-  orders: IOrder[]
-  cancelOrder: (o: IOrder) => void
-  toggleChase: (o: IOrder) => void
+  orders: IOrder[];
+  cancelOrder: (o: IOrder) => void;
+  toggleChase: (o: IOrder) => void;
 }
 
-export default function CardOrders ({
-  orders,
-  cancelOrder,
-  toggleChase
-}: ICardOrdersProps) {
-  const headers = ['Trade Side', 'Trade Type', 'Qty', 'Price', 'Actions']
+export default function CardOrders({ orders, cancelOrder, toggleChase }: ICardOrdersProps) {
+  const headers = ['Trade Side', 'Trade Type', 'Qty', 'Price', 'Actions'];
 
   const tableData = orders
     .filter((o) => o.cancelType !== null)
@@ -26,17 +22,28 @@ export default function CardOrders ({
       order.qty,
       order.price,
       <>
-        <Button onClick={() => { cancelOrder(order) }}>Cancel</Button>
-        <Button onClick={() => { toggleChase(order) }}>
+        <Button
+          onClick={() => {
+            cancelOrder(order);
+          }}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={() => {
+            toggleChase(order);
+          }}
+        >
           {order.chase ? 'Stop' : 'Chase'}
         </Button>
-      </>
-    ])
+      </>,
+    ]);
 
   return (
     <>
+      <h3>Orders</h3>
       <Table headers={headers} data={tableData} />
       {/* <pre>{JSON.stringify(orders, null, 2)}</pre> */}
     </>
-  )
+  );
 }

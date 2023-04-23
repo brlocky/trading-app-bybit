@@ -14,11 +14,8 @@ const SlidePicker = ({ value, min, max, step, onValueChange }: ISliderPickerProp
 
   return (
     <div>
-      <label
-        htmlFor="minmax-range"
-        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-      >
-        Min-max range
+      <label htmlFor="minmax-range" className="mb-2 block text-sm font-medium text-gray-600">
+        {value}
       </label>
       <input
         id="minmax-range"
@@ -27,7 +24,7 @@ const SlidePicker = ({ value, min, max, step, onValueChange }: ISliderPickerProp
         max={max}
         value={value}
         step={step}
-        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+        className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200"
         onChange={handleChange}
       />
     </div>

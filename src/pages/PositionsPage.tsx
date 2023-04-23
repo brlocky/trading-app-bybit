@@ -62,54 +62,42 @@ const PositionsPage: React.FC = () => {
       return;
     }
 
-    const ammendOrders = [...orders.filter(o => o.chase)];
+    const ammendOrders = [...orders.filter((o) => o.chase)];
 
     if (!ammendOrders.length) {
       return;
     }
 
-    ammendOrders.forEach(order => {
+    ammendOrders.forEach((order) => {
       let nearPrice = ticker.markPrice;
-      if (
-        order.positionIdx === LinearPositionIdx.BuySide &&
-        order.side === 'Buy'
-      ) {
+      if (order.positionIdx === LinearPositionIdx.BuySide && order.side === 'Buy') {
         nearPrice = ticker.bid1Price;
         if (parseFloat(nearPrice) <= parseFloat(order.price)) {
           return;
         }
       }
-  
-      if (
-        order.positionIdx === LinearPositionIdx.BuySide &&
-        order.side === 'Sell'
-      ) {
+
+      if (order.positionIdx === LinearPositionIdx.BuySide && order.side === 'Sell') {
         nearPrice = ticker.ask1Price;
         if (parseFloat(nearPrice) >= parseFloat(order.price)) {
           return;
         }
       }
-  
-      if (
-        order.positionIdx === LinearPositionIdx.SellSide &&
-        order.side === 'Sell'
-      ) {
+
+      if (order.positionIdx === LinearPositionIdx.SellSide && order.side === 'Sell') {
         nearPrice = ticker.ask1Price;
         if (parseFloat(nearPrice) >= parseFloat(order.price)) {
           return;
         }
       }
-  
-      if (
-        order.positionIdx === LinearPositionIdx.SellSide &&
-        order.side === 'Buy'
-      ) {
+
+      if (order.positionIdx === LinearPositionIdx.SellSide && order.side === 'Buy') {
         nearPrice = ticker.bid1Price;
         if (parseFloat(nearPrice) <= parseFloat(order.price)) {
           return;
         }
       }
-  
+
       workingAmendOrder = true;
       apiClient
         .amendOrder({
@@ -130,8 +118,7 @@ const PositionsPage: React.FC = () => {
             loadOrders();
           }, 100);
         });
-    })
-    
+    });
   }, [ticker]);
 
   const loadOrders = () => {
@@ -163,18 +150,16 @@ const PositionsPage: React.FC = () => {
   };
 
   const cancelOrder = async (order: IOrder) => {
-    apiClient
-      .cancelOrder({
-        category: 'linear',
-        symbol: order.symbol,
-        orderId: order.orderId,
-      });
+    apiClient.cancelOrder({
+      category: 'linear',
+      symbol: order.symbol,
+      orderId: order.orderId,
+    });
   };
 
   const toggleChase = async (order: IOrder) => {
-    SocketDispatch({type: 'update_order', payload: {...order, chase: !order.chase}})
+    SocketDispatch({ type: 'update_order', payload: { ...order, chase: !order.chase } });
   };
-  
 
   const closeAllOrders = () => {
     orders.map(cancelOrder);
@@ -227,16 +212,13 @@ const PositionsPage: React.FC = () => {
     }
 
     const nearPrice =
-      position.positionIdx === LinearPositionIdx.BuySide
-        ? ticker.ask1Price
-        : ticker.bid1Price;
+      position.positionIdx === LinearPositionIdx.BuySide ? ticker.ask1Price : ticker.bid1Price;
     apiClient
       .submitOrder({
         positionIdx: position.positionIdx,
         category: 'linear',
         symbol: position.symbol,
-        side:
-          position.positionIdx === LinearPositionIdx.BuySide ? 'Sell' : 'Buy',
+        side: position.positionIdx === LinearPositionIdx.BuySide ? 'Sell' : 'Buy',
         orderType: 'Limit',
         qty: qty.toFixed(3),
         price: nearPrice,
@@ -248,7 +230,7 @@ const PositionsPage: React.FC = () => {
       })
       .catch((e) => {
         console.log(e);
-      })
+      });
   };
 
   if (!ticker || !wallet || !tickerInfo) {
@@ -267,13 +249,10 @@ const PositionsPage: React.FC = () => {
         closeAll={closeAllOrders}
       />
 
-      <CardPositions
-        positions={positions}
-        price={ticker}
-        closeTrade={closeTrade}
-      />
-      <CardOrders orders={orders} cancelOrder={cancelOrder} toggleChase={toggleChase} />
-
+      <div className="grid gap-4 ">
+        <CardPositions positions={positions} price={ticker} closeTrade={closeTrade} />
+        <CardOrders orders={orders} cancelOrder={cancelOrder} toggleChase={toggleChase} />
+      </div>
       {/* <pre>{JSON.stringify(ticker, null, 2)}</pre> */}
       {/* <pre>{JSON.stringify(tickerInfo, null, 2)}</pre> */}
       {/* <pre>{JSON.stringify(price, null, 2)}</pre> */}

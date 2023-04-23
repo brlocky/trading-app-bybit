@@ -9,16 +9,12 @@ interface ICardPositionsProps {
   closeTrade: (o: IPosition, qty: number) => void;
 }
 
-export default function CardPositions({
-  positions,
-  price,
-  closeTrade,
-}: ICardPositionsProps) {
+export default function CardPositions({ positions, price, closeTrade }: ICardPositionsProps) {
   const formatCurrency = (value: string) => {
     return parseFloat(value).toFixed(2) + ' USDT';
   };
 
-  const calculatePL = (position: IPosition, price: ITicker) => {
+  const calculatePL = (position: IPosition, price: ITicker): string => {
     let diff = 0;
     if (position.side === 'Sell') {
       diff = parseFloat(position.entryPrice) - parseFloat(price.lastPrice);
@@ -32,72 +28,77 @@ export default function CardPositions({
     return pl.toFixed(4);
   };
 
-  const calculatePositionSize = (
-    order: IPosition,
-    percentage: number
-  ): number => {
+  const calculatePositionSize = (order: IPosition, percentage: number): number => {
     return (parseFloat(order.size) * percentage) / 100;
   };
 
-  const headers = [
-    'Ticker',
-    'Side',
-    'Qty',
-    'Value',
-    'Entry Price',
-    'Mark Price',
-    'P&L',
-    'Actions',
-  ];
+  const headers = ['Ticker', 'Side', 'Qty', 'P&L'];
 
   const tableData = positions
     .filter((p) => parseFloat(p.size) > 0)
     .sort((a, b) => parseFloat(a.createdTime) - parseFloat(b.createdTime))
     .map((p) => [
-      p.symbol,
-      p.side,
-      p.size,
-      formatCurrency(
-        (parseFloat(p.size) * parseFloat(p.entryPrice)).toString()
-      ),
-      formatCurrency(p.entryPrice),
-      formatCurrency(price.lastPrice),
-      formatCurrency(calculatePL(p, price)),
-      <>
-        <Button
-          onClick={() => {
-            closeTrade(p, calculatePositionSize(p, 25));
-          }}
-        >
-          Close 25%
-        </Button>
-        <Button
-          onClick={() => {
-            closeTrade(p, calculatePositionSize(p, 50));
-          }}
-        >
-          Close 50%
-        </Button>
-        <Button
-          onClick={() => {
-            closeTrade(p, calculatePositionSize(p, 75));
-          }}
-        >
-          Close 75%
-        </Button>
-        <Button
-          onClick={() => {
-            closeTrade(p, calculatePositionSize(p, 100));
-          }}
-        >
-          Close All
-        </Button>
-      </>,
+      [
+        p.symbol,
+        <>
+          <i
+            className={
+              p.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'
+            }
+          ></i>
+        </>,
+        p.size,
+        parseFloat(calculatePL(p, price)) >= 0 ? (
+          <span className="text-green-600">{formatCurrency(calculatePL(p, price))}</span>
+        ) : (
+          <span className="text-red-600">{formatCurrency(calculatePL(p, price))}</span>
+        ),
+      ],
+      [
+        '',
+        '',
+        '',
+        <>
+          <Button
+            onClick={() => {
+              closeTrade(p, calculatePositionSize(p, 25));
+            }}
+            key={25}
+          >
+            Close 25%
+          </Button>
+          <Button
+            onClick={() => {
+              closeTrade(p, calculatePositionSize(p, 50));
+            }}
+            key={50}
+          >
+            Close 50%
+          </Button>
+          <Button
+            onClick={() => {
+              closeTrade(p, calculatePositionSize(p, 75));
+            }}
+            key={75}
+          >
+            Close 75%
+          </Button>
+          <Button
+            onClick={() => {
+              closeTrade(p, calculatePositionSize(p, 100));
+            }}
+            key={100}
+          >
+            Close 100%
+          </Button>
+        </>,
+      ],
     ]);
 
   return (
     <>
-      <Table headers={headers} data={tableData} />
+      <h3>Positions</h3>
+      <Table headers={headers} data={tableData.flat()} />
       {/* <pre>{JSON.stringify(positions, null, 2)}</pre> */}
     </>
   );

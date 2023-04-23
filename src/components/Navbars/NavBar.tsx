@@ -7,9 +7,9 @@ export default function NavBar() {
     <>
       <div className="flex flex-wrap py-2">
         <div className="w-full px-4">
-          <nav className="relative flex flex-wrap items-center justify-between rounded bg-pink-500 px-2 py-3">
-            <div className="container mx-auto flex flex-wrap items-center justify-between px-4">
-              <div className="relative flex w-full justify-between px-4 lg:static lg:block lg:w-auto lg:justify-start">
+          <nav className="relative flex flex-wrap items-center justify-between rounded bg-blue-400 px-2 py-3">
+            <div className="w-full mx-auto flex flex-wrap items-center justify-between px-4">
+              <div className="relative flex w-full justify-between lg:static lg:block lg:w-auto lg:justify-start">
                 <Link
                   to="/"
                   className="flex items-center px-3 py-2 text-xs font-bold uppercase leading-snug text-white hover:opacity-75"

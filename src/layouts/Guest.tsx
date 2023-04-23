@@ -7,10 +7,8 @@ const GuestLayout: React.FC = () => {
     <>
       <NavBar />
 
-      <div className="p-4 sm:ml-64">
-        <div className="mt-14 p-4">
-          <Outlet />
-        </div>
+      <div className="p-4">
+        <Outlet />
       </div>
     </>
   );
