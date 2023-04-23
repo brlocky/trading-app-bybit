@@ -47,6 +47,7 @@ const TableCell = tw.td`
   whitespace-nowrap
 `;
 
+
 export const Table: React.FC<TableProps> = ({ headers, data }) => {
   return (
     <TableWrapper>
