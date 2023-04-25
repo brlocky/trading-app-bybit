@@ -6,7 +6,7 @@ import Button from '../Button/Button';
 interface ICardPositionsProps {
   positions: IPosition[];
   price: ITicker;
-  closeTrade: (o: IPosition, qty: number) => void;
+  closeTrade: (o: IPosition, qty: string) => void;
 }
 
 export default function CardPositions({ positions, price, closeTrade }: ICardPositionsProps) {
@@ -28,8 +28,8 @@ export default function CardPositions({ positions, price, closeTrade }: ICardPos
     return pl.toFixed(4);
   };
 
-  const calculatePositionSize = (order: IPosition, percentage: number): number => {
-    return (parseFloat(order.size) * percentage) / 100;
+  const calculateClosePositionSize = (order: IPosition, percentage: number): string => {
+    return ((parseFloat(order.size) * percentage) / 100).toString();
   };
 
   const headers = ['Ticker', 'Side', 'Qty', 'P&L'];
@@ -61,7 +61,7 @@ export default function CardPositions({ positions, price, closeTrade }: ICardPos
         <>
           <Button
             onClick={() => {
-              closeTrade(p, calculatePositionSize(p, 25));
+              closeTrade(p, calculateClosePositionSize(p, 25));
             }}
             key={25}
           >
@@ -69,7 +69,7 @@ export default function CardPositions({ positions, price, closeTrade }: ICardPos
           </Button>
           <Button
             onClick={() => {
-              closeTrade(p, calculatePositionSize(p, 50));
+              closeTrade(p, calculateClosePositionSize(p, 50));
             }}
             key={50}
           >
@@ -77,7 +77,7 @@ export default function CardPositions({ positions, price, closeTrade }: ICardPos
           </Button>
           <Button
             onClick={() => {
-              closeTrade(p, calculatePositionSize(p, 75));
+              closeTrade(p, calculateClosePositionSize(p, 75));
             }}
             key={75}
           >
@@ -85,7 +85,7 @@ export default function CardPositions({ positions, price, closeTrade }: ICardPos
           </Button>
           <Button
             onClick={() => {
-              closeTrade(p, calculatePositionSize(p, 100));
+              closeTrade(p, calculateClosePositionSize(p, 100));
             }}
             key={100}
           >
