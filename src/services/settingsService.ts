@@ -11,8 +11,8 @@ export const SettingsService = {
     const data = localStorage.getItem('settings');
     if (!data) {
       return {
-        apiKey: 'some-key',
-        apiSecret: 'some-secret',
+        apiKey: '',
+        apiSecret: '',
       };
     }
     return JSON.parse(data);

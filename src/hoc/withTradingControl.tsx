@@ -244,7 +244,7 @@ function withTradingControl<P extends WithTradingControlProps>(
           price: nearPrice,
           timeInForce: 'PostOnly',
         })
-        .then((orderResult) => {
+        .then(() => {
           loadTradingInfo();
         })
         .catch((e) => {

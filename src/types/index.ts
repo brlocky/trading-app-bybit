@@ -5,6 +5,7 @@ import {
   TickerLinearInverseV5,
   TradeModeV5,
 } from 'bybit-api';
+import OrderbookLevelV5 from 'bybit-api/lib/types/response/v5-market';
 
 export interface IWsConfig {
   key: string;
@@ -49,4 +50,13 @@ export interface IPosition {
 
 export interface IOrder extends AccountOrderV5 {
   chase?: boolean;
+}
+
+
+export interface IOrderbookResponse {
+  s: string;
+  b: string[];
+  a: string[];
+  ts: number;
+  u: number;
 }
