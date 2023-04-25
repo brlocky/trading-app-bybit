@@ -38,7 +38,7 @@ const SocketContextComponent: React.FunctionComponent<ISocketContextComponentPro
   const StartSubscriptions = () => {
     if (!socket) return;
     socket.subscribeV5(['position', 'wallet', 'order', 'execution'], 'linear', true);
-    socket.subscribeV5(['tickers.BTCUSDT', 'orderbook.500.BTCUSDT'], 'linear');
+    socket.subscribeV5(['tickers.BTCUSDT', 'orderbook.500.BTCUSDT', 'orderbook.500.ETHUSDT'], 'linear');
   };
 
   const OrderBooks = new OrderBooksStore({ traceLog: false, checkTimestamps: false });
@@ -63,7 +63,6 @@ const SocketContextComponent: React.FunctionComponent<ISocketContextComponentPro
         })
         .flat();
 
-      // console.log('symbol', symbol);
       if (allLevels.length) {
         const symbol = allLevels[0][0];
 
@@ -73,6 +72,8 @@ const SocketContextComponent: React.FunctionComponent<ISocketContextComponentPro
           // eslint-disable-next-line camelcase
           ts / 1000,
         );
+
+        SocketDispatch({ type: 'update_orderbook', payload: OrderBooks });
       }
     }
 
@@ -96,6 +97,7 @@ const SocketContextComponent: React.FunctionComponent<ISocketContextComponentPro
         // eslint-disable-next-line camelcase
         ts / 1000,
       );
+      SocketDispatch({ type: 'update_orderbook', payload: OrderBooks });
     }
 
     // console.error('unhandled orderbook update type: ', type);
@@ -115,7 +117,6 @@ const SocketContextComponent: React.FunctionComponent<ISocketContextComponentPro
     /** Messages */
     socket.on('update', (socketUpdate) => {
       const { topic, data } = socketUpdate;
-      // console.log(socketUpdate);
       if (topic.startsWith('tickers')) {
         SocketDispatch({ type: 'update_ticker', payload: data });
       } else {

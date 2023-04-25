@@ -29,7 +29,7 @@ export default function CardPositions({ positions, price, closeTrade }: ICardPos
   };
 
   const calculateClosePositionSize = (order: IPosition, percentage: number): string => {
-    return ((parseFloat(order.size) * percentage) / 100).toString();
+    return ((parseFloat(order.size) * percentage) / 100).toFixed(3);
   };
 
   const headers = ['Ticker', 'Side', 'Qty', 'P&L'];

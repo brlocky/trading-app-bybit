@@ -1,4 +1,4 @@
-import GuestLayout from './layouts/Guest';
+import GuestLayout from './layouts/GuestLayout';
 import { Route, Routes } from 'react-router';
 import SettingsPage from './pages/SettingsPage';
 import PositionsPage from './pages/PositionsPage';

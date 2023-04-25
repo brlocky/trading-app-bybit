@@ -30,7 +30,7 @@
       "typescript": {},
       "node": {
         "paths": ["src"],
-        "extensions": [".js", ".jsx", ".ts", ".tsx"]
+        "extensions": [".ts", ".tsx"]
       }
     },
     "react": {

@@ -6,6 +6,7 @@ import {
 } from 'bybit-api';
 import { createContext } from 'react';
 import { IOrder, IPosition, ITicker } from '../types';
+import { OrderBooksStore } from 'orderbooks';
 
 export interface ISocketContextState {
   socket: WebsocketClient | undefined;
@@ -15,6 +16,7 @@ export interface ISocketContextState {
   wallet: WalletBalanceV5 | undefined;
   positions: IPosition[];
   executions: ExecutionV5[];
+  orderbook: OrderBooksStore | undefined;
 }
 
 export const defaultSocketContextState: ISocketContextState = {
@@ -25,6 +27,7 @@ export const defaultSocketContextState: ISocketContextState = {
   wallet: undefined,
   positions: [],
   executions: [],
+  orderbook: undefined,
 };
 
 export type TSocketContextActions =
@@ -35,7 +38,8 @@ export type TSocketContextActions =
   | 'update_order'
   | 'update_orders'
   | 'update_executions'
-  | 'update_positions';
+  | 'update_positions'
+  | 'update_orderbook';
 export type TSocketContextPayload =
   | string
   | string[]
@@ -46,18 +50,15 @@ export type TSocketContextPayload =
   | IOrder
   | WalletBalanceV5
   | IPosition[]
-  | ExecutionV5[];
+  | ExecutionV5[]
+  | OrderBooksStore;
 
 export interface ISocketContextActions {
   type: TSocketContextActions;
   payload: TSocketContextPayload;
 }
 
-export const SocketReducer = (
-  state: ISocketContextState,
-  action: ISocketContextActions
-) => {
-
+export const SocketReducer = (state: ISocketContextState, action: ISocketContextActions) => {
   const currentOrders = [...state.orders];
 
   switch (action.type) {
@@ -75,21 +76,17 @@ export const SocketReducer = (
       };
     case 'update_wallet':
       return { ...state, wallet: action.payload as WalletBalanceV5 };
+    case 'update_orderbook':
+      return { ...state, orderbook: action.payload as OrderBooksStore };
     case 'update_orders':
       if (!(action.payload as []).length) {
         return { ...state };
       }
 
       (action.payload as IOrder[]).forEach((newOrder) => {
-        const index = currentOrders.findIndex(
-          (o) => o.orderId === newOrder.orderId
-        );
+        const index = currentOrders.findIndex((o) => o.orderId === newOrder.orderId);
 
-        if (
-          ['Rejected', 'Filled', 'Cancelled', 'Triggered'].includes(
-            newOrder.orderStatus
-          )
-        ) {
+        if (['Rejected', 'Filled', 'Cancelled', 'Triggered'].includes(newOrder.orderStatus)) {
           // remove Order
           if (index !== -1) {
             currentOrders.splice(index, 1);
@@ -108,25 +105,22 @@ export const SocketReducer = (
 
     case 'update_order':
       if (action.payload) {
-        const updateOrder = action.payload as IOrder
+        const updateOrder = action.payload as IOrder;
         const indexOrderToUpdate = currentOrders.findIndex(
-          (o) => o.orderId === updateOrder.orderId
+          (o) => o.orderId === updateOrder.orderId,
         );
-  
+
         if (indexOrderToUpdate !== -1) {
           currentOrders[indexOrderToUpdate] = updateOrder;
           return { ...state, orders: currentOrders };
         }
       }
-     
+
       return { ...state };
 
     case 'update_executions':
-
       (action.payload as ExecutionV5[]).forEach((execution) => {
-        const index = currentOrders.findIndex(
-          (o) => o.orderId === execution.orderId
-        );
+        const index = currentOrders.findIndex((o) => o.orderId === execution.orderId);
 
         // remove Order
         if (index !== -1) {

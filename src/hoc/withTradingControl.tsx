@@ -4,6 +4,7 @@ import SocketContext from '../contexts/SocketContext';
 import { LinearInverseInstrumentInfoV5, LinearPositionIdx, WalletBalanceV5 } from 'bybit-api';
 import { mapApiToWsPositionV5Response } from '../mappers';
 import { IOrder, IPosition, ITicker } from '../types';
+import { OrderBooksStore } from 'orderbooks';
 
 const symbol = 'BTCUSDT';
 const accountType = 'CONTRACT';
@@ -20,6 +21,7 @@ export interface WithTradingControlProps {
   wallet: WalletBalanceV5;
   orders: IOrder[];
   ticker: ITicker;
+  orderbook: OrderBooksStore
 }
 
 function withTradingControl<P extends WithTradingControlProps>(
@@ -27,7 +29,7 @@ function withTradingControl<P extends WithTradingControlProps>(
 ): React.FC<Omit<P, keyof WithTradingControlProps>> {
   const WithTradingControl: React.FC<Omit<P, keyof WithTradingControlProps>> = (props) => {
     const {
-      SocketState: { orders, positions, ticker, tickerInfo, wallet },
+      SocketState: { orders, positions, ticker, tickerInfo, wallet, orderbook },
       SocketDispatch,
     } = useContext(SocketContext);
 
@@ -266,6 +268,7 @@ function withTradingControl<P extends WithTradingControlProps>(
         wallet={wallet}
         orders={orders}
         ticker={ticker}
+        orderbook={orderbook}
       />
     );
   };

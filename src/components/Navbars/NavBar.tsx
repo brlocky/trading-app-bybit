@@ -6,8 +6,8 @@ export default function NavBar() {
   return (
     <>
       <div className="flex flex-wrap py-2">
-        <div className="w-full px-4">
-          <nav className="relative flex flex-wrap items-center justify-between rounded bg-blue-400 px-2 py-3">
+        <div className="w-full">
+          <nav className="relative flex flex-wrap items-center justify-between rounded bg-blue-400 py-3">
             <div className="w-full mx-auto flex flex-wrap items-center justify-between px-4">
               <div className="relative flex w-full justify-between lg:static lg:block lg:w-auto lg:justify-start">
                 <Link
