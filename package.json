@@ -82,7 +82,7 @@
     "prepare": "husky install"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": "eslint"
+    "*.{ts,tsx}": "eslint"
   },
   "eslintConfig": {
     "extends": [
