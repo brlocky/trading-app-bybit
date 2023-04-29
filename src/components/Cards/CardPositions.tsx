@@ -1,13 +1,42 @@
 import React from 'react';
 import { IPosition, ITicker } from '../../types';
-import { Table } from '../Tables/Table';
 import Button from '../Button/Button';
+import tw from 'twin.macro';
 
 interface ICardPositionsProps {
   positions: IPosition[];
   price: ITicker;
   closeTrade: (o: IPosition, qty: string) => void;
 }
+
+const PositionsContainer = tw.div`
+  grid
+  grid-cols-4
+  auto-rows-max
+  text-center
+`;
+
+const PositionPropContainer = tw.div`
+  grid-cols-1
+  p-2
+  self-center
+`;
+
+const PositionActionsRow = tw.div`
+col-span-full
+`;
+
+const PositionActionsContainer = tw.div`
+flex
+justify-around
+space-x-4
+w-full
+pt-2
+pb-2
+border-b-gray-400
+border-b-2
+border-t-2
+`;
 
 export default function CardPositions({ positions, price, closeTrade }: ICardPositionsProps) {
   const formatCurrency = (value: string) => {
@@ -34,31 +63,10 @@ export default function CardPositions({ positions, price, closeTrade }: ICardPos
 
   const headers = ['Ticker', 'Side', 'Qty', 'P&L'];
 
-  const tableData = positions
-    .filter((p) => parseFloat(p.size) > 0)
-    .sort((a, b) => parseFloat(a.createdTime) - parseFloat(b.createdTime))
-    .map((p) => [
-      [
-        p.symbol,
-        <>
-          <i
-            className={
-              p.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'
-            }
-          ></i>
-        </>,
-        p.size,
-        parseFloat(calculatePL(p, price)) >= 0 ? (
-          <span className="text-green-600">{formatCurrency(calculatePL(p, price))}</span>
-        ) : (
-          <span className="text-red-600">{formatCurrency(calculatePL(p, price))}</span>
-        ),
-      ],
-      [
-        '',
-        '',
-        '',
-        <>
+  const renderPositionActions = (p: IPosition) => {
+    return (
+      <PositionActionsRow>
+        <PositionActionsContainer>
           <Button
             onClick={() => {
               closeTrade(p, calculateClosePositionSize(p, 25));
@@ -91,14 +99,55 @@ export default function CardPositions({ positions, price, closeTrade }: ICardPos
           >
             Close 100%
           </Button>
-        </>,
-      ],
-    ]);
+        </PositionActionsContainer>
+      </PositionActionsRow>
+    );
+  };
 
+  const renderPositions = positions
+    .filter((p) => parseFloat(p.size) > 0)
+    .map((p) => {
+      return (
+        <>
+          <PositionPropContainer>{p.symbol}</PositionPropContainer>
+          <PositionPropContainer>
+            <i
+              className={
+                p.side === 'Buy'
+                  ? 'fas fa-arrow-up text-green-600'
+                  : 'fas fa-arrow-down text-red-600'
+              }
+            ></i>
+          </PositionPropContainer>
+          <PositionPropContainer>{p.size}</PositionPropContainer>
+          <PositionPropContainer>
+            {parseFloat(calculatePL(p, price)) >= 0 ? (
+              <span className="text-green-600">{formatCurrency(calculatePL(p, price))}</span>
+            ) : (
+              <span className="text-red-600">{formatCurrency(calculatePL(p, price))}</span>
+            )}
+          </PositionPropContainer>
+          {renderPositionActions(p)}
+        </>
+      );
+    });
+
+  const renderHeader = headers.map((h, index) => (
+    <PositionPropContainer key={index} className="bg-gray-100">
+      {h}
+    </PositionPropContainer>
+  ));
+  
   return (
     <>
       <h3>Positions</h3>
-      <Table headers={headers} data={tableData.flat()} />
+
+      <PositionsContainer>
+        {renderHeader}
+        {renderPositions}
+      </PositionsContainer>
+
+      {/* <Table headers={headers} data={tableData.flat()} /> */}
       {/* <pre>{JSON.stringify(positions, null, 2)}</pre> */}
     </>
   );

@@ -63,39 +63,38 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
   }
 
   return (
-    <div className="flex">
-      <Card header={`${symbolTick} - Position Size`}>
-        <div className="inline-flex w-full justify-between pb-3">
-          <div className="flex flex-col md:flex-row">
-            <span>Equity:</span>
-            <span>
-              <b>{formatCurrency(coin?.equity || '0')}</b> USDT
-            </span>
-          </div>
-          <div className="flex flex-col md:flex-row">
-            <span>Available Balance:</span>
-            <span>
-              <b>{formatCurrency(coin?.availableToWithdraw || '0')}</b> USDT
-            </span>
-          </div>
+    <div className="flex flex-col">
+      <h1>{symbolTick}</h1>
+      <div className="inline-flex w-full justify-between pb-3">
+        <div className="flex flex-col md:flex-row">
+          <span>Equity:</span>
+          <span className="justify-end w-full">
+            <b>{formatCurrency(coin?.equity || '0')}</b> USDT
+          </span>
         </div>
-        <SlidePicker
-          min={convertToNumber(minOrderQty)}
-          value={positionSize}
-          max={getMaxOrderQty()}
-          step={convertToNumber(qtyStep)}
-          onValueChange={orderQtyChanged}
-        />
+        <div className="flex flex-col md:flex-row">
+          <span>Available Balance:</span>
+          <span>
+            <b>{formatCurrency(coin?.availableToWithdraw || '0')}</b> USDT
+          </span>
+        </div>
+      </div>
+      <SlidePicker
+        min={convertToNumber(minOrderQty)}
+        value={positionSize}
+        max={getMaxOrderQty()}
+        step={convertToNumber(qtyStep)}
+        onValueChange={orderQtyChanged}
+      />
 
-        <div className="w-full inline-flex pt-3 justify-center">
-          <Button onClick={longTrade}>Long</Button>
-          <Button onClick={shortTrade}>Short</Button>
-          <Button onClick={closeAll}>Close All Orders</Button>
-        </div>
-        {/* <pre>{JSON.stringify(wallet, null, 2)}</pre> */}
-        {/* <pre>{JSON.stringify(symbolProps, null, 2)}</pre> */}
-        {/* <pre>{JSON.stringify(symbolInfo, null, 2)}</pre> */}
-      </Card>
+      <div className="inline-flex w-full justify-center pt-3 space-x-4">
+        <Button onClick={longTrade} className='bg-green-300'>Long</Button>
+        <Button onClick={shortTrade} className='bg-red-400'>Short</Button>
+        <Button onClick={closeAll}>Close All Orders</Button>
+      </div>
+      {/* <pre>{JSON.stringify(wallet, null, 2)}</pre> */}
+      {/* <pre>{JSON.stringify(symbolProps, null, 2)}</pre> */}
+      {/* <pre>{JSON.stringify(symbolInfo, null, 2)}</pre> */}
     </div>
   );
 };

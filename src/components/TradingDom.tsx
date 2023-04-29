@@ -14,7 +14,7 @@ const LadderComponent = tw.div`
 flex
 flex-col
 grow
-h-12
+h-2
 w-full
 p-2
 justify-center

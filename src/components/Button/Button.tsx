@@ -1,16 +1,20 @@
-import React from 'react';
+import React, { ButtonHTMLAttributes } from 'react';
+import clsx from 'clsx';
 
-type ButtonProps = {
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   onClick?: () => void;
   children: React.ReactNode;
-};
+  className?: string;
+}
 
-const Button = ({ onClick, children }: ButtonProps) => {
+const Button = ({ onClick, children, className, ...restProps }: ButtonProps) => {
+  const classes = clsx(
+    'rounded bg-gray-300 px-4 py-2 text-xs font-bold text-gray-800 hover:bg-gray-400',
+    className,
+  );
+
   return (
-    <button
-      className="px-4 py-2 font-bold text-xs text-gray-800 bg-gray-300 rounded-l hover:bg-gray-400"
-      onClick={onClick}
-    >
+    <button className={classes} onClick={onClick} {...restProps}>
       {children}
     </button>
   );

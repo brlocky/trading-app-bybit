@@ -12,6 +12,7 @@ grid
 grid-flow-row-dense 
 grid-cols-3
 grid-rows-2
+lg:grid-rows-1
 `;
 
 const LeftColumnComponent = tw.div`
@@ -19,7 +20,7 @@ flex
 p-2
 col-span-3
 lg:col-span-1
-lg:row-span-4
+lg:row-span-1
 `;
 
 const PositionPageContent = tw.div`
