@@ -24,11 +24,14 @@ const OrderPropContainer = tw.div`
 `;
 
 export default function CardOrders({ orders, cancelOrder, toggleChase }: ICardOrdersProps) {
-  const headers = ['Trade Side', 'Trade Type', 'Qty', 'Price', 'Actions'];
+  const headers = ['Type', 'Side', 'Qty', 'Price', 'Actions'];
 
   const renderOrders = orders.map((o) => {
     return (
       <>
+        <OrderPropContainer>
+          {o.side} / {o.symbol}
+        </OrderPropContainer>
         <OrderPropContainer>
           <i
             className={
@@ -38,7 +41,6 @@ export default function CardOrders({ orders, cancelOrder, toggleChase }: ICardOr
             }
           ></i>
         </OrderPropContainer>
-        <OrderPropContainer>{o.side}</OrderPropContainer>
         <OrderPropContainer>{o.qty}</OrderPropContainer>
         <OrderPropContainer>{o.price}</OrderPropContainer>
         <OrderPropContainer>
@@ -68,32 +70,6 @@ export default function CardOrders({ orders, cancelOrder, toggleChase }: ICardOr
       {h}
     </OrderPropContainer>
   ));
-
-  // const tableData = orders
-  //   .filter((o) => o.cancelType !== null)
-  //   .sort((a: IOrder, b: IOrder) => parseFloat(b.price) - parseFloat(a.price))
-  //   .map((order: IOrder) => [
-  //     order.positionIdx === LinearPositionIdx.BuySide ? 'Long' : 'Short',
-  //     order.side,
-  //     order.qty,
-  //     order.price,
-  //     <>
-  //       <Button
-  //         onClick={() => {
-  //           cancelOrder(order);
-  //         }}
-  //       >
-  //         Cancel
-  //       </Button>
-  //       <Button
-  //         onClick={() => {
-  //           toggleChase(order);
-  //         }}
-  //       >
-  //         {order.chase ? 'Stop' : 'Chase'}
-  //       </Button>
-  //     </>,
-  //   ]);
 
   return (
     <>
