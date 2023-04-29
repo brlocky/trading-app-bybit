@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/trading-app-bybit/static/css/main.30c6bf51.css",
-    "main.js": "/trading-app-bybit/static/js/main.35872b9e.js",
+    "main.css": "/trading-app-bybit/static/css/main.bc94c478.css",
+    "main.js": "/trading-app-bybit/static/js/main.134b21d7.js",
     "static/js/787.a2af2a11.chunk.js": "/trading-app-bybit/static/js/787.a2af2a11.chunk.js",
     "static/media/fa-solid-900.ttf": "/trading-app-bybit/static/media/fa-solid-900.4a2cd718d7031b732e76.ttf",
     "static/media/fa-brands-400.ttf": "/trading-app-bybit/static/media/fa-brands-400.150de8eaa454d669c405.ttf",
@@ -12,12 +12,12 @@
     "static/media/fa-v4compatibility.ttf": "/trading-app-bybit/static/media/fa-v4compatibility.0e3a648be390bd8cb094.ttf",
     "static/media/fa-v4compatibility.woff2": "/trading-app-bybit/static/media/fa-v4compatibility.68577e40f3e70067b5da.woff2",
     "index.html": "/trading-app-bybit/index.html",
-    "main.30c6bf51.css.map": "/trading-app-bybit/static/css/main.30c6bf51.css.map",
-    "main.35872b9e.js.map": "/trading-app-bybit/static/js/main.35872b9e.js.map",
+    "main.bc94c478.css.map": "/trading-app-bybit/static/css/main.bc94c478.css.map",
+    "main.134b21d7.js.map": "/trading-app-bybit/static/js/main.134b21d7.js.map",
     "787.a2af2a11.chunk.js.map": "/trading-app-bybit/static/js/787.a2af2a11.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.30c6bf51.css",
-    "static/js/main.35872b9e.js"
+    "static/css/main.bc94c478.css",
+    "static/js/main.134b21d7.js"
   ]
 }
