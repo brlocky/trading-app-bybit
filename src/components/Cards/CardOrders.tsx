@@ -77,22 +77,26 @@ export default function CardOrders({
           )}
         </OrderPropContainer>
         <OrderPropContainer className="space-x-2 space-y-1 text-center">
-          <Button
-            onClick={() => {
-              cancelOrder(o);
-            }}
-          >
-            Cancel
-          </Button>
           {!isTrigger ? (
             <Button
               onClick={() => {
                 toggleChase(o);
               }}
             >
-              {o.chase ? 'Stop' : 'Chase'}
+              {o.chase ? (
+                <i className={'fas fa-running text-red-600'}></i>
+              ) : (
+                <i className={'fas fa-running text-green-600'}></i>
+              )}
             </Button>
           ) : null}
+          <Button
+            onClick={() => {
+              cancelOrder(o);
+            }}
+          >
+            <i className={'fas fa-close'}></i>
+          </Button>
         </OrderPropContainer>
       </OrderRowContainer>
     );
