@@ -2,7 +2,7 @@ import React, { ReactNode } from 'react';
 import tw from 'twin.macro';
 
 // Card component prop types
-type CardProps = {
+interface CardProps {
   header: ReactNode;
   children: ReactNode;
 };

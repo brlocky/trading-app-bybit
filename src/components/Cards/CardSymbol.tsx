@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Card } from './Card';
 import { LinearInverseInstrumentInfoV5, WalletBalanceV5, WalletBalanceV5Coin } from 'bybit-api';
 import SlidePicker from '../Forms/SlidePicker';
 import { ITicker } from '../../types';

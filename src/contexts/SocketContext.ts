@@ -86,7 +86,7 @@ export const SocketReducer = (state: ISocketContextState, action: ISocketContext
       (action.payload as IOrder[]).forEach((newOrder) => {
         const index = currentOrders.findIndex((o) => o.orderId === newOrder.orderId);
 
-        if (['Rejected', 'Filled', 'Cancelled', 'Triggered'].includes(newOrder.orderStatus)) {
+        if (['Rejected', 'Filled', 'Cancelled', 'Triggered', 'Deactivated'].includes(newOrder.orderStatus)) {
           // remove Order
           if (index !== -1) {
             currentOrders.splice(index, 1);

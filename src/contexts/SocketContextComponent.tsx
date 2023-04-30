@@ -135,6 +135,8 @@ const SocketContextComponent: React.FunctionComponent<ISocketContextComponentPro
               break;
 
             case 'order':
+              console.log('Update orders');
+              console.log(data);
               SocketDispatch({ type: 'update_orders', payload: data });
               break;
 

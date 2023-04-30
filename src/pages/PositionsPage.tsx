@@ -88,7 +88,7 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
 
         <div className="grid gap-4 ">
           <CardPositions positions={positions} price={ticker} closePosition={closePosition} />
-          <CardOrders orders={orders} cancelOrder={cancelOrder} toggleChase={toggleChase} />
+          <CardOrders positions={positions} orders={orders} cancelOrder={cancelOrder} toggleChase={toggleChase} />
         </div>
         {/* <pre>{JSON.stringify(ticker, null, 2)}</pre> */}
         {/* <pre>{JSON.stringify(tickerInfo, null, 2)}</pre> */}

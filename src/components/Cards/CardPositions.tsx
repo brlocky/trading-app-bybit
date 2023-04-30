@@ -2,6 +2,11 @@ import React from 'react';
 import { IPosition, ITicker } from '../../types';
 import Button from '../Button/Button';
 import tw from 'twin.macro';
+import {
+  calculateClosePositionSize,
+  calculatePositionPnL,
+  formatCurrency,
+} from '../../utils/tradeUtils';
 
 interface ICardPositionsProps {
   positions: IPosition[];
@@ -25,7 +30,7 @@ const PositionRowContainer = tw.div`
 grid
 bg-green-50
 col-span-4
-grid-cols-5
+grid-cols-4
 `;
 
 const PositionActionsContainer = tw.div`
@@ -42,29 +47,7 @@ border-t-2
 `;
 
 export default function CardPositions({ positions, price, closePosition }: ICardPositionsProps) {
-  const formatCurrency = (value: string) => {
-    return parseFloat(value).toFixed(2) + ' USDT';
-  };
-
-  const calculatePL = (position: IPosition, price: ITicker): string => {
-    let diff = 0;
-    if (position.side === 'Sell') {
-      diff = parseFloat(position.entryPrice) - parseFloat(price.lastPrice);
-    }
-    if (position.side === 'Buy') {
-      diff = parseFloat(price.lastPrice) - parseFloat(position.entryPrice);
-    }
-
-    const pl = diff * parseFloat(position.size);
-
-    return pl.toFixed(4);
-  };
-
-  const calculateClosePositionSize = (order: IPosition, percentage: number): string => {
-    return ((parseFloat(order.size) * percentage) / 100).toFixed(3);
-  };
-
-  const headers = ['Ticker', 'Side', 'Qty', 'P&L'];
+  const headers = ['Ticker', 'Entry', 'Qty', 'P&L'];
 
   const renderPositionActions = (p: IPosition) => {
     return (
@@ -110,7 +93,6 @@ export default function CardPositions({ positions, price, closePosition }: ICard
     .map((p, index) => {
       return (
         <PositionRowContainer key={index}>
-          <PositionPropContainer>{p.symbol}</PositionPropContainer>
           <PositionPropContainer>
             <i
               className={
@@ -118,14 +100,18 @@ export default function CardPositions({ positions, price, closePosition }: ICard
                   ? 'fas fa-arrow-up text-green-600'
                   : 'fas fa-arrow-down text-red-600'
               }
-            ></i>
+            ></i>{' '}
+            {p.symbol}
           </PositionPropContainer>
+          <PositionPropContainer>{p.entryPrice}</PositionPropContainer>
           <PositionPropContainer>{p.size}</PositionPropContainer>
           <PositionPropContainer>
-            {parseFloat(calculatePL(p, price)) >= 0 ? (
-              <span className="text-green-600">{formatCurrency(calculatePL(p, price))}</span>
+            {parseFloat(calculatePositionPnL(p, price)) >= 0 ? (
+              <span className="text-green-600">
+                {formatCurrency(calculatePositionPnL(p, price))}
+              </span>
             ) : (
-              <span className="text-red-600">{formatCurrency(calculatePL(p, price))}</span>
+              <span className="text-red-600">{formatCurrency(calculatePositionPnL(p, price))}</span>
             )}
           </PositionPropContainer>
           {renderPositionActions(p)}
