@@ -21,7 +21,6 @@ const OrdersContainer = tw.div`
   grid
   grid-cols-6
   auto-rows-max
-  text-center
 `;
 
 const OrderRowContainer = tw.div`

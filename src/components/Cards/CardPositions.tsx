@@ -18,7 +18,6 @@ const PositionsContainer = tw.div`
   grid
   grid-cols-4
   auto-rows-max
-  text-center
 `;
 
 const PositionPropContainer = tw.div`
@@ -36,11 +35,10 @@ grid-cols-4
 const PositionActionsContainer = tw.div`
 col-span-full
 flex
-justify-around
+justify-between
 space-x-4
 w-full
-pt-2
-pb-2
+p-2
 border-b-gray-400
 border-b-2
 border-t-2
