@@ -6,7 +6,7 @@ import tw from 'twin.macro';
 interface ICardPositionsProps {
   positions: IPosition[];
   price: ITicker;
-  closeTrade: (o: IPosition, qty: string) => void;
+  closePosition: (o: IPosition, qty: string) => void;
 }
 
 const PositionsContainer = tw.div`
@@ -19,14 +19,17 @@ const PositionsContainer = tw.div`
 const PositionPropContainer = tw.div`
   grid-cols-1
   p-2
-  self-center
 `;
 
-const PositionActionsRow = tw.div`
-col-span-full
+const PositionRowContainer = tw.div`
+grid
+bg-green-50
+col-span-4
+grid-cols-5
 `;
 
 const PositionActionsContainer = tw.div`
+col-span-full
 flex
 justify-around
 space-x-4
@@ -38,7 +41,7 @@ border-b-2
 border-t-2
 `;
 
-export default function CardPositions({ positions, price, closeTrade }: ICardPositionsProps) {
+export default function CardPositions({ positions, price, closePosition }: ICardPositionsProps) {
   const formatCurrency = (value: string) => {
     return parseFloat(value).toFixed(2) + ' USDT';
   };
@@ -65,50 +68,48 @@ export default function CardPositions({ positions, price, closeTrade }: ICardPos
 
   const renderPositionActions = (p: IPosition) => {
     return (
-      <PositionActionsRow>
-        <PositionActionsContainer>
-          <Button
-            onClick={() => {
-              closeTrade(p, calculateClosePositionSize(p, 25));
-            }}
-            key={25}
-          >
-            Close 25%
-          </Button>
-          <Button
-            onClick={() => {
-              closeTrade(p, calculateClosePositionSize(p, 50));
-            }}
-            key={50}
-          >
-            Close 50%
-          </Button>
-          <Button
-            onClick={() => {
-              closeTrade(p, calculateClosePositionSize(p, 75));
-            }}
-            key={75}
-          >
-            Close 75%
-          </Button>
-          <Button
-            onClick={() => {
-              closeTrade(p, calculateClosePositionSize(p, 100));
-            }}
-            key={100}
-          >
-            Close 100%
-          </Button>
-        </PositionActionsContainer>
-      </PositionActionsRow>
+      <PositionActionsContainer>
+        <Button
+          onClick={() => {
+            closePosition(p, calculateClosePositionSize(p, 25));
+          }}
+          key={25}
+        >
+          Close 25%
+        </Button>
+        <Button
+          onClick={() => {
+            closePosition(p, calculateClosePositionSize(p, 50));
+          }}
+          key={50}
+        >
+          Close 50%
+        </Button>
+        <Button
+          onClick={() => {
+            closePosition(p, calculateClosePositionSize(p, 75));
+          }}
+          key={75}
+        >
+          Close 75%
+        </Button>
+        <Button
+          onClick={() => {
+            closePosition(p, calculateClosePositionSize(p, 100));
+          }}
+          key={100}
+        >
+          Close 100%
+        </Button>
+      </PositionActionsContainer>
     );
   };
 
   const renderPositions = positions
     .filter((p) => parseFloat(p.size) > 0)
-    .map((p) => {
+    .map((p, index) => {
       return (
-        <>
+        <PositionRowContainer key={index}>
           <PositionPropContainer>{p.symbol}</PositionPropContainer>
           <PositionPropContainer>
             <i
@@ -128,7 +129,7 @@ export default function CardPositions({ positions, price, closeTrade }: ICardPos
             )}
           </PositionPropContainer>
           {renderPositionActions(p)}
-        </>
+        </PositionRowContainer>
       );
     });
 
@@ -137,7 +138,7 @@ export default function CardPositions({ positions, price, closeTrade }: ICardPos
       {h}
     </PositionPropContainer>
   ));
-  
+
   return (
     <>
       <h3>Positions</h3>

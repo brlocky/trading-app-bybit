@@ -38,7 +38,7 @@ const SocketContextComponent: React.FunctionComponent<ISocketContextComponentPro
   const StartSubscriptions = () => {
     if (!socket) return;
     socket.subscribeV5(['position', 'wallet', 'order', 'execution'], 'linear', true);
-    socket.subscribeV5(['tickers.BTCUSDT', 'orderbook.500.BTCUSDT', 'orderbook.500.ETHUSDT'], 'linear');
+    socket.subscribeV5(['tickers.BTCUSDT', 'orderbook.500.BTCUSDT'], 'linear');
   };
 
   const OrderBooks = new OrderBooksStore({ traceLog: false, checkTimestamps: false });

@@ -35,9 +35,11 @@ lg:row-span-1
 
 const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
   openLongTrade,
+  closeLongTrade,
   openShortTrade,
+  closeShortTrade,
   closeAllOrders,
-  closeTrade,
+  closePosition,
   cancelOrder,
   toggleChase,
   positions,
@@ -56,7 +58,22 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
   return (
     <PositionPageComponent>
       <LeftColumnComponent>
-        <TradingDom orderbook={orderbook} />
+        <TradingDom
+          orderbook={orderbook}
+          tickerInfo={tickerInfo}
+          openLong={(p) => {
+            openLongTrade(positionSize.toString(), p);
+          }}
+          openShort={(p) => {
+            openShortTrade(positionSize.toString(), p);
+          }}
+          closeLong={(p) => {
+            closeLongTrade(positionSize.toString(), p);
+          }}
+          closeShort={(p) => {
+            closeShortTrade(positionSize.toString(), p);
+          }}
+        />
       </LeftColumnComponent>
       <PositionPageContent>
         <CardSymbol
@@ -70,7 +87,7 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
         />
 
         <div className="grid gap-4 ">
-          <CardPositions positions={positions} price={ticker} closeTrade={closeTrade} />
+          <CardPositions positions={positions} price={ticker} closePosition={closePosition} />
           <CardOrders orders={orders} cancelOrder={cancelOrder} toggleChase={toggleChase} />
         </div>
         {/* <pre>{JSON.stringify(ticker, null, 2)}</pre> */}

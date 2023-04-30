@@ -68,7 +68,7 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
       <div className="inline-flex w-full justify-between pb-3">
         <div className="flex flex-col md:flex-row">
           <span>Equity:</span>
-          <span className="justify-end w-full">
+          <span className="w-full justify-end">
             <b>{formatCurrency(coin?.equity || '0')}</b> USDT
           </span>
         </div>
@@ -80,6 +80,7 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
         </div>
       </div>
       <SlidePicker
+        showValue
         min={convertToNumber(minOrderQty)}
         value={positionSize}
         max={getMaxOrderQty()}
@@ -87,9 +88,13 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
         onValueChange={orderQtyChanged}
       />
 
-      <div className="inline-flex w-full justify-center pt-3 space-x-4">
-        <Button onClick={longTrade} className='bg-green-300'>Long</Button>
-        <Button onClick={shortTrade} className='bg-red-400'>Short</Button>
+      <div className="inline-flex w-full justify-center space-x-4 pt-3">
+        <Button onClick={longTrade} className="bg-green-300">
+          Long
+        </Button>
+        <Button onClick={shortTrade} className="bg-red-400">
+          Short
+        </Button>
         <Button onClick={closeAll}>Close All Orders</Button>
       </div>
       {/* <pre>{JSON.stringify(wallet, null, 2)}</pre> */}

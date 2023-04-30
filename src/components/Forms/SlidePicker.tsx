@@ -5,18 +5,23 @@ interface ISliderPickerProps {
   max: number;
   step: number;
   onValueChange?: (value: number) => void;
+  showValue?: boolean;
+  className?: string;
 }
-const SlidePicker = ({ value, min, max, step, onValueChange }: ISliderPickerProps) => {
+const SlidePicker = ({ value, min, max, step, onValueChange, showValue, className }: ISliderPickerProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (onValueChange) onValueChange(parseFloat(value));
   };
 
   return (
-    <div>
-      <label htmlFor="minmax-range" className="mb-2 block text-sm font-medium text-gray-600">
-        {value}
-      </label>
+    <div className={className || ''}>
+      {showValue ? (
+        <label htmlFor="minmax-range" className="mb-2 block text-sm font-medium text-gray-600">
+          {value}
+        </label>
+      ) : null}
+
       <input
         id="minmax-range"
         type="range"

@@ -17,8 +17,15 @@ const OrdersContainer = tw.div`
   text-center
 `;
 
+const OrderRowContainer = tw.div`
+grid
+bg-green-50
+col-span-5
+grid-cols-5
+`;
+
 const OrderPropContainer = tw.div`
-  grid-cols-1
+col-span-1
   p-2
   self-center
 `;
@@ -26,9 +33,9 @@ const OrderPropContainer = tw.div`
 export default function CardOrders({ orders, cancelOrder, toggleChase }: ICardOrdersProps) {
   const headers = ['Type', 'Side', 'Qty', 'Price', 'Actions'];
 
-  const renderOrders = orders.map((o) => {
+  const renderOrders = orders.map((o, index) => {
     return (
-      <>
+      <OrderRowContainer key={index}>
         <OrderPropContainer>
           {o.side} / {o.symbol}
         </OrderPropContainer>
@@ -43,25 +50,23 @@ export default function CardOrders({ orders, cancelOrder, toggleChase }: ICardOr
         </OrderPropContainer>
         <OrderPropContainer>{o.qty}</OrderPropContainer>
         <OrderPropContainer>{o.price}</OrderPropContainer>
-        <OrderPropContainer>
-          <>
-            <Button
-              onClick={() => {
-                cancelOrder(o);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                toggleChase(o);
-              }}
-            >
-              {o.chase ? 'Stop' : 'Chase'}
-            </Button>
-          </>
+        <OrderPropContainer className='text-center space-x-2 space-y-1'>
+          <Button
+            onClick={() => {
+              cancelOrder(o);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              toggleChase(o);
+            }}
+          >
+            {o.chase ? 'Stop' : 'Chase'}
+          </Button>
         </OrderPropContainer>
-      </>
+      </OrderRowContainer>
     );
   });
 
