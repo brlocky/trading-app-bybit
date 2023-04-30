@@ -28,12 +28,13 @@ grid
 bg-green-50
 col-span-full
 grid-cols-6
+p-1
 `;
 
 const OrderPropContainer = tw.div`
 col-span-1
-  p-2
-  self-center
+self-center
+text-left
 `;
 
 export default function CardOrders({
