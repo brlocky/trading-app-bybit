@@ -5,6 +5,7 @@ import { LinearInverseInstrumentInfoV5, LinearPositionIdx, WalletBalanceV5 } fro
 import { mapApiToWsPositionV5Response } from '../mappers';
 import { IOrder, IPosition, ITicker } from '../types';
 import { OrderBooksStore } from 'orderbooks';
+import { isOrderStopLossOrTakeProfit } from '../utils/tradeUtils';
 
 const symbol = 'BTCUSDT';
 const accountType = 'CONTRACT';
@@ -182,7 +183,7 @@ function withTradingControl<P extends WithTradingControlProps>(
     };
 
     const closeAllOrders = () => {
-      orders.map(cancelOrder);
+      orders.filter((o) => !isOrderStopLossOrTakeProfit(o)).map(cancelOrder);
       loadTradingInfo();
     };
 
@@ -221,7 +222,7 @@ function withTradingControl<P extends WithTradingControlProps>(
           category: 'linear',
           symbol: symbol,
           side: 'Buy',
-          orderType: 'Limit',
+          orderType: 'Market',
           qty: positionSize,
           price: nearPrice.toString(),
           timeInForce: 'GTC',
@@ -245,7 +246,7 @@ function withTradingControl<P extends WithTradingControlProps>(
           category: 'linear',
           symbol: symbol,
           side: 'Sell',
-          orderType: 'Limit',
+          orderType: 'Market',
           qty: positionSize,
           price: nearPrice.toString(),
           timeInForce: 'GTC',
