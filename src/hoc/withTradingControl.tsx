@@ -11,6 +11,8 @@ const accountType = 'CONTRACT';
 
 export interface WithTradingControlProps {
   openLongTrade: (positionSize: string, price?: number) => Promise<void>;
+  openMarketLongTrade: (positionSize: string) => Promise<void>;
+  openMarketShortTrade: (positionSize: string) => Promise<void>;
   closeLongTrade: (positionSize: string, price?: number) => Promise<void>;
   openShortTrade: (positionSize: string, price?: number) => Promise<void>;
   closeShortTrade: (positionSize: string, price?: number) => Promise<void>;
@@ -18,6 +20,7 @@ export interface WithTradingControlProps {
   closePosition: (position: IPosition, qty: string) => Promise<void>;
   cancelOrder: (order: IOrder) => Promise<void>;
   toggleChase: (order: IOrder) => Promise<void>;
+  addStopLoss: (symbol: string, positionSide: LinearPositionIdx, price: number) => Promise<void>;
   positions: IPosition[];
   tickerInfo: LinearInverseInstrumentInfoV5;
   wallet: WalletBalanceV5;
@@ -169,7 +172,7 @@ function withTradingControl<P extends WithTradingControlProps>(
           symbol: order.symbol,
           orderId: order.orderId,
         })
-        .then(() => {
+        .finally(() => {
           loadTradingInfo();
         });
     };
@@ -199,13 +202,62 @@ function withTradingControl<P extends WithTradingControlProps>(
           price: nearPrice.toString(),
           timeInForce: 'PostOnly',
         })
-        .then(() => {
+        .catch((e) => {
+          console.log(e);
+        })
+        .finally(() => {
           loadTradingInfo();
+        });
+    };
+
+    const openMarketLongTrade = async (positionSize: string) => {
+      if (!ticker) {
+        return;
+      }
+      const nearPrice = parseFloat(ticker.ask1Price);
+      apiClient
+        .submitOrder({
+          positionIdx: LinearPositionIdx.BuySide,
+          category: 'linear',
+          symbol: symbol,
+          side: 'Buy',
+          orderType: 'Limit',
+          qty: positionSize,
+          price: nearPrice.toString(),
+          timeInForce: 'GTC',
         })
         .catch((e) => {
           console.log(e);
+        })
+        .finally(() => {
+          loadTradingInfo();
         });
     };
+
+    const openMarketShortTrade = async (positionSize: string) => {
+      if (!ticker) {
+        return;
+      }
+      const nearPrice = parseFloat(ticker.bid1Price);
+      apiClient
+        .submitOrder({
+          positionIdx: LinearPositionIdx.SellSide,
+          category: 'linear',
+          symbol: symbol,
+          side: 'Sell',
+          orderType: 'Limit',
+          qty: positionSize,
+          price: nearPrice.toString(),
+          timeInForce: 'GTC',
+        })
+        .catch((e) => {
+          console.log(e);
+        })
+        .finally(() => {
+          loadTradingInfo();
+        });
+    };
+
 
     const closeLongTrade = async (qty: string, price?: number) => {
       if (!ticker) {
@@ -225,11 +277,11 @@ function withTradingControl<P extends WithTradingControlProps>(
           timeInForce: 'PostOnly',
           reduceOnly: true,
         })
-        .then(() => {
-          loadTradingInfo();
-        })
         .catch((e) => {
           console.log(e);
+        })
+        .finally(() => {
+          loadTradingInfo();
         });
     };
 
@@ -249,11 +301,11 @@ function withTradingControl<P extends WithTradingControlProps>(
           price: nearPrice.toString(),
           timeInForce: 'PostOnly',
         })
-        .then(() => {
-          loadTradingInfo();
-        })
         .catch((e) => {
           console.log(e);
+        })
+        .finally(() => {
+          loadTradingInfo();
         });
     };
 
@@ -275,11 +327,11 @@ function withTradingControl<P extends WithTradingControlProps>(
           timeInForce: 'PostOnly',
           reduceOnly: true,
         })
-        .then(() => {
-          loadTradingInfo();
-        })
         .catch((e) => {
           console.log(e);
+        })
+        .finally(() => {
+          loadTradingInfo();
         });
     };
 
@@ -302,11 +354,27 @@ function withTradingControl<P extends WithTradingControlProps>(
           timeInForce: 'PostOnly',
           reduceOnly: true,
         })
-        .then(() => {
+        .catch((e) => {
+          console.log(e);
+        })
+        .finally(() => {
           loadTradingInfo();
+        });
+    };
+
+    const addStopLoss = async (symbol: string, positionSide: LinearPositionIdx, price: number) => {
+      apiClient
+        .setTradingStop({
+          positionIdx: positionSide,
+          category: 'linear',
+          symbol: symbol,
+          stopLoss: price.toString(),
         })
         .catch((e) => {
           console.log(e);
+        })
+        .finally(() => {
+          loadTradingInfo();
         });
     };
 
@@ -314,13 +382,16 @@ function withTradingControl<P extends WithTradingControlProps>(
       <WrappedComponent
         {...(props as P)}
         openLongTrade={openLongTrade}
+        openMarketLongTrade={openMarketLongTrade}
         closeLongTrade={closeLongTrade}
         openShortTrade={openShortTrade}
+        openMarketShortTrade={openMarketShortTrade}
         closeShortTrade={closeShortTrade}
         closeAllOrders={closeAllOrders}
         closePosition={closePosition}
         cancelOrder={cancelOrder}
         toggleChase={toggleChase}
+        addStopLoss={addStopLoss}
         positions={positions}
         tickerInfo={tickerInfo}
         wallet={wallet}

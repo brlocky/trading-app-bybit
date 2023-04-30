@@ -33,15 +33,20 @@ lg:col-span-2
 lg:row-span-1
 `;
 
+
+
 const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
   openLongTrade,
+  openMarketLongTrade,
   closeLongTrade,
   openShortTrade,
+  openMarketShortTrade,
   closeShortTrade,
   closeAllOrders,
   closePosition,
   cancelOrder,
   toggleChase,
+  addStopLoss,
   positions,
   tickerInfo,
   wallet,
@@ -60,7 +65,7 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
       <LeftColumnComponent>
         <TradingDom
           orderbook={orderbook}
-          tickerInfo={tickerInfo}
+          addStopLoss={addStopLoss}
           openLong={(p) => {
             openLongTrade(positionSize.toString(), p);
           }}
@@ -81,14 +86,19 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
           wallet={wallet}
           price={ticker}
           positionSizeUpdated={(s) => setPositionSize(s)}
-          longTrade={() => openLongTrade(positionSize.toString())}
-          shortTrade={() => openShortTrade(positionSize.toString())}
+          longTrade={() => openMarketLongTrade(positionSize.toString())}
+          shortTrade={() => openMarketShortTrade(positionSize.toString())}
           closeAll={closeAllOrders}
         />
 
         <div className="grid gap-4 ">
           <CardPositions positions={positions} price={ticker} closePosition={closePosition} />
-          <CardOrders positions={positions} orders={orders} cancelOrder={cancelOrder} toggleChase={toggleChase} />
+          <CardOrders
+            positions={positions}
+            orders={orders}
+            cancelOrder={cancelOrder}
+            toggleChase={toggleChase}
+          />
         </div>
         {/* <pre>{JSON.stringify(ticker, null, 2)}</pre> */}
         {/* <pre>{JSON.stringify(tickerInfo, null, 2)}</pre> */}

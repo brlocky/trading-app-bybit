@@ -3,7 +3,7 @@ import { OrderBooksStore } from 'orderbooks';
 import tw from 'twin.macro';
 import styled from 'styled-components';
 import SlidePicker from './Forms/SlidePicker';
-import { LinearInverseInstrumentInfoV5 } from 'bybit-api';
+import { LinearPositionIdx } from 'bybit-api';
 
 const BodyComponent = tw.div`
 flex
@@ -51,7 +51,9 @@ p-2
 font-bold
 `;
 
-const normalizedValueFilter = [1, 5, 10, 25, 50, 100];
+const normalizedValueFilter = [ 5, 10, 25, 50, 100, 250];
+
+const symbol = 'BTCUSDT';
 
 interface LadderRowProps {
   bellowPrice: boolean;
@@ -59,20 +61,20 @@ interface LadderRowProps {
 
 interface TradingDomProps {
   orderbook: OrderBooksStore;
-  tickerInfo: LinearInverseInstrumentInfoV5;
   openLong: (price: number) => void;
   closeLong: (price: number) => void;
   openShort: (price: number) => void;
   closeShort: (price: number) => void;
+  addStopLoss: (symbol: string, side: LinearPositionIdx, price: number) => void;
 }
 
 export const TradingDom = ({
   orderbook,
-  tickerInfo,
   openLong,
   closeLong,
   openShort,
   closeShort,
+  addStopLoss,
 }: TradingDomProps) => {
   const [selectedFilterIndex, setSelectedFilterIndex] = useState<number>(0);
   const currentOrderBook = orderbook.getBook('BTCUSDT');
@@ -112,7 +114,7 @@ export const TradingDom = ({
         step={1}
         value={selectedFilterIndex}
         onValueChange={updateTickValue}
-        className={'p-4 bg-slate-300'}
+        className={'bg-slate-300 p-4'}
       />
       <SelectedValue>{selectedValueFilter}</SelectedValue>
       <LadderComponent>
@@ -129,7 +131,21 @@ export const TradingDom = ({
               >
                 {bellowPrice ? '+' : '-'}
               </LadderRowBidComponent>
+              <LadderRowBidComponent
+                onClick={() =>
+                  bellowPrice ? addStopLoss(symbol, LinearPositionIdx.BuySide, price) : {}
+                }
+              >
+                {bellowPrice ? 'SL' : ''}
+              </LadderRowBidComponent>
               <LadderRowPriceComponent>{price}</LadderRowPriceComponent>
+              <LadderRowBidComponent
+                onClick={() =>
+                  bellowPrice ? {} : addStopLoss(symbol, LinearPositionIdx.SellSide, price)
+                }
+              >
+                {bellowPrice ? '' : 'SL'}
+              </LadderRowBidComponent>
               <LadderRowAskComponent
                 onClick={() => (bellowPrice ? closeShort(price) : openShort(price))}
               >

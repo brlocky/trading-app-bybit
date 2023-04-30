@@ -103,7 +103,7 @@ export default function CardPositions({ positions, price, closePosition }: ICard
             ></i>{' '}
             {p.symbol}
           </PositionPropContainer>
-          <PositionPropContainer>{p.entryPrice}</PositionPropContainer>
+          <PositionPropContainer>{formatCurrency(p.entryPrice)}</PositionPropContainer>
           <PositionPropContainer>{p.size}</PositionPropContainer>
           <PositionPropContainer>
             {parseFloat(calculatePositionPnL(p, price)) >= 0 ? (
