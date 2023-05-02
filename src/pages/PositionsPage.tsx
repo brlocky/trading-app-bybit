@@ -33,9 +33,8 @@ lg:col-span-2
 lg:row-span-1
 `;
 
-
-
 const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
+  tradingService,
   openLongTrade,
   openMarketLongTrade,
   closeLongTrade,
@@ -64,8 +63,9 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
     <PositionPageComponent>
       <LeftColumnComponent>
         <TradingDom
+          tradingService={tradingService}
           orderbook={orderbook}
-          addStopLoss={addStopLoss}
+          // addStopLoss={addStopLoss}
           openLong={(p) => {
             openLongTrade(positionSize.toString(), p);
           }}
@@ -82,6 +82,7 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
       </LeftColumnComponent>
       <PositionPageContent>
         <CardSymbol
+          tradingService={tradingService}
           symbolInfo={tickerInfo}
           wallet={wallet}
           price={ticker}
@@ -92,7 +93,7 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
         />
 
         <div className="grid gap-4 ">
-          <CardPositions positions={positions} price={ticker} closePosition={closePosition} />
+          <CardPositions tradingService={tradingService} positions={positions} tickerInfo={ticker} />
           <CardOrders
             positions={positions}
             orders={orders}

@@ -3,8 +3,10 @@ import { LinearInverseInstrumentInfoV5, WalletBalanceV5, WalletBalanceV5Coin } f
 import SlidePicker from '../Forms/SlidePicker';
 import { ITicker } from '../../types';
 import Button from '../Button/Button';
+import { ITradingService } from '../../services';
 
 interface ICardSymbolProps {
+  tradingService: ITradingService;
   symbolInfo: LinearInverseInstrumentInfoV5;
   wallet: WalletBalanceV5;
   price: ITicker;
@@ -17,6 +19,7 @@ interface ICardSymbolProps {
 const symbolTick = 'BTCUSDT';
 
 const CardSymbol: React.FC<ICardSymbolProps> = ({
+  tradingService,
   symbolInfo,
   wallet,
   price,
@@ -30,17 +33,10 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
 
   useEffect(() => {
     setCoin(wallet.coin[0]);
-    const minOrderQty = convertToNumber(symbolInfo.lotSizeFilter.minOrderQty);
+    const minOrderQty = tradingService.convertToNumber(symbolInfo.lotSizeFilter.minOrderQty);
     setPositionSize(minOrderQty);
   }, [symbolInfo]);
 
-  const convertToNumber = (value: string): number => {
-    return parseFloat(value);
-  };
-
-  const formatCurrency = (value: string) => {
-    return convertToNumber(value).toFixed(2);
-  };
 
   const orderQtyChanged = (value: number) => {
     setPositionSize(value);
@@ -68,22 +64,22 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
         <div className="flex flex-col md:flex-row">
           <span>Equity:</span>
           <span className="w-full justify-end">
-            <b>{formatCurrency(coin?.equity || '0')}</b> USDT
+            <b>{tradingService.formatCurrency(coin?.equity || '0')}</b> USDT
           </span>
         </div>
         <div className="flex flex-col md:flex-row">
           <span>Available Balance:</span>
           <span>
-            <b>{formatCurrency(coin?.availableToWithdraw || '0')}</b> USDT
+            <b>{tradingService.formatCurrency(coin?.availableToWithdraw || '0')}</b> USDT
           </span>
         </div>
       </div>
       <SlidePicker
         showValue
-        min={convertToNumber(minOrderQty)}
+        min={tradingService.convertToNumber(minOrderQty)}
         value={positionSize}
         max={getMaxOrderQty()}
-        step={convertToNumber(qtyStep)}
+        step={tradingService.convertToNumber(qtyStep)}
         onValueChange={orderQtyChanged}
       />
 

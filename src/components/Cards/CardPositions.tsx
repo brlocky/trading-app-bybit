@@ -7,11 +7,13 @@ import {
   calculatePositionPnL,
   formatCurrency,
 } from '../../utils/tradeUtils';
+import { ITradingService } from '../../services';
+import { LinearPositionIdx } from 'bybit-api';
 
 interface ICardPositionsProps {
+  tradingService: ITradingService;
   positions: IPosition[];
-  price: ITicker;
-  closePosition: (o: IPosition, qty: string) => void;
+  tickerInfo: ITicker;
 }
 
 const PositionsContainer = tw.div`
@@ -44,43 +46,59 @@ border-b-2
 border-t-2
 `;
 
-export default function CardPositions({ positions, price, closePosition }: ICardPositionsProps) {
+export default function CardPositions({
+  tradingService,
+  positions,
+  tickerInfo,
+}: ICardPositionsProps) {
   const headers = ['Ticker', 'Entry', 'Qty', 'P&L'];
 
+  const { closePosition, addStopLoss } = tradingService;
+
   const renderPositionActions = (p: IPosition) => {
+    const closePrice =
+      p.positionIdx == LinearPositionIdx.BuySide ? tickerInfo.ask1Price : tickerInfo.bid1Price;
     return (
       <PositionActionsContainer>
         <Button
           onClick={() => {
-            closePosition(p, calculateClosePositionSize(p, 25));
+            closePosition(p, calculateClosePositionSize(p, 25), closePrice);
           }}
           key={25}
         >
-          Close 25%
+          25%
         </Button>
         <Button
           onClick={() => {
-            closePosition(p, calculateClosePositionSize(p, 50));
+            closePosition(p, calculateClosePositionSize(p, 50), closePrice);
           }}
           key={50}
         >
-          Close 50%
+          50%
         </Button>
         <Button
           onClick={() => {
-            closePosition(p, calculateClosePositionSize(p, 75));
+            closePosition(p, calculateClosePositionSize(p, 75), closePrice);
           }}
           key={75}
         >
-          Close 75%
+          75%
         </Button>
         <Button
           onClick={() => {
-            closePosition(p, calculateClosePositionSize(p, 100));
+            closePosition(p, calculateClosePositionSize(p, 100), closePrice);
           }}
           key={100}
         >
-          Close 100%
+          100%
+        </Button>
+        <Button
+          onClick={() => {
+            addStopLoss(p.symbol, p.positionIdx, p.entryPrice);
+          }}
+          key={'BE'}
+        >
+          BE
         </Button>
       </PositionActionsContainer>
     );
@@ -104,12 +122,14 @@ export default function CardPositions({ positions, price, closePosition }: ICard
           <PositionPropContainer>{formatCurrency(p.entryPrice)}</PositionPropContainer>
           <PositionPropContainer>{p.size}</PositionPropContainer>
           <PositionPropContainer>
-            {parseFloat(calculatePositionPnL(p, price)) >= 0 ? (
+            {parseFloat(calculatePositionPnL(p, tickerInfo)) >= 0 ? (
               <span className="text-green-600">
-                {formatCurrency(calculatePositionPnL(p, price))}
+                {formatCurrency(calculatePositionPnL(p, tickerInfo))}
               </span>
             ) : (
-              <span className="text-red-600">{formatCurrency(calculatePositionPnL(p, price))}</span>
+              <span className="text-red-600">
+                {formatCurrency(calculatePositionPnL(p, tickerInfo))}
+              </span>
             )}
           </PositionPropContainer>
           {renderPositionActions(p)}

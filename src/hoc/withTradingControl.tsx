@@ -6,11 +6,13 @@ import { mapApiToWsPositionV5Response } from '../mappers';
 import { IOrder, IPosition, ITicker } from '../types';
 import { OrderBooksStore } from 'orderbooks';
 import { isOrderStopLossOrTakeProfit } from '../utils/tradeUtils';
+import { ITradingService, TradingService } from '../services/tradingService';
 
 const symbol = 'BTCUSDT';
 const accountType = 'CONTRACT';
 
 export interface WithTradingControlProps {
+  tradingService: ITradingService;
   openLongTrade: (positionSize: string, price?: number) => Promise<void>;
   openMarketLongTrade: (positionSize: string) => Promise<void>;
   openMarketShortTrade: (positionSize: string) => Promise<void>;
@@ -38,6 +40,7 @@ function withTradingControl<P extends WithTradingControlProps>(
       SocketState: { orders, positions, ticker, tickerInfo, wallet, orderbook },
       SocketDispatch,
     } = useContext(SocketContext);
+
 
     const apiClient = useApi(); // Use the useApi hook to access the API context
     useEffect(() => {
@@ -379,9 +382,11 @@ function withTradingControl<P extends WithTradingControlProps>(
         });
     };
 
+    const tradingService = TradingService(apiClient);
     return (
       <WrappedComponent
         {...(props as P)}
+        tradingService={tradingService}
         openLongTrade={openLongTrade}
         openMarketLongTrade={openMarketLongTrade}
         closeLongTrade={closeLongTrade}
