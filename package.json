@@ -188,7 +188,7 @@
   },
   "babelMacros": {
     "twin": {
-      "config": "./src/tailwind.config.js",
+      "config": "./tailwind.config.js",
       "preset": "styled-components"
     }
   }

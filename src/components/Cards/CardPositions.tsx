@@ -73,6 +73,7 @@ export default function CardPositions({
             closePosition(p, calculateClosePositionSize(p, 50), closePrice);
           }}
           key={50}
+          
         >
           50%
         </Button>
