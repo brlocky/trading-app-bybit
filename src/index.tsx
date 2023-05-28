@@ -7,23 +7,29 @@ import App from './App';
 import './index.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { ApiProvider } from './providers';
-import SocketContextComponent from './contexts/SocketContextComponent';
+import { Provider } from 'react-redux';
+import { store } from './store';
+import { SettingsService } from './services';
+import { SocketListener } from './socket/socketListener';
+import { selectInterval, selectSymbol } from './slices/symbolSlice';
 
-const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
-);
+const { apiKey, apiSecret } = SettingsService.loadSettings();
+const state = store.getState();
+const symbol = selectSymbol(state);
+const interval = selectInterval(state);
+
+const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
   <React.StrictMode>
     <HashRouter>
-      {/* <WebSocketProvider> */}
-      <ApiProvider>
-        <SocketContextComponent>
+      <Provider store={store}>
+        <ApiProvider apiKey={apiKey} apiSecret={apiSecret}>
+          <SocketListener apiKey={apiKey} apiSecret={apiSecret} symbol={symbol} interval={interval} />
           <App />
-        </SocketContextComponent>
-      </ApiProvider>
-      {/* </WebSocketProvider> */}
+        </ApiProvider>
+      </Provider>
     </HashRouter>
-  </React.StrictMode>
+  </React.StrictMode>,
 );
 
 // If you want to start measuring performance in your app, pass a function

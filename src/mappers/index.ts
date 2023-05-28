@@ -1,1 +1,2 @@
-export * from './apiToWsResponseMapper'
+export * from './apiToWsResponseMapper';
+export * from './mapKlineToCandleStickData';

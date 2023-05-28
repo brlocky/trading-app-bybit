@@ -1,18 +1,29 @@
-import React, { ComponentType, useContext, useEffect } from 'react';
+import React, { ComponentType, useEffect } from 'react';
 import { useApi } from '../providers';
-import SocketContext from '../contexts/SocketContext';
-import { LinearInverseInstrumentInfoV5, LinearPositionIdx, WalletBalanceV5 } from 'bybit-api';
+import { LinearInverseInstrumentInfoV5, LinearPositionIdx } from 'bybit-api';
 import { mapApiToWsPositionV5Response } from '../mappers';
-import { IOrder, IPosition, ITicker } from '../types';
-import { OrderBooksStore } from 'orderbooks';
+import { IOrder, IPosition } from '../types';
 import { isOrderStopLossOrTakeProfit } from '../utils/tradeUtils';
-import { ITradingService, TradingService } from '../services/tradingService';
+import { DataService, IDataService, ITradingService, TradingService } from '../services';
+import { useSelector, useDispatch } from 'react-redux';
+import {
+  selectSymbol,
+  selectOrders,
+  selectTicker,
+  selectTickerInfo,
+  updateTickerInfo,
+  updateOrder,
+  updatePositions,
+  updateWallet,
+  updateOrders,
+} from '../slices/symbolSlice';
+import { AppDispatch } from '../store';
 
-const symbol = 'BTCUSDT';
 const accountType = 'CONTRACT';
 
 export interface WithTradingControlProps {
   tradingService: ITradingService;
+  dataService: IDataService;
   openLongTrade: (positionSize: string, price?: number) => Promise<void>;
   openMarketLongTrade: (positionSize: string) => Promise<void>;
   openMarketShortTrade: (positionSize: string) => Promise<void>;
@@ -24,23 +35,18 @@ export interface WithTradingControlProps {
   cancelOrder: (order: IOrder) => Promise<void>;
   toggleChase: (order: IOrder) => Promise<void>;
   addStopLoss: (symbol: string, positionSide: LinearPositionIdx, price: number) => Promise<void>;
-  positions: IPosition[];
-  tickerInfo: LinearInverseInstrumentInfoV5;
-  wallet: WalletBalanceV5;
-  orders: IOrder[];
-  ticker: ITicker;
-  orderbook: OrderBooksStore;
 }
 
 function withTradingControl<P extends WithTradingControlProps>(
   WrappedComponent: ComponentType<P>,
 ): React.FC<Omit<P, keyof WithTradingControlProps>> {
   const WithTradingControl: React.FC<Omit<P, keyof WithTradingControlProps>> = (props) => {
-    const {
-      SocketState: { orders, positions, ticker, tickerInfo, wallet, orderbook },
-      SocketDispatch,
-    } = useContext(SocketContext);
+    const symbol = useSelector(selectSymbol);
+    const orders = useSelector(selectOrders);
+    const ticker = useSelector(selectTicker);
+    const tickerInfo = useSelector(selectTickerInfo);
 
+    const dispatch = useDispatch<AppDispatch>();
 
     const apiClient = useApi(); // Use the useApi hook to access the API context
     useEffect(() => {
@@ -53,10 +59,7 @@ function withTradingControl<P extends WithTradingControlProps>(
           symbol: symbol,
         })
         .then((info) => {
-          SocketDispatch({
-            type: 'update_ticker_info',
-            payload: info.result.list[0] as LinearInverseInstrumentInfoV5,
-          });
+          dispatch(updateTickerInfo(info.result.list[0] as LinearInverseInstrumentInfoV5))
         });
     }, []);
 
@@ -133,10 +136,7 @@ function withTradingControl<P extends WithTradingControlProps>(
           symbol: symbol,
         })
         .then((orderInfo) => {
-          SocketDispatch({
-            type: 'update_orders',
-            payload: orderInfo.result.list,
-          });
+          dispatch(updateOrders(orderInfo.result.list))
         });
 
       // Get current positions Info
@@ -146,10 +146,7 @@ function withTradingControl<P extends WithTradingControlProps>(
           symbol: symbol,
         })
         .then((positionInfo) => {
-          SocketDispatch({
-            type: 'update_positions',
-            payload: positionInfo.result.list.map(mapApiToWsPositionV5Response),
-          });
+          dispatch(updatePositions(positionInfo.result.list.map(mapApiToWsPositionV5Response)))
         });
 
       // Get USDT Wallet Balance
@@ -161,10 +158,7 @@ function withTradingControl<P extends WithTradingControlProps>(
         .then((res) => {
           const usdtWallet = res.result.list[0];
           if (usdtWallet) {
-            SocketDispatch({
-              type: 'update_wallet',
-              payload: usdtWallet,
-            });
+            dispatch(updateWallet(usdtWallet))
           }
         });
     };
@@ -182,7 +176,7 @@ function withTradingControl<P extends WithTradingControlProps>(
     };
 
     const toggleChase = async (order: IOrder) => {
-      SocketDispatch({ type: 'update_order', payload: { ...order, chase: !order.chase } });
+      dispatch(updateOrder({ ...order, chase: !order.chase }))
     };
 
     const closeAllOrders = () => {
@@ -261,7 +255,6 @@ function withTradingControl<P extends WithTradingControlProps>(
           loadTradingInfo();
         });
     };
-
 
     const closeLongTrade = async (qty: string, price?: number) => {
       if (!ticker) {
@@ -344,8 +337,7 @@ function withTradingControl<P extends WithTradingControlProps>(
         return;
       }
 
-      const nearPrice =
-        position.positionIdx === LinearPositionIdx.BuySide ? ticker.ask1Price : ticker.bid1Price;
+      const nearPrice = position.positionIdx === LinearPositionIdx.BuySide ? ticker.ask1Price : ticker.bid1Price;
       apiClient
         .submitOrder({
           positionIdx: position.positionIdx,
@@ -383,10 +375,13 @@ function withTradingControl<P extends WithTradingControlProps>(
     };
 
     const tradingService = TradingService(apiClient);
+    const dataService = DataService(apiClient);
+
     return (
       <WrappedComponent
         {...(props as P)}
         tradingService={tradingService}
+        dataService={dataService}
         openLongTrade={openLongTrade}
         openMarketLongTrade={openMarketLongTrade}
         closeLongTrade={closeLongTrade}
@@ -398,12 +393,6 @@ function withTradingControl<P extends WithTradingControlProps>(
         cancelOrder={cancelOrder}
         toggleChase={toggleChase}
         addStopLoss={addStopLoss}
-        positions={positions}
-        tickerInfo={tickerInfo}
-        wallet={wallet}
-        orders={orders}
-        ticker={ticker}
-        orderbook={orderbook}
       />
     );
   };
