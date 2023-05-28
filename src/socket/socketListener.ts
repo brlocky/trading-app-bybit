@@ -86,7 +86,7 @@ export const SocketListener: React.FC<SocketListenerProps> = ({ apiKey, apiSecre
 
   const StartSubscriptions = (s: WebsocketClient, symbol: string, interval: string) => {
     s.subscribeV5(['position', 'wallet', 'order', 'execution'], 'linear', true);
-    s.subscribeV5([`tickers.${symbol}`, `kline.${interval}.${symbol}`], 'linear', false);
+    s.subscribeV5([`tickers.${symbol}`, `kline.${interval}.${symbol}`, `orderbook.50.${symbol}`], 'linear', false);
   };
 
   const OrderBooks = new OrderBooksStore({ traceLog: false, checkTimestamps: false });
@@ -145,8 +145,6 @@ export const SocketListener: React.FC<SocketListenerProps> = ({ apiKey, apiSecre
       );
       dispatch(updateOrderbook(OrderBooks))
     }
-
-    // console.error('unhandled orderbook update type: ', type);
   }
 
   // Low level map of exchange properties to expected local properties
@@ -158,8 +156,6 @@ export const SocketListener: React.FC<SocketListenerProps> = ({ apiKey, apiSecre
     /** Messages */
     s.on('update', (socketUpdate) => {
       const { topic, data } = socketUpdate;
-
-      console.log('socket update', topic)
 
       if (topic.startsWith('tickers')) {
         dispatch(updateTicker(data));
@@ -187,8 +183,6 @@ export const SocketListener: React.FC<SocketListenerProps> = ({ apiKey, apiSecre
           break;
 
         case 'wallet':
-          console.log('--------------- update wallt');
-          console.log(data);
           if (data[0]) {
             dispatch(updateWallet(data[0]));
           }

@@ -68,8 +68,7 @@ export const Chart: React.FC<Props> = (props) => {
 
   useEffect(() => {
     if (newSeries.current && data) {
-      console.log('update data');
-      newSeries.current.setData(data);
+      newSeries.current.setData(JSON.parse(JSON.stringify(data)));
     }
   }, [data]);
 
@@ -78,7 +77,7 @@ export const Chart: React.FC<Props> = (props) => {
     const lastItem = items[items.length - 1];
 
     if (newSeries.current && lastCandle && lastCandle.time >= lastItem?._internal_originalTime) {
-      newSeries.current.update(lastCandle);
+      newSeries.current.update(JSON.parse(JSON.stringify(lastCandle)));
     }
   }, [lastCandle]);
 

@@ -93,8 +93,7 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
       });
   }, []);
 
-  console.log(symbol, interval, ticker, wallet, tickerInfo);
-  if (!ticker || !wallet || !tickerInfo) {
+  if (!ticker || !wallet || !tickerInfo || !orderbook) {
     return <>not niceee</>;
   }
 
@@ -104,7 +103,7 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
         <Chart data={klineData} lastCandle={kline} />
       </TopComponent>
       <LeftColumnComponent>
-        {/* <TradingDom
+        <TradingDom
           tradingService={tradingService}
           orderbook={orderbook}
           // addStopLoss={addStopLoss}
@@ -120,7 +119,7 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
           closeShort={(p) => {
             closeShortTrade(positionSize.toString(), p);
           }}
-        /> */}
+        />
       </LeftColumnComponent>
       <PositionPageContent>
         <CardSymbol

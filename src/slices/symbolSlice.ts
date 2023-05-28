@@ -47,7 +47,7 @@ const symbolSlice = createSlice({
       state.klineData = [...action.payload];
     },
     updateLastKline(state, action: PayloadAction<CandlestickData>) {
-      state.kline = action.payload;
+      state.kline = { ...action.payload };
     },
     closeLastKline(state, action: PayloadAction<CandlestickData>) {
       if (!state.klineData.length) {
@@ -137,7 +137,7 @@ export const {
   updatePositions,
 } = symbolSlice.actions;
 
-export default symbolSlice.reducer;
+export const symbolReducer = symbolSlice.reducer;
 
 // Other code such as selectors can use the imported `RootState` type
 export const selectSymbol = (state: RootState) => state.symbol.symbol;
