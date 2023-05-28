@@ -1,9 +1,9 @@
-import { createChart, ColorType, CandlestickData } from 'lightweight-charts';
+import { createChart, ColorType } from 'lightweight-charts';
 import React, { useEffect, useRef } from 'react';
+import { useSelector } from 'react-redux';
+import { selectInterval, selectKlineData, selectLastKline, selectSymbol, selectTickerInfo } from '../../slices/symbolSlice';
 
 interface Props {
-  data: CandlestickData[];
-  lastCandle: CandlestickData | undefined;
   colors?: {
     backgroundColor?: string;
     lineColor?: string;
@@ -15,8 +15,6 @@ interface Props {
 
 export const Chart: React.FC<Props> = (props) => {
   const {
-    data,
-    lastCandle,
     colors: {
       backgroundColor = 'white',
       lineColor = '#2962FF',
@@ -30,6 +28,12 @@ export const Chart: React.FC<Props> = (props) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartInstanceRef = useRef<any>(null);
 
+  const symbol = useSelector(selectSymbol);
+  const interval = useSelector(selectInterval);
+  const klineData = useSelector(selectKlineData);
+  const kline = useSelector(selectLastKline);
+  const tickerInfo = useSelector(selectTickerInfo);
+
   useEffect(() => {
     const handleResize = () => {
       if (chartInstanceRef.current) {
@@ -41,9 +45,23 @@ export const Chart: React.FC<Props> = (props) => {
 
     if (chartContainerRef.current) {
       chartInstanceRef.current = createChart(chartContainerRef.current, {
+        timeScale: {
+          timeVisible: true,
+          ticksVisible: true,
+        },
+        localization: {
+          priceFormatter: (p: number) => `${p.toFixed(5).padEnd(10)}`,
+        },
         layout: {
           background: { type: ColorType.Solid, color: backgroundColor },
           textColor,
+        },
+        rightPriceScale: {
+          ticksVisible: true,
+          scaleMargins: {
+            top: 0.1,
+            bottom: 0.1,
+          },
         },
         width: chartContainerRef.current.clientWidth,
         height: 600,
@@ -53,6 +71,11 @@ export const Chart: React.FC<Props> = (props) => {
         lineColor,
         topColor: areaTopColor,
         bottomColor: areaBottomColor,
+        priceFormat: {
+          type: 'price',
+          precision: tickerInfo?.priceScale,
+          minMove: tickerInfo?.priceFilter.tickSize,
+        },
       });
 
       window.addEventListener('resize', handleResize);
@@ -64,22 +87,22 @@ export const Chart: React.FC<Props> = (props) => {
         chartInstanceRef.current.remove();
       }
     };
-  }, [backgroundColor, lineColor, textColor, areaTopColor, areaBottomColor]);
+  }, [interval, symbol, backgroundColor, lineColor, textColor, areaTopColor, areaBottomColor]);
 
   useEffect(() => {
-    if (newSeries.current && data) {
-      newSeries.current.setData(JSON.parse(JSON.stringify(data)));
+    if (newSeries.current && klineData) {
+      newSeries.current.setData(JSON.parse(JSON.stringify(klineData)));
     }
-  }, [data]);
+  }, [klineData]);
 
   useEffect(() => {
     const items = newSeries.current._internal__series._private__data._private__items;
     const lastItem = items[items.length - 1];
 
-    if (newSeries.current && lastCandle && lastCandle.time >= lastItem?._internal_originalTime) {
-      newSeries.current.update(JSON.parse(JSON.stringify(lastCandle)));
+    if (newSeries.current && kline && kline.time >= lastItem?._internal_originalTime) {
+      newSeries.current.update(JSON.parse(JSON.stringify(kline)));
     }
-  }, [lastCandle]);
+  }, [kline]);
 
   return <div ref={chartContainerRef}></div>;
 };

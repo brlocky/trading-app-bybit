@@ -7,16 +7,16 @@ import { ITradingService } from '../../services';
 
 interface ICardSymbolProps {
   tradingService: ITradingService;
-  symbolInfo: LinearInverseInstrumentInfoV5;
-  wallet: WalletBalanceV5;
-  price: ITicker;
+  symbolInfo: LinearInverseInstrumentInfoV5 | undefined;
+  wallet: WalletBalanceV5 | undefined;
+  price: ITicker | undefined;
   positionSizeUpdated: (size: number) => void;
   longTrade: () => void;
   shortTrade: () => void;
   closeAll: () => void;
 }
 
-const symbolTick = 'BTCUSDT';
+const symbolTick = '---- WIPBTCUSDT';
 
 const CardSymbol: React.FC<ICardSymbolProps> = ({
   tradingService,
@@ -31,7 +31,14 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
   const [positionSize, setPositionSize] = useState<number>(0);
   const [coin, setCoin] = useState<WalletBalanceV5Coin | undefined>();
 
+  if (!wallet || !symbolInfo || !price) {
+    return <></>
+  }
   useEffect(() => {
+    if (!symbolInfo) {
+      return
+    }
+    
     setCoin(wallet.coin[0]);
     const minOrderQty = tradingService.convertToNumber(symbolInfo.lotSizeFilter.minOrderQty);
     setPositionSize(minOrderQty);

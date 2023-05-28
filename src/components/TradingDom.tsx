@@ -5,6 +5,8 @@ import styled from 'styled-components';
 import { LinearPositionIdx } from 'bybit-api';
 import Dropdown, { IDropdownOption } from './Forms/DropDown';
 import { ITradingService } from '../services';
+import { useSelector } from 'react-redux';
+import { selectSymbol } from '../slices/symbolSlice';
 
 const BodyComponent = tw.div`
 flex
@@ -54,7 +56,6 @@ const LadderRowAskComponent = tw(LadderRowItemComponent)`
 hover:bg-red-300
 `;
 
-const symbol = 'BTCUSDT';
 
 interface LadderRowProps {
   bellowPrice: boolean;
@@ -62,7 +63,7 @@ interface LadderRowProps {
 
 interface TradingDomProps {
   tradingService: ITradingService;
-  orderbook: OrderBooksStore;
+  orderbook: OrderBooksStore | undefined;
   openLong: (price: number) => void;
   closeLong: (price: number) => void;
   openShort: (price: number) => void;
@@ -80,7 +81,14 @@ export const TradingDom = ({
 }: // addStopLoss,
 TradingDomProps) => {
   const [selectedFilterIndex, setSelectedFilterIndex] = useState<number>(0);
-  const currentOrderBook = orderbook.getBook('BTCUSDT');
+
+  const symbol = useSelector(selectSymbol);
+
+  if (!orderbook || !symbol) {
+    return <></>
+  }
+
+  const currentOrderBook = orderbook.getBook(symbol);
 
   const ask = currentOrderBook.getBestAsk() || 0;
   const bid = currentOrderBook.getBestBid() || 0;

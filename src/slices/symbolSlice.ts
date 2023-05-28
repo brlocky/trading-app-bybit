@@ -6,7 +6,7 @@ import { ITicker, IOrder, IPosition } from '../types';
 import { RootState } from '../store';
 
 interface ISymbolState {
-  symbol: string;
+  symbol: string | undefined;
   interval: string;
   ticker: ITicker | undefined;
   tickerInfo: LinearInverseInstrumentInfoV5 | undefined;
@@ -20,7 +20,7 @@ interface ISymbolState {
 }
 
 const initialState: ISymbolState = {
-  symbol: 'BTCUSDT',
+  symbol: undefined,
   interval: '1',
   ticker: undefined,
   tickerInfo: undefined,
@@ -37,6 +37,20 @@ const symbolSlice = createSlice({
   name: 'symbol',
   initialState,
   reducers: {
+    updateSymbol(state, action: PayloadAction<string>) {
+      return {
+        ...initialState,
+        symbol: action.payload,
+        interval: state.interval,
+      };
+    },
+    updateInterval(state, action: PayloadAction<string>) {
+      return {
+        ...initialState,
+        symbol: state.symbol,
+        interval: action.payload,
+      };
+    },
     updateTicker(state, action: PayloadAction<ITicker>) {
       state.ticker = { ...state.ticker, ...action.payload };
     },
@@ -124,6 +138,8 @@ const symbolSlice = createSlice({
 });
 
 export const {
+  updateSymbol,
+  updateInterval,
   updateTicker,
   updateTickerInfo,
   updateKline,

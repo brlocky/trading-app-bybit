@@ -50,17 +50,7 @@ function withTradingControl<P extends WithTradingControlProps>(
 
     const apiClient = useApi(); // Use the useApi hook to access the API context
     useEffect(() => {
-      loadTradingInfo();
-
-      // Symbol ticker and step
-      apiClient
-        .getInstrumentsInfo({
-          category: 'linear',
-          symbol: symbol,
-        })
-        .then((info) => {
-          dispatch(updateTickerInfo(info.result.list[0] as LinearInverseInstrumentInfoV5))
-        });
+      reloadTradingInfo();
     }, []);
 
     useEffect(() => {
@@ -71,7 +61,7 @@ function withTradingControl<P extends WithTradingControlProps>(
 
       const ammendOrders = [...orders.filter((o) => o.chase)];
 
-      if (!ammendOrders.length) {
+      if (!ammendOrders.length || !symbol) {
         return;
       }
 
@@ -122,45 +112,47 @@ function withTradingControl<P extends WithTradingControlProps>(
           .finally(() => {
             setTimeout(() => {
               workingAmendOrder = false;
-              loadTradingInfo();
+              reloadTradingInfo();
             }, 100);
           });
       });
     }, [ticker]);
 
-    const loadTradingInfo = () => {
-      // Get current orders Info
-      apiClient
-        .getActiveOrders({
-          category: 'linear',
-          symbol: symbol,
-        })
-        .then((orderInfo) => {
-          dispatch(updateOrders(orderInfo.result.list))
-        });
+    const reloadTradingInfo = () => {
+      if (!symbol) return;
 
-      // Get current positions Info
-      apiClient
-        .getPositionInfo({
-          category: 'linear',
-          symbol: symbol,
-        })
-        .then((positionInfo) => {
-          dispatch(updatePositions(positionInfo.result.list.map(mapApiToWsPositionV5Response)))
-        });
+      const activeOrdersPromise = apiClient.getActiveOrders({
+        category: 'linear',
+        symbol: symbol,
+      });
 
-      // Get USDT Wallet Balance
-      apiClient
-        .getWalletBalance({
-          accountType: accountType,
-          coin: 'USDT',
-        })
-        .then((res) => {
-          const usdtWallet = res.result.list[0];
-          if (usdtWallet) {
-            dispatch(updateWallet(usdtWallet))
-          }
-        });
+      const positionInfoPromise = apiClient.getPositionInfo({
+        category: 'linear',
+        symbol: symbol,
+      });
+
+      const walletInfoPromise = apiClient.getWalletBalance({
+        accountType: accountType,
+        coin: 'USDT',
+      });
+
+      const tickerInfoPromise = apiClient.getInstrumentsInfo({
+        category: 'linear',
+        symbol: symbol,
+      });
+
+      Promise.all([activeOrdersPromise, positionInfoPromise, walletInfoPromise, tickerInfoPromise]).then(
+        ([orderInfo, positionInfo, walletInfo, tickerInfo]) => {
+
+          // dispatch(updateOrders(orderInfo.result.list));
+          // dispatch(updatePositions(positionInfo.result.list.map(mapApiToWsPositionV5Response)));
+          // const usdtWallet = walletInfo.result.list[0];
+          // if (usdtWallet) {
+          //   dispatch(updateWallet(usdtWallet));
+          // }
+          dispatch(updateTickerInfo(tickerInfo.result.list[0] as LinearInverseInstrumentInfoV5));
+        },
+      );
     };
 
     const cancelOrder = async (order: IOrder) => {
@@ -171,21 +163,21 @@ function withTradingControl<P extends WithTradingControlProps>(
           orderId: order.orderId,
         })
         .finally(() => {
-          loadTradingInfo();
+          reloadTradingInfo();
         });
     };
 
     const toggleChase = async (order: IOrder) => {
-      dispatch(updateOrder({ ...order, chase: !order.chase }))
+      dispatch(updateOrder({ ...order, chase: !order.chase }));
     };
 
     const closeAllOrders = () => {
       orders.filter((o) => !isOrderStopLossOrTakeProfit(o)).map(cancelOrder);
-      loadTradingInfo();
+      reloadTradingInfo();
     };
 
     const openLongTrade = async (positionSize: string, price?: number) => {
-      if (!ticker) {
+      if (!ticker || !symbol) {
         return;
       }
       const nearPrice = price ? price : parseFloat(ticker.bid1Price);
@@ -204,12 +196,12 @@ function withTradingControl<P extends WithTradingControlProps>(
           console.log(e);
         })
         .finally(() => {
-          loadTradingInfo();
+          reloadTradingInfo();
         });
     };
 
     const openMarketLongTrade = async (positionSize: string) => {
-      if (!ticker) {
+      if (!ticker || !symbol) {
         return;
       }
       const nearPrice = parseFloat(ticker.ask1Price);
@@ -228,12 +220,12 @@ function withTradingControl<P extends WithTradingControlProps>(
           console.log(e);
         })
         .finally(() => {
-          loadTradingInfo();
+          reloadTradingInfo();
         });
     };
 
     const openMarketShortTrade = async (positionSize: string) => {
-      if (!ticker) {
+      if (!ticker || !symbol) {
         return;
       }
       const nearPrice = parseFloat(ticker.bid1Price);
@@ -252,12 +244,12 @@ function withTradingControl<P extends WithTradingControlProps>(
           console.log(e);
         })
         .finally(() => {
-          loadTradingInfo();
+          reloadTradingInfo();
         });
     };
 
     const closeLongTrade = async (qty: string, price?: number) => {
-      if (!ticker) {
+      if (!ticker || !symbol) {
         return;
       }
 
@@ -278,12 +270,12 @@ function withTradingControl<P extends WithTradingControlProps>(
           console.log(e);
         })
         .finally(() => {
-          loadTradingInfo();
+          reloadTradingInfo();
         });
     };
 
     const openShortTrade = async (positionSize: string, price?: number) => {
-      if (!ticker) {
+      if (!ticker || !symbol) {
         return;
       }
       const nearPrice = price ? price : ticker.ask1Price;
@@ -302,12 +294,12 @@ function withTradingControl<P extends WithTradingControlProps>(
           console.log(e);
         })
         .finally(() => {
-          loadTradingInfo();
+          reloadTradingInfo();
         });
     };
 
     const closeShortTrade = async (qty: string, price?: number) => {
-      if (!ticker) {
+      if (!ticker || !symbol) {
         return;
       }
 
@@ -328,7 +320,7 @@ function withTradingControl<P extends WithTradingControlProps>(
           console.log(e);
         })
         .finally(() => {
-          loadTradingInfo();
+          reloadTradingInfo();
         });
     };
 
@@ -354,7 +346,7 @@ function withTradingControl<P extends WithTradingControlProps>(
           console.log(e);
         })
         .finally(() => {
-          loadTradingInfo();
+          reloadTradingInfo();
         });
     };
 
@@ -370,7 +362,7 @@ function withTradingControl<P extends WithTradingControlProps>(
           console.log(e);
         })
         .finally(() => {
-          loadTradingInfo();
+          reloadTradingInfo();
         });
     };
 

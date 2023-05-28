@@ -1,18 +1,28 @@
 import { OrderSideV5, WebsocketClient } from 'bybit-api';
-import OrderbookLevelV5 from 'bybit-api/lib/types/response/v5-market';
+import OrderbookLevelV5, { LinearInverseInstrumentInfoV5 } from 'bybit-api/lib/types/response/v5-market';
 import { OrderBookLevel, OrderBookLevelState, OrderBooksStore } from 'orderbooks';
 import React, { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { mapKlineObjToCandleStickData } from '../mappers';
 import { IOrderbookResponse } from '../types';
-import { closeLastKline, updateExecutions, updateLastKline, updateOrder, updateOrderbook, updatePositions, updateTicker, updateWallet } from '../slices/symbolSlice';
-import OrderBook from 'orderbooks/lib/OrderBook';
+import {
+  closeLastKline,
+  selectInterval,
+  selectSymbol,
+  updateExecutions,
+  updateLastKline,
+  updateOrder,
+  updateOrderbook,
+  updatePositions,
+  updateTicker,
+  updateTickerInfo,
+  updateWallet,
+} from '../slices/symbolSlice';
+import { useApi } from '../providers';
 
 interface SocketListenerProps {
   apiKey: string;
   apiSecret: string;
-  symbol: string;
-  interval: string;
 }
 
 interface ISocketUpdate<T> {
@@ -22,20 +32,18 @@ interface ISocketUpdate<T> {
   data: T;
 }
 
-export const SocketListener: React.FC<SocketListenerProps> = ({ apiKey, apiSecret, symbol, interval }) => {
+export const SocketListener: React.FC<SocketListenerProps> = ({ apiKey, apiSecret }) => {
   const [socket, setSocket] = useState<WebsocketClient | undefined>(undefined);
-  const [selectedSymbol, setSelectedSymbol] = useState<string | undefined>(undefined);
-  const [selectedInterval, setSelectedInterval] = useState<string | undefined>(undefined);
 
-  const dispatch = useDispatch();
+  const symbol = useSelector(selectSymbol);
+  const interval = useSelector(selectInterval);
   useEffect(() => {
-    if (!apiKey || !apiSecret) {
+    if (!apiKey || !apiSecret || !symbol) {
       return;
     }
+
     console.log('Start socket listener', symbol);
 
-    setSelectedSymbol(symbol);
-    setSelectedInterval(interval);
     initializeSocketAndListeners(symbol, interval);
 
     // Clean up the socket connection on component unmount
@@ -46,20 +54,26 @@ export const SocketListener: React.FC<SocketListenerProps> = ({ apiKey, apiSecre
     };
   }, []);
 
+  const apiClient = useApi();
+  const dispatch = useDispatch();
+
   useEffect(() => {
-    if (!socket) {
+    console.log('Symbol or Interval changed', symbol, interval, socket);
+    if (!socket || !symbol) {
       return;
     }
 
-    console.log('Synbol interval changed');
-    if (selectedSymbol !== symbol) {
-      setSelectedSymbol(symbol);
-    }
-    if (selectedInterval !== interval) {
-      setSelectedInterval(interval);
-    }
+    console.log('Synbol interval changed xxxx');
 
-    initializeSocketAndListeners(symbol, interval);
+    apiClient
+      .getInstrumentsInfo({
+        category: 'linear',
+        symbol: symbol,
+      })
+      .then((tickerInfo) => {
+        dispatch(updateTickerInfo(tickerInfo.result.list[0] as LinearInverseInstrumentInfoV5));
+        initializeSocketAndListeners(symbol, interval);
+      });
   }, [symbol, interval]);
 
   const initializeSocketAndListeners = (symbol: string, interval: string) => {
@@ -76,17 +90,17 @@ export const SocketListener: React.FC<SocketListenerProps> = ({ apiKey, apiSecre
       market: 'v5',
     });
 
-    setSocket(newSocket);
-
     StartListeners(newSocket);
     StartSubscriptions(newSocket, symbol, interval);
 
+    setSocket(newSocket);
     return newSocket;
   };
 
   const StartSubscriptions = (s: WebsocketClient, symbol: string, interval: string) => {
     s.subscribeV5(['position', 'wallet', 'order', 'execution'], 'linear', true);
     s.subscribeV5([`tickers.${symbol}`, `kline.${interval}.${symbol}`, `orderbook.50.${symbol}`], 'linear', false);
+    // s.subscribeV5([`tickers.${symbol}`, `kline.${interval}.${symbol}`], 'linear', false);
   };
 
   const OrderBooks = new OrderBooksStore({ traceLog: false, checkTimestamps: false });
@@ -119,7 +133,7 @@ export const SocketListener: React.FC<SocketListenerProps> = ({ apiKey, apiSecre
           ts / 1000,
         );
 
-        dispatch(updateOrderbook(OrderBooks))
+        dispatch(updateOrderbook(OrderBooks));
       }
     }
 
@@ -143,7 +157,7 @@ export const SocketListener: React.FC<SocketListenerProps> = ({ apiKey, apiSecre
         // eslint-disable-next-line camelcase
         ts / 1000,
       );
-      dispatch(updateOrderbook(OrderBooks))
+      dispatch(updateOrderbook(OrderBooks));
     }
   }
 
@@ -163,7 +177,7 @@ export const SocketListener: React.FC<SocketListenerProps> = ({ apiKey, apiSecre
       }
 
       if (topic.toLowerCase().startsWith('orderbook')) {
-        handleOrderbookUpdate(socketUpdate);
+        handleOrderbookUpdate(JSON.parse(JSON.stringify(socketUpdate)));
         return;
       }
 

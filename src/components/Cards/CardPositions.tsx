@@ -13,7 +13,7 @@ import { LinearPositionIdx } from 'bybit-api';
 interface ICardPositionsProps {
   tradingService: ITradingService;
   positions: IPosition[];
-  tickerInfo: ITicker;
+  tickerInfo: ITicker | undefined;
 }
 
 const PositionsContainer = tw.div`
@@ -51,6 +51,10 @@ export default function CardPositions({
   positions,
   tickerInfo,
 }: ICardPositionsProps) {
+
+  if (!tickerInfo) { 
+    return <></>
+  }
   const headers = ['Ticker', 'Entry', 'Qty', 'P&L'];
 
   const { closePosition, addStopLoss } = tradingService;

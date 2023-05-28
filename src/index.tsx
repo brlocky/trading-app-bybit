@@ -8,25 +8,24 @@ import './index.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { ApiProvider } from './providers';
 import { Provider } from 'react-redux';
-import { store } from './store';
+import { persistor, store } from './store';
 import { SettingsService } from './services';
 import { SocketListener } from './socket/socketListener';
-import { selectInterval, selectSymbol } from './slices/symbolSlice';
+import { PersistGate } from 'redux-persist/integration/react';
 
 const { apiKey, apiSecret } = SettingsService.loadSettings();
-const state = store.getState();
-const symbol = selectSymbol(state);
-const interval = selectInterval(state);
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
   <React.StrictMode>
     <HashRouter>
       <Provider store={store}>
-        <ApiProvider apiKey={apiKey} apiSecret={apiSecret}>
-          <SocketListener apiKey={apiKey} apiSecret={apiSecret} symbol={symbol} interval={interval} />
-          <App />
-        </ApiProvider>
+        <PersistGate loading={null} persistor={persistor}>
+          <ApiProvider apiKey={apiKey} apiSecret={apiSecret}>
+            <SocketListener apiKey={apiKey} apiSecret={apiSecret} />
+            <App />
+          </ApiProvider>
+        </PersistGate>
       </Provider>
     </HashRouter>
   </React.StrictMode>,
