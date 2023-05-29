@@ -91,7 +91,7 @@ export const Chart: React.FC<Props> = (props) => {
         chartInstanceRef.current.remove();
       }
     };
-  }, [tickerInfo, interval, symbol, backgroundColor, lineColor, textColor, areaTopColor, areaBottomColor]);
+  }, [tickerInfo, backgroundColor, lineColor, textColor, areaTopColor, areaBottomColor]);
 
   useEffect(() => {
     if (newSeries.current && klineData) {
@@ -100,10 +100,7 @@ export const Chart: React.FC<Props> = (props) => {
   }, [klineData]);
 
   useEffect(() => {
-    const items = newSeries.current._internal__series._private__data._private__items;
-    const lastItem = items[items.length - 1];
-
-    if (newSeries.current && kline && kline.time >= lastItem?._internal_originalTime) {
+    if (kline) {
       newSeries.current.update(JSON.parse(JSON.stringify(kline)));
     }
   }, [kline]);

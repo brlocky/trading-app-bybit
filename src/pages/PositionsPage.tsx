@@ -145,9 +145,6 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
               <div className="grid gap-4 ">
                 <CardSymbol
                   tradingService={tradingService}
-                  symbolInfo={tickerInfo}
-                  wallet={wallet}
-                  price={ticker}
                   positionSizeUpdated={(s) => setPositionSize(s)}
                   longTrade={() => openMarketLongTrade(positionSize.toString())}
                   shortTrade={() => openMarketShortTrade(positionSize.toString())}

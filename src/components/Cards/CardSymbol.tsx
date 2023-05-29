@@ -4,12 +4,11 @@ import SlidePicker from '../Forms/SlidePicker';
 import { ITicker } from '../../types';
 import Button from '../Button/Button';
 import { ITradingService } from '../../services';
+import { useSelector } from 'react-redux';
+import { selectTicker, selectTickerInfo, selectWallet } from '../../slices/symbolSlice';
 
 interface ICardSymbolProps {
   tradingService: ITradingService;
-  symbolInfo: LinearInverseInstrumentInfoV5 | undefined;
-  wallet: WalletBalanceV5 | undefined;
-  price: ITicker | undefined;
   positionSizeUpdated: (size: number) => void;
   longTrade: () => void;
   shortTrade: () => void;
@@ -20,29 +19,32 @@ const symbolTick = '---- WIPBTCUSDT';
 
 const CardSymbol: React.FC<ICardSymbolProps> = ({
   tradingService,
-  symbolInfo,
-  wallet,
-  price,
   positionSizeUpdated,
   longTrade,
   shortTrade,
   closeAll,
 }: ICardSymbolProps) => {
   const [positionSize, setPositionSize] = useState<number>(0);
-  const [coin, setCoin] = useState<WalletBalanceV5Coin | undefined>();
 
-  if (!wallet || !symbolInfo || !price) {
+
+  const tickerInfo = useSelector(selectTickerInfo)
+  const wallet = useSelector(selectWallet)
+  const ticker = useSelector(selectTicker)
+
+  if (!wallet || !tickerInfo || !ticker) {
     return <></>
   }
-  useEffect(() => {
-    if (!symbolInfo) {
-      return
-    }
+
+  const coin = wallet.coin[0];
+  // useEffect(() => {
+  //   if (!symbolInfo) {
+  //     return
+  //   }
     
-    setCoin(wallet.coin[0]);
-    const minOrderQty = tradingService.convertToNumber(symbolInfo.lotSizeFilter.minOrderQty);
-    setPositionSize(minOrderQty);
-  }, [symbolInfo]);
+  //   setCoin(wallet.coin[0]);
+  //   const minOrderQty = tradingService.convertToNumber(symbolInfo.lotSizeFilter.minOrderQty);
+  //   setPositionSize(minOrderQty);
+  // }, [symbolInfo]);
 
 
   const orderQtyChanged = (value: number) => {
@@ -52,17 +54,14 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
 
   const getMaxOrderQty = (): number => {
     const maxWalletOrderAmmount =
-      parseFloat(coin?.availableToWithdraw || '0') / parseFloat(price?.lastPrice || '0');
+      parseFloat(coin.availableToWithdraw) / parseFloat(ticker.lastPrice);
     return maxWalletOrderAmmount || 0;
   };
 
   const {
     lotSizeFilter: { minOrderQty, qtyStep },
-  } = symbolInfo;
+  } = tickerInfo;
 
-  if (!wallet || !symbolInfo || !coin) {
-    return <></>;
-  }
 
   return (
     <div className="flex flex-col">
@@ -71,13 +70,13 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
         <div className="flex flex-col md:flex-row">
           <span>Equity:</span>
           <span className="w-full justify-end">
-            <b>{tradingService.formatCurrency(coin?.equity || '0')}</b> USDT
+            <b>{tradingService.formatCurrency(coin.equity)}</b> USDT
           </span>
         </div>
         <div className="flex flex-col md:flex-row">
           <span>Available Balance:</span>
           <span>
-            <b>{tradingService.formatCurrency(coin?.availableToWithdraw || '0')}</b> USDT
+            <b>{tradingService.formatCurrency(coin.availableToWithdraw)}</b> USDT
           </span>
         </div>
       </div>
