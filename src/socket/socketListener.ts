@@ -40,7 +40,6 @@ export const SocketListener: React.FC = () => {
 
   useEffect(() => {
     return () => {
-      console.log('------- component unmoun? - socketListener');
       socket.closeAll();
     };
   }, []);

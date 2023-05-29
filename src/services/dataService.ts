@@ -1,6 +1,6 @@
 import { KlineIntervalV3, RestClientV5 } from 'bybit-api';
-import { CandlestickData } from 'lightweight-charts';
 import { mapKlineToCandleStickData } from '../mappers';
+import { CandlestickDataWithVolume } from '../types';
 
 interface IKlineProps {
   symbol: string;
@@ -8,7 +8,7 @@ interface IKlineProps {
   interval: KlineIntervalV3;
 }
 export interface IDataService {
-  getKline: (props: IKlineProps) => Promise<CandlestickData[]>;
+  getKline: (props: IKlineProps) => Promise<CandlestickDataWithVolume[]>;
 }
 
 export const DataService = (apiClient: RestClientV5): IDataService => {

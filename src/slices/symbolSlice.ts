@@ -1,8 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { LinearInverseInstrumentInfoV5, WalletBalanceV5, ExecutionV5 } from 'bybit-api';
-import { CandlestickData } from 'lightweight-charts';
 import { OrderBooksStore } from 'orderbooks';
-import { ITicker, IOrder, IPosition } from '../types';
+import { ITicker, IOrder, IPosition, CandlestickDataWithVolume } from '../types';
 import { RootState } from '../store';
 
 interface ISymbolState {
@@ -15,8 +14,8 @@ interface ISymbolState {
   positions: IPosition[];
   executions: ExecutionV5[];
   orderbook: OrderBooksStore | undefined;
-  kline: CandlestickData | undefined;
-  klineData: CandlestickData[];
+  kline: CandlestickDataWithVolume | undefined;
+  klineData: CandlestickDataWithVolume[];
 }
 
 const initialState: ISymbolState = {
@@ -57,13 +56,13 @@ const symbolSlice = createSlice({
     updateTickerInfo(state, action: PayloadAction<LinearInverseInstrumentInfoV5>) {
       state.tickerInfo = { ...action.payload };
     },
-    updateKline(state, action: PayloadAction<CandlestickData[]>) {
+    updateKline(state, action: PayloadAction<CandlestickDataWithVolume[]>) {
       state.klineData = [...action.payload];
     },
-    updateLastKline(state, action: PayloadAction<CandlestickData>) {
+    updateLastKline(state, action: PayloadAction<CandlestickDataWithVolume>) {
       state.kline = { ...action.payload };
     },
-    closeLastKline(state, action: PayloadAction<CandlestickData>) {
+    closeLastKline(state, action: PayloadAction<CandlestickDataWithVolume>) {
       if (!state.klineData.length) {
         state.klineData = [action.payload];
       } else if (state.klineData[state.klineData.length - 1].time === action.payload.time) {
