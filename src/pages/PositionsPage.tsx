@@ -108,7 +108,6 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
             });
         });
 
-      console.log('positions', positions);
     }
   }, [symbol, interval]);
 
