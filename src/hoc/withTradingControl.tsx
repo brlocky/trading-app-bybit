@@ -49,9 +49,9 @@ function withTradingControl<P extends WithTradingControlProps>(
     const dispatch = useDispatch<AppDispatch>();
 
     const apiClient = useApi(); // Use the useApi hook to access the API context
-    // useEffect(() => {
-    //   reloadTradingInfo();
-    // }, []);
+    useEffect(() => {
+      reloadTradingInfo();
+    }, [tickerInfo]);
 
     useEffect(() => {
       let workingAmendOrder = false;
@@ -136,21 +136,14 @@ function withTradingControl<P extends WithTradingControlProps>(
         coin: 'USDT',
       });
 
-      const tickerInfoPromise = apiClient.getInstrumentsInfo({
-        category: 'linear',
-        symbol: symbol,
-      });
-
-      Promise.all([activeOrdersPromise, positionInfoPromise, walletInfoPromise, tickerInfoPromise]).then(
-        ([orderInfo, positionInfo, walletInfo, tickerInfo]) => {
-
-          // dispatch(updateOrders(orderInfo.result.list));
-          // dispatch(updatePositions(positionInfo.result.list.map(mapApiToWsPositionV5Response)));
-          // const usdtWallet = walletInfo.result.list[0];
-          // if (usdtWallet) {
-          //   dispatch(updateWallet(usdtWallet));
-          // }
-          dispatch(updateTickerInfo(tickerInfo.result.list[0] as LinearInverseInstrumentInfoV5));
+      Promise.all([activeOrdersPromise, positionInfoPromise, walletInfoPromise]).then(
+        ([orderInfo, positionInfo, walletInfo]) => {
+          dispatch(updateOrders(orderInfo.result.list));
+          dispatch(updatePositions(positionInfo.result.list.map(mapApiToWsPositionV5Response)));
+          const usdtWallet = walletInfo.result.list[0];
+          if (usdtWallet) {
+            dispatch(updateWallet(usdtWallet));
+          }
         },
       );
     };

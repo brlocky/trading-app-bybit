@@ -89,7 +89,6 @@ export const SymbolSelector: React.FunctionComponent = () => {
                   onClick={() => setSymbol(t.symbol)}
                   href="#"
                   key={index}
-                  className={selectedSymbol === t.symbol ? 'bg-red-300' : ''}
                 >
                   <span>{t.symbol}</span>
                   <span>{(Number(t.price24hPcnt)*100).toFixed(2)}%</span>

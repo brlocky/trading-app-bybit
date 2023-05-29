@@ -107,6 +107,8 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
               dispatch(updateKline(r));
             });
         });
+
+      console.log('positions', positions);
     }
   }, [symbol, interval]);
 
@@ -117,16 +119,6 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
         <IntervalSelector />
       </TopComponent>
       <PositionPageComponent>
-        {/* <CardSymbol
-        tradingService={tradingService}
-        symbolInfo={tickerInfo}
-        wallet={wallet}
-        price={ticker}
-        positionSizeUpdated={(s) => setPositionSize(s)}
-        longTrade={() => openMarketLongTrade(positionSize.toString())}
-        shortTrade={() => openMarketShortTrade(positionSize.toString())}
-        closeAll={closeAllOrders}
-      /> */}
         {!tickerInfo ? (
           <>loading tickerInfo ?</>
         ) : (
@@ -152,6 +144,16 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
             <PositionPageContent>
               <Chart />
               <div className="grid gap-4 ">
+                <CardSymbol
+                  tradingService={tradingService}
+                  symbolInfo={tickerInfo}
+                  wallet={wallet}
+                  price={ticker}
+                  positionSizeUpdated={(s) => setPositionSize(s)}
+                  longTrade={() => openMarketLongTrade(positionSize.toString())}
+                  shortTrade={() => openMarketShortTrade(positionSize.toString())}
+                  closeAll={closeAllOrders}
+                />
                 <CardPositions tradingService={tradingService} positions={positions} tickerInfo={ticker} />
                 <CardOrders positions={positions} orders={orders} cancelOrder={cancelOrder} toggleChase={toggleChase} />
               </div>
