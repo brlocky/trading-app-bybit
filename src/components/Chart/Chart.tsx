@@ -45,6 +45,24 @@ export const Chart: React.FC<Props> = (props) => {
   const kline = useSelector(selectLastKline);
   const tickerInfo = useSelector(selectTickerInfo);
 
+  function myClickHandler(param:any) {
+    if (!param.point) {
+      return;
+    }
+    const price = newSeries.current.coordinateToPrice(param.point.y).toFixed(tickerInfo?.priceScale);
+    // let time = param.time * 1000;
+    // time = Number.isNaN(time) ? '' : time;
+    // // console.log(time)
+    // dispatch(
+    //   setParamClick({
+    //     price: price,
+    //     time: time,
+    //   }),
+    // );
+
+    console.log(`Click at ${param.point.x}, ${param.point.y}. The time is ${param.time} ${price}.`);
+  }
+
   useEffect(() => {
     if (!tickerInfo) {
       return;
@@ -111,6 +129,8 @@ export const Chart: React.FC<Props> = (props) => {
       });
 
       chartInstanceRef.current.timeScale().fitContent();
+
+      chartInstanceRef.current.subscribeClick(myClickHandler);
 
       window.addEventListener('resize', handleResize);
     }
