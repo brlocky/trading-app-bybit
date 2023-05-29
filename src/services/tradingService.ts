@@ -1,4 +1,4 @@
-import { LinearPositionIdx, RestClientV5 } from 'bybit-api';
+import { LinearInverseInstrumentInfoV5, LinearPositionIdx, RestClientV5 } from 'bybit-api';
 import { IPosition } from '../types';
 
 export interface ITradingService {
@@ -15,7 +15,7 @@ export interface ITradingService {
 
   addStopLoss: (symbol: string, positionSide: LinearPositionIdx, price: string) => Promise<void>;
   closePosition: (position: IPosition, qty: string, price: string) => Promise<void>;
-  getDomNormalizedAggregatorValues: () => number[];
+  getDomNormalizedAggregatorValues: (tickInfo: LinearInverseInstrumentInfoV5) => string[];
   convertToNumber: (value: string) => number;
   formatCurrency: (value: string) => string;
   myFunction1: () => void;
@@ -24,10 +24,10 @@ export interface ITradingService {
 }
 
 export const TradingService = (apiClient: RestClientV5): ITradingService => {
-  const getDomNormalizedAggregatorValues = () => {
-    const tickerSize = 0.1;
+  const getDomNormalizedAggregatorValues = (tickInfo: LinearInverseInstrumentInfoV5):string[] => {
     const multipliers = [1, 2, 4, 10, 20, 50, 100];
-    return multipliers.map((m) => m * tickerSize);
+    const tickSizeValue = parseFloat(tickInfo.priceFilter.tickSize);
+    return multipliers.map((m) => (m * tickSizeValue).toFixed(Number(tickInfo.priceScale)));
   };
 
   const convertToNumber = (value: string): number => {

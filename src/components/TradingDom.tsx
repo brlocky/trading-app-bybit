@@ -6,7 +6,7 @@ import { LinearPositionIdx } from 'bybit-api';
 import Dropdown, { IDropdownOption } from './Forms/DropDown';
 import { ITradingService } from '../services';
 import { useSelector } from 'react-redux';
-import { selectSymbol } from '../slices/symbolSlice';
+import { selectOrderbook, selectSymbol, selectTickerInfo } from '../slices/symbolSlice';
 
 const BodyComponent = tw.div`
 flex
@@ -63,7 +63,6 @@ interface LadderRowProps {
 
 interface TradingDomProps {
   tradingService: ITradingService;
-  orderbook: OrderBooksStore | undefined;
   openLong: (price: number) => void;
   closeLong: (price: number) => void;
   openShort: (price: number) => void;
@@ -73,7 +72,6 @@ interface TradingDomProps {
 
 export const TradingDom = ({
   tradingService,
-  orderbook,
   openLong,
   closeLong,
   openShort,
@@ -83,8 +81,10 @@ TradingDomProps) => {
   const [selectedFilterIndex, setSelectedFilterIndex] = useState<number>(0);
 
   const symbol = useSelector(selectSymbol);
+  const tickerInfo = useSelector(selectTickerInfo);
+  const orderbook = useSelector(selectOrderbook);
 
-  if (!orderbook || !symbol) {
+  if (!orderbook || !symbol || !tickerInfo) {
     return <></>
   }
 
@@ -94,14 +94,18 @@ TradingDomProps) => {
   const bid = currentOrderBook.getBestBid() || 0;
 
   const updateTickValue = (option: IDropdownOption) => {
-    const selectedValue = parseFloat(option.value);
+    const selectedValue = option.value;
     const index = domAggregatorFilterValues.findIndex((v) => v === selectedValue);
     setSelectedFilterIndex(index);
   };
 
-  const domAggregatorFilterValues = tradingService.getDomNormalizedAggregatorValues();
+  const domAggregatorFilterValues = tradingService.getDomNormalizedAggregatorValues(tickerInfo);
 
   function generatePriceList(size: number, multiplier: number, price: number): string[] {
+    while (multiplier <= 5e-7) {
+      multiplier = multiplier * 2;
+    }
+
     const arr: string[] = [];
     const normalizedPrice = Math.round(price / multiplier) * multiplier; // normalize price
     let currPrice: number = normalizedPrice;
@@ -125,9 +129,9 @@ TradingDomProps) => {
 
   const selectedValueFilter = domAggregatorFilterValues[selectedFilterIndex];
 
-  const mapFilterValueToDropDownOption = (value: number) => ({
-    value: value.toString(),
-    label: value.toString(),
+  const mapFilterValueToDropDownOption = (value: string) => ({
+    value: value,
+    label: value,
   });
 
   const ladderSize = 30;
@@ -138,7 +142,7 @@ TradingDomProps) => {
     <BodyComponent>
       <LadderComponent>
         {/* {currentOrderBook.book.map((row) => { */}
-        {generatePriceList(ladderSize, selectedValueFilter, ask).map((price, index) => {
+        {generatePriceList(ladderSize, Number(selectedValueFilter), ask).map((price, index) => {
           const priceAsNumber = parseFloat(price);
 
           if (ladderMiddle === index) {

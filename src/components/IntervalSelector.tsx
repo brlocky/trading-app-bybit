@@ -86,7 +86,6 @@ export const IntervalSelector: React.FunctionComponent = () => {
               onClick={() => setInterval(t.value)}
               href="#"
               key={index}
-              className={selectedInterval === t.value ? 'bg-red-300' : ''}
             >
               {t.label}
             </IntervalLine>

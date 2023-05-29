@@ -49,9 +49,9 @@ function withTradingControl<P extends WithTradingControlProps>(
     const dispatch = useDispatch<AppDispatch>();
 
     const apiClient = useApi(); // Use the useApi hook to access the API context
-    useEffect(() => {
-      reloadTradingInfo();
-    }, []);
+    // useEffect(() => {
+    //   reloadTradingInfo();
+    // }, []);
 
     useEffect(() => {
       let workingAmendOrder = false;

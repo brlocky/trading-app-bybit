@@ -17,13 +17,15 @@ import {
   selectTickerInfo,
   selectWallet,
   updateKline,
+  updateTickerInfo,
 } from '../slices/symbolSlice';
-import { KlineIntervalV3 } from 'bybit-api';
+import { KlineIntervalV3, LinearInverseInstrumentInfoV5 } from 'bybit-api';
 import { AppDispatch } from '../store';
 import { SymbolSelector } from '../components/SymbolSelector';
 import { IntervalSelector } from '../components/IntervalSelector';
+import { useApi } from '../providers';
 
-const ContentWrapper= tw.div`
+const ContentWrapper = tw.div`
 flex
 flex-col
 w-full
@@ -84,24 +86,29 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
   const orderbook = useSelector(selectOrderbook);
 
   const dispatch = useDispatch<AppDispatch>();
+  const apiClient = useApi();
 
   useEffect(() => {
     if (symbol) {
-      dataService
-        .getKline({
-          symbol: symbol,
-          interval: interval as KlineIntervalV3,
+      apiClient
+        .getInstrumentsInfo({
           category: 'linear',
+          symbol: symbol,
         })
-        .then((r) => {
-          dispatch(updateKline(r));
+        .then((res) => {
+          dispatch(updateTickerInfo(res.result.list[0] as LinearInverseInstrumentInfoV5));
+          dataService
+            .getKline({
+              symbol: symbol,
+              interval: interval as KlineIntervalV3,
+              category: 'linear',
+            })
+            .then((r) => {
+              dispatch(updateKline(r));
+            });
         });
     }
   }, [symbol, interval]);
-
-  if (!tickerInfo) {
-    return <></>;
-  }
 
   return (
     <ContentWrapper>
@@ -120,33 +127,37 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
         shortTrade={() => openMarketShortTrade(positionSize.toString())}
         closeAll={closeAllOrders}
       /> */}
-
-        <LeftColumnComponent>
-          <TradingDom
-            tradingService={tradingService}
-            orderbook={orderbook}
-            // addStopLoss={addStopLoss}
-            openLong={(p) => {
-              openLongTrade(positionSize.toString(), p);
-            }}
-            openShort={(p) => {
-              openShortTrade(positionSize.toString(), p);
-            }}
-            closeLong={(p) => {
-              closeLongTrade(positionSize.toString(), p);
-            }}
-            closeShort={(p) => {
-              closeShortTrade(positionSize.toString(), p);
-            }}
-          />
-        </LeftColumnComponent>
-        <PositionPageContent>
-          <Chart />
-          <div className="grid gap-4 ">
-            <CardPositions tradingService={tradingService} positions={positions} tickerInfo={ticker} />
-            <CardOrders positions={positions} orders={orders} cancelOrder={cancelOrder} toggleChase={toggleChase} />
-          </div>
-        </PositionPageContent>
+        {!tickerInfo ? (
+          <>loading tickerInfo ?</>
+        ) : (
+          <>
+            <LeftColumnComponent>
+              <TradingDom
+                tradingService={tradingService}
+                // addStopLoss={addStopLoss}
+                openLong={(p) => {
+                  openLongTrade(positionSize.toString(), p);
+                }}
+                openShort={(p) => {
+                  openShortTrade(positionSize.toString(), p);
+                }}
+                closeLong={(p) => {
+                  closeLongTrade(positionSize.toString(), p);
+                }}
+                closeShort={(p) => {
+                  closeShortTrade(positionSize.toString(), p);
+                }}
+              />
+            </LeftColumnComponent>
+            <PositionPageContent>
+              <Chart />
+              <div className="grid gap-4 ">
+                <CardPositions tradingService={tradingService} positions={positions} tickerInfo={ticker} />
+                <CardOrders positions={positions} orders={orders} cancelOrder={cancelOrder} toggleChase={toggleChase} />
+              </div>
+            </PositionPageContent>
+          </>
+        )}
       </PositionPageComponent>
     </ContentWrapper>
   );

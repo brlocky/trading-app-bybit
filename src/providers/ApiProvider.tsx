@@ -8,15 +8,17 @@ interface IApiProviderProps {
   children: ReactNode;
   apiKey: string;
   apiSecret: string;
+  testnet?: boolean;
 }
+
 // Create the API provider component
-export const ApiProvider: React.FC<IApiProviderProps> = ({ children, apiKey, apiSecret }: IApiProviderProps) => {
+export const ApiProvider: React.FC<IApiProviderProps> = ({ children, apiKey, apiSecret, testnet }: IApiProviderProps) => {
   const [apiClient, setApiClient] = useState<RestClientV5 | null>(null);
 
   // Initialize the API client once
   if (!apiClient) {
     // Retrieve the API key and API secret from SettingsService
-    const client = new RestClientV5({ key: apiKey, secret: apiSecret });
+    const client = new RestClientV5({ key: apiKey, secret: apiSecret, testnet: testnet });
     setApiClient(client);
   }
 

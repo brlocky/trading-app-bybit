@@ -1,7 +1,7 @@
 import { OrderSideV5, WebsocketClient } from 'bybit-api';
 import OrderbookLevelV5, { LinearInverseInstrumentInfoV5 } from 'bybit-api/lib/types/response/v5-market';
 import { OrderBookLevel, OrderBookLevelState, OrderBooksStore } from 'orderbooks';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { mapKlineObjToCandleStickData } from '../mappers';
 import { IOrderbookResponse } from '../types';
@@ -9,6 +9,7 @@ import {
   closeLastKline,
   selectInterval,
   selectSymbol,
+  selectTickerInfo,
   updateExecutions,
   updateLastKline,
   updateOrder,
@@ -18,12 +19,7 @@ import {
   updateTickerInfo,
   updateWallet,
 } from '../slices/symbolSlice';
-import { useApi } from '../providers';
-
-interface SocketListenerProps {
-  apiKey: string;
-  apiSecret: string;
-}
+import { useSocket } from '../providers';
 
 interface ISocketUpdate<T> {
   topic: string;
@@ -32,75 +28,57 @@ interface ISocketUpdate<T> {
   data: T;
 }
 
-export const SocketListener: React.FC<SocketListenerProps> = ({ apiKey, apiSecret }) => {
-  const [socket, setSocket] = useState<WebsocketClient | undefined>(undefined);
-
+export const SocketListener: React.FC = () => {
   const symbol = useSelector(selectSymbol);
   const interval = useSelector(selectInterval);
+  const tickerInfo = useSelector(selectTickerInfo);
+  const dispatch = useDispatch();
+  const socket = useSocket();
+
+  const lastSymbolRef = useRef(symbol);
+  const lastIntervalRef = useRef(interval);
+
   useEffect(() => {
-    if (!apiKey || !apiSecret || !symbol) {
-      return;
-    }
-
-    console.log('Start socket listener', symbol);
-
-    initializeSocketAndListeners(symbol, interval);
-
-    // Clean up the socket connection on component unmount
     return () => {
-      if (socket) {
-        socket.closeAll();
-      }
+      console.log('------- component unmoun? - socketListener');
+      socket.closeAll();
     };
   }, []);
 
-  const apiClient = useApi();
-  const dispatch = useDispatch();
-
   useEffect(() => {
-    console.log('Symbol or Interval changed', symbol, interval, socket);
-    if (!socket || !symbol) {
+    if (!tickerInfo) {
       return;
     }
+    initializeSocketAndListeners();
+  }, [tickerInfo]);
 
-    console.log('Synbol interval changed xxxx');
-
-    apiClient
-      .getInstrumentsInfo({
-        category: 'linear',
-        symbol: symbol,
-      })
-      .then((tickerInfo) => {
-        dispatch(updateTickerInfo(tickerInfo.result.list[0] as LinearInverseInstrumentInfoV5));
-        initializeSocketAndListeners(symbol, interval);
-      });
-  }, [symbol, interval]);
-
-  const initializeSocketAndListeners = (symbol: string, interval: string) => {
-    console.log('initializeSocketAndListeners');
-    // Close current connection
-    if (socket) {
-      console.log('closing socket');
-      socket.closeAll();
+  useEffect(() => {
+    if (symbol !== lastSymbolRef.current) {
+      StopSubscriptions(lastSymbolRef.current as string, interval);
     }
+    lastSymbolRef.current = symbol;
+  }, [symbol]);
 
-    const newSocket = new WebsocketClient({
-      key: apiKey,
-      secret: apiSecret,
-      market: 'v5',
-    });
+  useEffect(() => {
+    if (interval !== lastIntervalRef.current && symbol) {
+      StopSubscriptions(symbol, lastIntervalRef.current as string);
+    }
+    lastIntervalRef.current = interval;
+  }, [interval]);
 
-    StartListeners(newSocket);
-    StartSubscriptions(newSocket, symbol, interval);
-
-    setSocket(newSocket);
-    return newSocket;
+  const initializeSocketAndListeners = () => {
+    StartListeners();
+    StartSubscriptions();
   };
 
-  const StartSubscriptions = (s: WebsocketClient, symbol: string, interval: string) => {
-    s.subscribeV5(['position', 'wallet', 'order', 'execution'], 'linear', true);
-    s.subscribeV5([`tickers.${symbol}`, `kline.${interval}.${symbol}`, `orderbook.50.${symbol}`], 'linear', false);
-    // s.subscribeV5([`tickers.${symbol}`, `kline.${interval}.${symbol}`], 'linear', false);
+  const StartSubscriptions = () => {
+    socket.subscribeV5(['position', 'wallet', 'order', 'execution'], 'linear', true);
+    socket.subscribeV5([`tickers.${symbol}`, `kline.${interval}.${symbol}`, `orderbook.50.${symbol}`], 'linear', false);
+  };
+
+  const StopSubscriptions = (s: string, i: string) => {
+    socket.unsubscribeV5(['position', 'wallet', 'order', 'execution'], 'linear', true);
+    socket.unsubscribeV5([`tickers.${s}`, `kline.${i}.${s}`, `orderbook.50.${s}`], 'linear', false);
   };
 
   const OrderBooks = new OrderBooksStore({ traceLog: false, checkTimestamps: false });
@@ -166,9 +144,9 @@ export const SocketListener: React.FC<SocketListenerProps> = ({ apiKey, apiSecre
     return OrderBookLevel(symbol, +level.price, side, parseFloat(level.size));
   }
 
-  const StartListeners = (s: WebsocketClient) => {
+  const StartListeners = () => {
     /** Messages */
-    s.on('update', (socketUpdate) => {
+    socket.on('update', (socketUpdate) => {
       const { topic, data } = socketUpdate;
 
       if (topic.startsWith('tickers')) {

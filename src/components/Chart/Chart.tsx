@@ -35,6 +35,10 @@ export const Chart: React.FC<Props> = (props) => {
   const tickerInfo = useSelector(selectTickerInfo);
 
   useEffect(() => {
+    if (!tickerInfo) {
+      return;
+    }
+
     const handleResize = () => {
       if (chartInstanceRef.current) {
         chartInstanceRef.current.applyOptions({
@@ -50,7 +54,7 @@ export const Chart: React.FC<Props> = (props) => {
           ticksVisible: true,
         },
         localization: {
-          priceFormatter: (p: number) => `${p.toFixed(5).padEnd(10)}`,
+          priceFormatter: (p: number) => `${p.toFixed(parseInt(tickerInfo.priceScale))}`,
         },
         layout: {
           background: { type: ColorType.Solid, color: backgroundColor },
@@ -73,8 +77,8 @@ export const Chart: React.FC<Props> = (props) => {
         bottomColor: areaBottomColor,
         priceFormat: {
           type: 'price',
-          precision: tickerInfo?.priceScale,
-          minMove: tickerInfo?.priceFilter.tickSize,
+          precision: tickerInfo.priceScale,
+          minMove: tickerInfo.priceFilter.tickSize,
         },
       });
 
@@ -87,7 +91,7 @@ export const Chart: React.FC<Props> = (props) => {
         chartInstanceRef.current.remove();
       }
     };
-  }, [interval, symbol, backgroundColor, lineColor, textColor, areaTopColor, areaBottomColor]);
+  }, [tickerInfo, interval, symbol, backgroundColor, lineColor, textColor, areaTopColor, areaBottomColor]);
 
   useEffect(() => {
     if (newSeries.current && klineData) {

@@ -11,7 +11,7 @@ absolute left-0 right-0 mt-2 w-40 divide-y divide-gray-200 rounded-md border bor
 `;
 
 const SymbolLine = tw.a`
-block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100
+flex flex-col px-4 py-2 text-sm text-gray-700 hover:bg-gray-100
 `;
 
 const SymbolAction = tw.button`
@@ -26,7 +26,9 @@ export const SymbolSelector: React.FunctionComponent = () => {
 
   useEffect(() => {
     apiClient.getTickers({ category: 'linear' }).then((t) => {
-      const sorted = t.result.list.sort((a, b) => a.symbol.localeCompare(b.symbol));
+      // const sorted = t.result.list.sort((a, b) => a.symbol.localeCompare(b.symbol));
+      // const sorted = t.result.list.sort((a, b) => Number(Number(b.volume24h)/Number(b.lastPrice)) - Number(Number(a.volume24h)/Number(a.lastPrice)));
+      const sorted = t.result.list.sort((a, b) => Number((b as TickerLinearInverseV5).price24hPcnt) - Number((a as TickerLinearInverseV5).price24hPcnt));
       setTickers(sorted as TickerLinearInverseV5[]);
     });
   }, []);
@@ -89,7 +91,9 @@ export const SymbolSelector: React.FunctionComponent = () => {
                   key={index}
                   className={selectedSymbol === t.symbol ? 'bg-red-300' : ''}
                 >
-                  {t.symbol}
+                  <span>{t.symbol}</span>
+                  <span>{(Number(t.price24hPcnt)*100).toFixed(2)}%</span>
+                  <span>{(Number(t.volume24h) / 1000000).toLocaleString(undefined, { maximumFractionDigits: 2 })}M</span>
                 </SymbolLine>
               ))}
           </SymbolCol>

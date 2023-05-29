@@ -6,7 +6,7 @@ import App from './App';
 
 import './index.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import { ApiProvider } from './providers';
+import { ApiProvider, SocketProvider } from './providers';
 import { Provider } from 'react-redux';
 import { persistor, store } from './store';
 import { SettingsService } from './services';
@@ -22,9 +22,11 @@ root.render(
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
           <ApiProvider apiKey={apiKey} apiSecret={apiSecret}>
-            <SocketListener apiKey={apiKey} apiSecret={apiSecret} />
             <App />
           </ApiProvider>
+          <SocketProvider socketKey={apiKey} socketSecret={apiSecret}>
+            <SocketListener />
+          </SocketProvider>
         </PersistGate>
       </Provider>
     </HashRouter>
