@@ -1,6 +1,6 @@
 import React, { ComponentType, useEffect } from 'react';
 import { useApi } from '../providers';
-import { LinearInverseInstrumentInfoV5, LinearPositionIdx } from 'bybit-api';
+import { LinearPositionIdx } from 'bybit-api';
 import { mapApiToWsPositionV5Response } from '../mappers';
 import { IOrder, IPosition } from '../types';
 import { isOrderStopLossOrTakeProfit } from '../utils/tradeUtils';
@@ -11,7 +11,6 @@ import {
   selectOrders,
   selectTicker,
   selectTickerInfo,
-  updateTickerInfo,
   updateOrder,
   updatePositions,
   updateWallet,

@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { OrderBooksStore } from 'orderbooks';
 import tw from 'twin.macro';
 import styled from 'styled-components';
 import { LinearPositionIdx } from 'bybit-api';
@@ -91,7 +90,7 @@ TradingDomProps) => {
   const currentOrderBook = orderbook.getBook(symbol);
 
   const ask = currentOrderBook.getBestAsk() || 0;
-  const bid = currentOrderBook.getBestBid() || 0;
+  // const bid = currentOrderBook.getBestBid() || 0;
 
   const updateTickValue = (option: IDropdownOption) => {
     const selectedValue = option.value;
