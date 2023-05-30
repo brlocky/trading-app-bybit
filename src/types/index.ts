@@ -5,7 +5,7 @@ import {
   TickerLinearInverseV5,
   TradeModeV5,
 } from 'bybit-api';
-import { CandlestickData } from 'lightweight-charts';
+import { CandlestickData } from '@felipecsl/lightweight-charts';
 
 export interface IWsConfig {
   key: string;
@@ -62,3 +62,10 @@ export interface IOrderbookResponse {
 }
 
 export type CandlestickDataWithVolume = CandlestickData & { volume: number };
+
+
+export interface ITarget {
+  ticks: number,
+  price: number,
+  qty: number,
+}

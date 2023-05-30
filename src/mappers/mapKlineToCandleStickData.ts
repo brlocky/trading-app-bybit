@@ -1,4 +1,4 @@
-import { UTCTimestamp } from 'lightweight-charts';
+import { UTCTimestamp } from '@felipecsl/lightweight-charts';
 import { CandlestickDataWithVolume } from '../types';
 
 

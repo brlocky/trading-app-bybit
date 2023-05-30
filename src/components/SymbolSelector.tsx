@@ -28,7 +28,9 @@ export const SymbolSelector: React.FunctionComponent = () => {
     apiClient.getTickers({ category: 'linear' }).then((t) => {
       // const sorted = t.result.list.sort((a, b) => a.symbol.localeCompare(b.symbol));
       // const sorted = t.result.list.sort((a, b) => Number(Number(b.volume24h)/Number(b.lastPrice)) - Number(Number(a.volume24h)/Number(a.lastPrice)));
-      const sorted = t.result.list.sort((a, b) => Number((b as TickerLinearInverseV5).price24hPcnt) - Number((a as TickerLinearInverseV5).price24hPcnt));
+      const sorted = t.result.list.sort(
+        (a, b) => Number((b as TickerLinearInverseV5).price24hPcnt) - Number((a as TickerLinearInverseV5).price24hPcnt),
+      );
       setTickers(sorted as TickerLinearInverseV5[]);
     });
   }, []);
@@ -41,7 +43,10 @@ export const SymbolSelector: React.FunctionComponent = () => {
   const selectedSymbol = useSelector(selectSymbol);
   const dispatch = useDispatch();
   const setSymbol = (s: string) => {
-    dispatch(updateSymbol(s));
+    if (s !== selectedSymbol) {
+      dispatch(updateSymbol(s));
+    }
+
     setIsDropdownOpen(false);
   };
 
@@ -85,13 +90,9 @@ export const SymbolSelector: React.FunctionComponent = () => {
             {tickers
               .filter((ticker) => ticker.symbol.toUpperCase().includes(filterValue.toUpperCase()))
               .map((t, index) => (
-                <SymbolLine
-                  onClick={() => setSymbol(t.symbol)}
-                  href="#"
-                  key={index}
-                >
+                <SymbolLine onClick={() => setSymbol(t.symbol)} href="#" key={index}>
                   <span>{t.symbol}</span>
-                  <span>{(Number(t.price24hPcnt)*100).toFixed(2)}%</span>
+                  <span>{(Number(t.price24hPcnt) * 100).toFixed(2)}%</span>
                   <span>{(Number(t.volume24h) / 1000000).toLocaleString(undefined, { maximumFractionDigits: 2 })}M</span>
                 </SymbolLine>
               ))}

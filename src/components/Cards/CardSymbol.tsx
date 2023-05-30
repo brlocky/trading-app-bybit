@@ -4,82 +4,158 @@ import SlidePicker from '../Forms/SlidePicker';
 import { ITicker } from '../../types';
 import Button from '../Button/Button';
 import { ITradingService } from '../../services';
-import { useSelector } from 'react-redux';
-import { selectTicker, selectTickerInfo, selectWallet } from '../../slices/symbolSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { Input, NumericInput } from '../Forms';
+import tw from 'twin.macro';
+import {
+  selectTickerInfo,
+  selectWallet,
+  selectTicker,
+  selectTakeProfits,
+  selectStopLosses,
+  updateTakeProfit,
+  updateStopLoss,
+  selectPositionSize,
+  updatePositionSize,
+} from '../../slices';
+
+const Row = tw.div`inline-flex w-full justify-between pb-3`;
+const Col = tw.div`flex flex-col md:flex-row items-center gap-x-5`;
 
 interface ICardSymbolProps {
   tradingService: ITradingService;
-  positionSizeUpdated: (size: number) => void;
   longTrade: () => void;
   shortTrade: () => void;
   closeAll: () => void;
 }
 
-const symbolTick = '---- WIPBTCUSDT';
-
 const CardSymbol: React.FC<ICardSymbolProps> = ({
   tradingService,
-  positionSizeUpdated,
   longTrade,
   shortTrade,
   closeAll,
 }: ICardSymbolProps) => {
-  const [positionSize, setPositionSize] = useState<number>(0);
 
+  const dispatch = useDispatch();
+  const tickerInfo = useSelector(selectTickerInfo);
+  const wallet = useSelector(selectWallet);
+  const ticker = useSelector(selectTicker);
+  const takeProfits = useSelector(selectTakeProfits);
+  const stopLosses = useSelector(selectStopLosses);
+  const positionSize = useSelector(selectPositionSize);
 
-  const tickerInfo = useSelector(selectTickerInfo)
-  const wallet = useSelector(selectWallet)
-  const ticker = useSelector(selectTicker)
-
-  if (!wallet || !tickerInfo || !ticker) {
-    return <></>
+  if (!wallet || !tickerInfo || !ticker || !takeProfits || !stopLosses) {
+    return <></>;
   }
+
+
+//   //send data to chart tab
+//   useEffect(() => {
+//     var limitPriceEmpty = (limitPrice === '' || stopLoss === '' || takeProfit === '')
+//     var marketOrderEmpty = (stopLoss === '' || takeProfit === '')
+
+//     if (limitPriceEmpty && orderType === 'limitOrder') {
+//         dispatch(setCalcInfo(null));
+//         return;
+//     } else if (marketOrderEmpty && orderType === 'marketOrder') {
+//         dispatch(setCalcInfo(null));
+//         return;
+//     }
+//     if (orderType === 'marketOrder') {
+
+//         dispatch(setCalcInfo({
+//             orderType: orderType,
+//             stopLoss: stopLoss,
+//             takeProfit: takeProfit,
+//             price: null,
+//             positionType: positionType,
+//             checkBox: false,
+
+//         }))
+//     } else if (orderType === 'limitOrder') {
+
+
+//         dispatch(setCalcInfo({
+//             orderType: orderType,
+//             takeProfit: takeProfit,
+//             stopLoss: stopLoss,
+//             price: limitPrice,
+//             positionType: positionType,
+//             checkBox: checkBox,
+//         })
+
+//         )
+//     }
+// }, [stopLoss, takeProfit, limitPrice, positionType, orderType, paramChartClicked, checkBox])
+
 
   const coin = wallet.coin[0];
   // useEffect(() => {
   //   if (!symbolInfo) {
   //     return
   //   }
-    
+
   //   setCoin(wallet.coin[0]);
   //   const minOrderQty = tradingService.convertToNumber(symbolInfo.lotSizeFilter.minOrderQty);
   //   setPositionSize(minOrderQty);
   // }, [symbolInfo]);
 
-
   const orderQtyChanged = (value: number) => {
-    setPositionSize(value);
-    positionSizeUpdated(value);
+    dispatch(updatePositionSize(value))
   };
 
   const getMaxOrderQty = (): number => {
-    const maxWalletOrderAmmount =
-      parseFloat(coin.availableToWithdraw) / parseFloat(ticker.lastPrice);
+    const maxWalletOrderAmmount = parseFloat(coin.availableToWithdraw) / parseFloat(ticker.lastPrice);
     return maxWalletOrderAmmount || 0;
+  };
+
+  const takeProfit1 = { ...takeProfits[0] };
+  const stopLoss1 = { ...stopLosses[0] };
+  const updateTakeProfitHandler = (v: number) => {
+    takeProfit1.ticks = v;
+    dispatch(updateTakeProfit([takeProfit1]));
+  };
+
+  const updateStopLossHandler = (v: number) => {
+    stopLoss1.ticks = v;
+    dispatch(updateStopLoss([stopLoss1]));
   };
 
   const {
     lotSizeFilter: { minOrderQty, qtyStep },
   } = tickerInfo;
 
-
   return (
     <div className="flex flex-col">
-      <h1>{symbolTick}</h1>
-      <div className="inline-flex w-full justify-between pb-3">
-        <div className="flex flex-col md:flex-row">
+      <Row>
+        <Col>
           <span>Equity:</span>
           <span className="w-full justify-end">
             <b>{tradingService.formatCurrency(coin.equity)}</b> USDT
           </span>
-        </div>
-        <div className="flex flex-col md:flex-row">
+        </Col>
+        <Col>
           <span>Available Balance:</span>
           <span>
             <b>{tradingService.formatCurrency(coin.availableToWithdraw)}</b> USDT
           </span>
-        </div>
-      </div>
+        </Col>
+      </Row>
+      <Row>
+        <Col>
+          <span>TP</span>
+          <span>
+            <NumericInput value={takeProfit1.ticks} onChange={updateTakeProfitHandler} />
+          </span>
+        </Col>
+        <Col>
+          <span>SL</span>
+          <span>
+            <NumericInput value={stopLoss1.ticks} onChange={updateStopLossHandler} />
+          </span>
+        </Col>
+      </Row>
+
       <SlidePicker
         showValue
         min={tradingService.convertToNumber(minOrderQty)}

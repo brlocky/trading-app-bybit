@@ -2,21 +2,33 @@ import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import { configureStore } from '@reduxjs/toolkit';
 import { symbolReducer } from '../slices/symbolSlice';
+import { tradeSetupReducer } from '../slices/tradeSetupSlice';
 
-// Persist configuration
-const persistConfig = {
-  key: 'root',
-  storage,
-  whitelist: ['symbol', 'interval'], // Specify the slices to persist
-};
+// Create the persisted Symbol reducer
+const persistedSymbolReducer = persistReducer(
+  {
+    key: 'root',
+    storage,
+    whitelist: ['symbol', 'interval'], // Specify the slices to persist
+  },
+  symbolReducer,
+);
 
-// Create the persisted reducer
-const persistedReducer = persistReducer(persistConfig, symbolReducer);
+// Create the persisted TradeSetup reducer
+const persistedTradeReducer = persistReducer(
+  {
+    key: 'tradeSetup',
+    storage,
+    whitelist: ['positionSize', 'takeProfits', 'stopLosses'], // Specify the slices to persist
+  },
+  tradeSetupReducer,
+);
 
 // Configure the store with the persisted reducer
 export const store = configureStore({
   reducer: {
-    symbol: persistedReducer,
+    symbol: persistedSymbolReducer,
+    tradeSetup: persistedTradeReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

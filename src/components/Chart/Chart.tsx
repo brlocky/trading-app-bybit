@@ -1,4 +1,4 @@
-import { createChart, ColorType, CrosshairMode, LineStyle } from 'lightweight-charts';
+import { createChart, ColorType, CrosshairMode } from '@felipecsl/lightweight-charts';
 import React, { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import {
@@ -7,8 +7,11 @@ import {
   selectLastKline,
   selectPositions,
   selectSymbol,
+  selectTicker,
   selectTickerInfo,
 } from '../../slices/symbolSlice';
+import { selectPositionSize, selectStopLosses, selectTakeProfits } from '../../slices';
+import { calculateTargetPnL } from '../../utils/tradeUtils';
 
 interface Props {
   colors?: {
@@ -38,14 +41,24 @@ export const Chart: React.FC<Props> = (props) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartInstanceRef = useRef<any>(null);
 
-  const symbol = useSelector(selectSymbol);
-  const interval = useSelector(selectInterval);
+  const entryPriceLine = useRef<any>(null);
+  const stopLossPriceLine = useRef<any>(null);
+  const takeProfPriceLine = useRef<any>(null);
+
   const positions = useSelector(selectPositions);
   const klineData = useSelector(selectKlineData);
   const kline = useSelector(selectLastKline);
+  const ticker = useSelector(selectTicker);
   const tickerInfo = useSelector(selectTickerInfo);
+  const positionSize = useSelector(selectPositionSize);
 
-  function myClickHandler(param:any) {
+  const takeProfits = useSelector(selectTakeProfits);
+  const stopLosses = useSelector(selectStopLosses);
+
+  const takeProfit1 = takeProfits[0];
+  const stopLoss1 = stopLosses[0];
+
+  function myClickHandler(param: any) {
     if (!param.point) {
       return;
     }
@@ -61,6 +74,15 @@ export const Chart: React.FC<Props> = (props) => {
     // );
 
     console.log(`Click at ${param.point.x}, ${param.point.y}. The time is ${param.time} ${price}.`);
+  }
+
+  function handler(params: any) {
+    const line = params.customPriceLine;
+    console.log(
+      `${line.options().title} dragged from ${params.fromPriceString} to ${chartInstanceRef.current
+        .priceScale('right')
+        .formatPrice(line.options().price)}`,
+    );
   }
 
   useEffect(() => {
@@ -132,6 +154,8 @@ export const Chart: React.FC<Props> = (props) => {
 
       chartInstanceRef.current.subscribeClick(myClickHandler);
 
+      chartInstanceRef.current.subscribeCustomPriceLineDragged(handler);
+
       window.addEventListener('resize', handleResize);
     }
 
@@ -144,12 +168,56 @@ export const Chart: React.FC<Props> = (props) => {
   }, [tickerInfo, backgroundColor, lineColor, textColor, areaTopColor, areaBottomColor]);
 
   useEffect(() => {
-    if (newSeries.current && klineData.length) {
+    if (newSeries.current) {
       newSeries.current.setData(JSON.parse(JSON.stringify(klineData)));
       const volumeData = klineData.map((d) => {
         return { time: d.time, value: d.volume, color: volumeColor };
       });
       newVolumeSeries.current.setData(volumeData);
+
+      if (stopLossPriceLine.current !== null) {
+        newSeries.current.removePriceLine(entryPriceLine.current);
+        entryPriceLine.current = null;
+
+        newSeries.current.removePriceLine(takeProfPriceLine.current);
+        takeProfPriceLine.current = null;
+
+        newSeries.current.removePriceLine(stopLossPriceLine.current);
+        stopLossPriceLine.current = null;
+      }
+      // newSeries.current.removePriceLine(stopLossPriceLine.current);
+      // stopLossPriceLine.current = null;
+
+      // const entryPrice = Number(ticker?.lastPrice);
+      // if (entryPrice && tickerInfo) {
+      //   newSeries.current.createPriceLine({
+      //     price: entryPrice + Number(tickerInfo.priceFilter.tickSize) * 50,
+      //     color: 'green',
+      //     lineWidth: 2,
+      //     lineStyle: LineStyle.Dotted,
+      //     title: 'TP',
+      //     draggable: true,
+      //   });
+
+      //   console.log(ticker?.lastPrice);
+      //   newSeries.current.createPriceLine({
+      //     price: entryPrice,
+      //     color: 'rgba(53, 162, 74, 1)',
+      //     lineWidth: 2,
+      //     lineStyle: LineStyle.Dotted,
+      //     title: 'Entry',
+      //     draggable: true,
+      //   });
+
+      //   newSeries.current.createPriceLine({
+      //     price: entryPrice - Number(tickerInfo.priceFilter.tickSize) * 10,
+      //     color: 'red',
+      //     lineWidth: 2,
+      //     lineStyle: LineStyle.Dotted,
+      //     title: 'SL',
+      //     draggable: true,
+      //   });
+      // }
 
       // positions.forEach((p) => {
       //   const myPriceLine = {
@@ -158,21 +226,109 @@ export const Chart: React.FC<Props> = (props) => {
       //     lineWidth: 2,
       //     lineStyle: 3, // LineStyle.Dashed
       //     axisLabelVisible: true,
-      //     title: 'Entry',
-      //     draggable: true,
+      //     title: 'Position',
       //   };
 
       //   newSeries.current.createPriceLine(myPriceLine);
       // });
+
+      // chartInstanceRef.current.timeScale().fitContent();
     }
   }, [klineData]);
 
   useEffect(() => {
     if (kline) {
-      newSeries.current.update(JSON.parse(JSON.stringify(kline)));
-      newVolumeSeries.current.update({ time: kline.time, value: kline.volume, color: volumeColor });
+      newSeries.current?.update(JSON.parse(JSON.stringify(kline)));
+      newVolumeSeries.current?.update({ time: kline.time, value: kline.volume, color: volumeColor });
+
+      updatePriceChart(kline.close);
     }
   }, [kline]);
+
+  useEffect(() => {
+    if (ticker) {
+      updatePriceChart(Number(ticker.lastPrice));
+    }
+  }, [takeProfits, stopLosses, ticker, positionSize]);
+
+  // useEffect(() => {
+  //   newSeries.current.removePriceLine(stopLossPrice.current)
+  //   stopLossPrice.current = null
+
+  // }, [kline]);
+
+  const updatePriceChart = (priceLocal: number) => {
+    const priceLines = entryPriceLine.current === null && stopLossPriceLine.current === null && takeProfPriceLine.current === null;
+
+    // if price line exists
+    if (priceLines) {
+      // create price lines (current price) - subject to change
+      entryPriceLine.current = newSeries.current.createPriceLine({
+        title: 'entry @',
+        color: '#b0c4de',
+        lineWidth: 1,
+        lineStyle: null,
+        axisLabelVisible: true,
+        lineVisible: true,
+        draggable: true,
+      });
+
+      // create stop loss price
+      stopLossPriceLine.current = newSeries.current.createPriceLine({
+        title: 'StopLoss @',
+        color: 'red',
+        lineWidth: 2,
+        lineStyle: null,
+        axisLabelVisible: true,
+        lineVisible: true,
+        draggable: true,
+      });
+
+      // create take profit
+      takeProfPriceLine.current = newSeries.current.createPriceLine({
+        title: 'TakeProfit @',
+        color: 'green',
+        lineWidth: 2,
+        lineStyle: null,
+        axisLabelVisible: true,
+        lineVisible: true,
+        draggable: true,
+      });
+    }
+
+    if (tickerInfo && ticker) {
+      const tickSize = Number(tickerInfo.priceFilter.tickSize);
+
+      const takeProfitUsd = priceLocal + tickSize * takeProfit1.ticks;
+      const stopLossUsd = priceLocal - tickSize * stopLoss1.ticks;
+
+      const pnLTakeProfit = calculateTargetPnL(takeProfit1, ticker, tickerInfo, positionSize);
+      const pnLStopLoss = calculateTargetPnL(stopLoss1, ticker, tickerInfo, positionSize);
+
+      entryPriceLine.current.applyOptions({
+        price: priceLocal,
+      });
+
+      takeProfPriceLine.current.applyOptions({
+        price: takeProfitUsd,
+        title: 'TakeProfit @' + pnLTakeProfit + '€',
+      });
+
+      stopLossPriceLine.current.applyOptions({
+        price: stopLossUsd,
+        title: 'StopLoss @' + pnLStopLoss + '€',
+      });
+    }
+
+    // dispatch to calculator tab
+    // dispatch(
+    //   setExtraInfo({
+    //     price: parseFloat(priceLocal).toFixed(2),
+    //     stopLoss: stopLossUsd.toFixed(2),
+    //     takeProfit: takeProfitUsd.toFixed(2),
+    //   }),
+    // );
+  };
 
   return <div ref={chartContainerRef}></div>;
 };

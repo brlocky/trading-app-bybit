@@ -24,6 +24,7 @@ import { AppDispatch } from '../store';
 import { SymbolSelector } from '../components/SymbolSelector';
 import { IntervalSelector } from '../components/IntervalSelector';
 import { useApi } from '../providers';
+import { selectPositionSize } from '../slices';
 
 const ContentWrapper = tw.div`
 flex
@@ -47,6 +48,7 @@ gap-x-2
 
 const LeftColumnComponent = tw.div`
 flex
+flex-col
 p-2
 col-span-3
 lg:col-span-1
@@ -74,7 +76,6 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
   cancelOrder,
   toggleChase,
 }) => {
-  const [positionSize, setPositionSize] = useState<number>(0.001);
 
   const symbol = useSelector(selectSymbol);
   const interval = useSelector(selectInterval);
@@ -84,7 +85,8 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
   const tickerInfo = useSelector(selectTickerInfo);
   const wallet = useSelector(selectWallet);
   const orderbook = useSelector(selectOrderbook);
-
+  const positionSize = useSelector(selectPositionSize);
+  
   const dispatch = useDispatch<AppDispatch>();
   const apiClient = useApi();
 
@@ -107,22 +109,23 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
               dispatch(updateKline(r));
             });
         });
-
     }
   }, [symbol, interval]);
 
   return (
     <ContentWrapper>
-      <TopComponent>
-        <SymbolSelector />
-        <IntervalSelector />
-      </TopComponent>
       <PositionPageComponent>
         {!tickerInfo ? (
           <>loading tickerInfo ?</>
         ) : (
           <>
             <LeftColumnComponent>
+              <CardSymbol
+                tradingService={tradingService}
+                longTrade={() => openMarketLongTrade(positionSize.toString())}
+                shortTrade={() => openMarketShortTrade(positionSize.toString())}
+                closeAll={closeAllOrders}
+              />
               <TradingDom
                 tradingService={tradingService}
                 // addStopLoss={addStopLoss}
@@ -141,15 +144,12 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
               />
             </LeftColumnComponent>
             <PositionPageContent>
+              <TopComponent>
+                <SymbolSelector />
+                <IntervalSelector />
+              </TopComponent>
               <Chart />
               <div className="grid gap-4 ">
-                <CardSymbol
-                  tradingService={tradingService}
-                  positionSizeUpdated={(s) => setPositionSize(s)}
-                  longTrade={() => openMarketLongTrade(positionSize.toString())}
-                  shortTrade={() => openMarketShortTrade(positionSize.toString())}
-                  closeAll={closeAllOrders}
-                />
                 <CardPositions tradingService={tradingService} positions={positions} tickerInfo={ticker} />
                 <CardOrders positions={positions} orders={orders} cancelOrder={cancelOrder} toggleChase={toggleChase} />
               </div>

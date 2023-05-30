@@ -44,7 +44,6 @@ const intervals = [
   { label: '1 month', value: 'M' },
 ];
 
-
 export const IntervalSelector: React.FunctionComponent = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -55,7 +54,10 @@ export const IntervalSelector: React.FunctionComponent = () => {
   const selectedInterval = useSelector(selectInterval);
   const dispatch = useDispatch();
   const setInterval = (s: string) => {
-    dispatch(updateInterval(s));
+    if (s !== selectedInterval) {
+      dispatch(updateInterval(s));
+    }
+
     setIsDropdownOpen(false);
   };
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -82,11 +84,7 @@ export const IntervalSelector: React.FunctionComponent = () => {
       {isDropdownOpen && (
         <IntervalCol ref={dropdownRef}>
           {intervals.map((t, index) => (
-            <IntervalLine
-              onClick={() => setInterval(t.value)}
-              href="#"
-              key={index}
-            >
+            <IntervalLine onClick={() => setInterval(t.value)} href="#" key={index}>
               {t.label}
             </IntervalLine>
           ))}
