@@ -1,5 +1,6 @@
 {
   "name": "trading-app-bybit",
+  "homepage": "./",
   "version": "0.1.2",
   "private": true,
   "dependencies": {
