@@ -76,7 +76,6 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
   cancelOrder,
   toggleChase,
 }) => {
-
   const symbol = useSelector(selectSymbol);
   const interval = useSelector(selectInterval);
   const orders = useSelector(selectOrders);
@@ -86,7 +85,7 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
   const wallet = useSelector(selectWallet);
   const orderbook = useSelector(selectOrderbook);
   const positionSize = useSelector(selectPositionSize);
-  
+
   const dispatch = useDispatch<AppDispatch>();
   const apiClient = useApi();
 
@@ -115,47 +114,41 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
   return (
     <ContentWrapper>
       <PositionPageComponent>
-        {!tickerInfo ? (
-          <>loading tickerInfo ?</>
-        ) : (
-          <>
-            <LeftColumnComponent>
-              <CardSymbol
-                tradingService={tradingService}
-                longTrade={() => openMarketLongTrade(positionSize.toString())}
-                shortTrade={() => openMarketShortTrade(positionSize.toString())}
-                closeAll={closeAllOrders}
-              />
-              <TradingDom
-                tradingService={tradingService}
-                // addStopLoss={addStopLoss}
-                openLong={(p) => {
-                  openLongTrade(positionSize.toString(), p);
-                }}
-                openShort={(p) => {
-                  openShortTrade(positionSize.toString(), p);
-                }}
-                closeLong={(p) => {
-                  closeLongTrade(positionSize.toString(), p);
-                }}
-                closeShort={(p) => {
-                  closeShortTrade(positionSize.toString(), p);
-                }}
-              />
-            </LeftColumnComponent>
-            <PositionPageContent>
-              <TopComponent>
-                <SymbolSelector />
-                <IntervalSelector />
-              </TopComponent>
-              <Chart />
-              <div className="grid gap-4 ">
-                <CardPositions tradingService={tradingService} positions={positions} tickerInfo={ticker} />
-                <CardOrders positions={positions} orders={orders} cancelOrder={cancelOrder} toggleChase={toggleChase} />
-              </div>
-            </PositionPageContent>
-          </>
-        )}
+        <LeftColumnComponent>
+          <CardSymbol
+            tradingService={tradingService}
+            longTrade={() => openMarketLongTrade(positionSize.toString())}
+            shortTrade={() => openMarketShortTrade(positionSize.toString())}
+            closeAll={closeAllOrders}
+          />
+          <TradingDom
+            tradingService={tradingService}
+            // addStopLoss={addStopLoss}
+            openLong={(p) => {
+              openLongTrade(positionSize.toString(), p);
+            }}
+            openShort={(p) => {
+              openShortTrade(positionSize.toString(), p);
+            }}
+            closeLong={(p) => {
+              closeLongTrade(positionSize.toString(), p);
+            }}
+            closeShort={(p) => {
+              closeShortTrade(positionSize.toString(), p);
+            }}
+          />
+        </LeftColumnComponent>
+        <PositionPageContent>
+          <TopComponent>
+            <SymbolSelector />
+            <IntervalSelector />
+          </TopComponent>
+          <Chart />
+          <div className="grid gap-4 ">
+            <CardPositions tradingService={tradingService} positions={positions} tickerInfo={ticker} />
+            <CardOrders positions={positions} orders={orders} cancelOrder={cancelOrder} toggleChase={toggleChase} />
+          </div>
+        </PositionPageContent>
       </PositionPageComponent>
     </ContentWrapper>
   );

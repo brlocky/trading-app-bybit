@@ -45,8 +45,9 @@ const symbolSlice = createSlice({
     },
     updateInterval(state, action: PayloadAction<string>) {
       return {
-        ...initialState,
-        symbol: state.symbol,
+        ...state,
+        klineData: [],
+        kline: undefined,
         interval: action.payload,
       };
     },
