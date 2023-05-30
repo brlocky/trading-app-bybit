@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import CardPositions from '../components/Cards/CardPositions';
 import CardSymbol from '../components/Cards/CardSymbol';
 import CardOrders from '../components/Cards/CardOrders';
@@ -9,13 +9,10 @@ import { Chart } from '../components/Chart';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   selectInterval,
-  selectOrderbook,
   selectOrders,
   selectPositions,
   selectSymbol,
   selectTicker,
-  selectTickerInfo,
-  selectWallet,
   updateKline,
   updateTickerInfo,
 } from '../slices/symbolSlice';
@@ -81,9 +78,6 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
   const orders = useSelector(selectOrders);
   const positions = useSelector(selectPositions);
   const ticker = useSelector(selectTicker);
-  const tickerInfo = useSelector(selectTickerInfo);
-  const wallet = useSelector(selectWallet);
-  const orderbook = useSelector(selectOrderbook);
   const positionSize = useSelector(selectPositionSize);
 
   const dispatch = useDispatch<AppDispatch>();

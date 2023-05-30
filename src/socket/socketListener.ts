@@ -1,7 +1,7 @@
-import { OrderSideV5, WebsocketClient } from 'bybit-api';
-import OrderbookLevelV5, { LinearInverseInstrumentInfoV5 } from 'bybit-api/lib/types/response/v5-market';
+import { OrderSideV5 } from 'bybit-api';
+import OrderbookLevelV5 from 'bybit-api/lib/types/response/v5-market';
 import { OrderBookLevel, OrderBookLevelState, OrderBooksStore } from 'orderbooks';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { mapKlineObjToCandleStickData } from '../mappers';
 import { IOrderbookResponse } from '../types';
@@ -16,7 +16,6 @@ import {
   updateOrderbook,
   updatePositions,
   updateTicker,
-  updateTickerInfo,
   updateWallet,
 } from '../slices/symbolSlice';
 import { useSocket } from '../providers';

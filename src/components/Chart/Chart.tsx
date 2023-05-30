@@ -2,10 +2,8 @@ import { createChart, ColorType, CrosshairMode } from '@felipecsl/lightweight-ch
 import React, { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import {
-  selectInterval,
   selectKlineData,
   selectLastKline,
-  selectPositions,
   selectSymbol,
   selectTicker,
   selectTickerInfo,
@@ -46,8 +44,6 @@ export const Chart: React.FC<Props> = (props) => {
   const takeProfPriceLine = useRef<any>(null);
 
   const symbol = useSelector(selectSymbol);
-  const interval = useSelector(selectInterval);
-  const positions = useSelector(selectPositions);
   const klineData = useSelector(selectKlineData);
   const kline = useSelector(selectLastKline);
   const ticker = useSelector(selectTicker);

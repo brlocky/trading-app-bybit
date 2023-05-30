@@ -1,4 +1,4 @@
-import { LinearInverseInstrumentInfoV5, LinearPositionIdx, OrderSideV5 } from 'bybit-api';
+import { LinearInverseInstrumentInfoV5, LinearPositionIdx } from 'bybit-api';
 import { IOrder, IPosition, ITicker, ITarget } from '../types';
 
 export const calculateOrderPnL = (entryPrice: string, order: IOrder): string | null => {

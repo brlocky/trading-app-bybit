@@ -1,11 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { LinearInverseInstrumentInfoV5, WalletBalanceV5, WalletBalanceV5Coin } from 'bybit-api';
+import React from 'react';
 import SlidePicker from '../Forms/SlidePicker';
-import { ITicker } from '../../types';
 import Button from '../Button/Button';
 import { ITradingService } from '../../services';
 import { useDispatch, useSelector } from 'react-redux';
-import { Input, NumericInput } from '../Forms';
+import { NumericInput } from '../Forms';
 import tw from 'twin.macro';
 import {
   selectTickerInfo,
