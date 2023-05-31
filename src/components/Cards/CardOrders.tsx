@@ -14,7 +14,6 @@ interface ICardOrdersProps {
   orders: IOrder[];
   positions: IPosition[];
   cancelOrder: (o: IOrder) => void;
-  toggleChase: (o: IOrder) => void;
 }
 
 const OrdersContainer = tw.div`
@@ -41,7 +40,6 @@ export default function CardOrders({
   orders,
   positions,
   cancelOrder,
-  toggleChase,
 }: ICardOrdersProps) {
   const headers = ['Ticker', 'Type', 'Qty', 'Price', 'Profit', 'Actions'];
   const renderOrders = orders.map((o, index) => {
@@ -77,19 +75,6 @@ export default function CardOrders({
           )}
         </OrderPropContainer>
         <OrderPropContainer className="space-x-2 space-y-1 text-center">
-          {!isTrigger ? (
-            <Button
-              onClick={() => {
-                toggleChase(o);
-              }}
-            >
-              {o.chase ? (
-                <i className={'fas fa-running text-red-600'}></i>
-              ) : (
-                <i className={'fas fa-running text-green-600'}></i>
-              )}
-            </Button>
-          ) : null}
           <Button
             onClick={() => {
               cancelOrder(o);

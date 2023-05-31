@@ -44,15 +44,10 @@ p-2
 const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
   tradingService,
   dataService,
-  openLongTrade,
   openMarketLongTrade,
-  closeLongTrade,
-  openShortTrade,
   openMarketShortTrade,
-  closeShortTrade,
   closeAllOrders,
   cancelOrder,
-  toggleChase,
 }) => {
   const symbol = useSelector(selectSymbol);
   const interval = useSelector(selectInterval);
@@ -75,7 +70,7 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
           dispatch(updateTickerInfo(res.result.list[0] as LinearInverseInstrumentInfoV5));
         });
     }
-  }, [symbol, interval]);
+  }, [symbol]);
 
   return (
     <ContentWrapper>
@@ -101,7 +96,7 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
 
         <div className="grid gap-4 ">
           <CardPositions tradingService={tradingService} />
-          <CardOrders positions={positions} orders={orders} cancelOrder={cancelOrder} toggleChase={toggleChase} />
+          <CardOrders positions={positions} orders={orders} cancelOrder={cancelOrder} />
         </div>
       </PositionPageContent>
     </ContentWrapper>

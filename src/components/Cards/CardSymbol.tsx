@@ -3,7 +3,6 @@ import SlidePicker from '../Forms/SlidePicker';
 import Button from '../Button/Button';
 import { ITradingService } from '../../services';
 import { useDispatch, useSelector } from 'react-redux';
-import { NumericInput } from '../Forms';
 import tw from 'twin.macro';
 import {
   selectTickerInfo,
@@ -11,10 +10,9 @@ import {
   selectTicker,
   selectTakeProfits,
   selectStopLosses,
-  updateTakeProfit,
-  updateStopLoss,
   selectPositionSize,
   updatePositionSize,
+  selectLeverage,
 } from '../../slices';
 import { LeverageSelector, MarginModeSelector, PositionModeSelector } from '../Trade';
 
@@ -32,73 +30,25 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({ tradingService, longTrade, sho
   const dispatch = useDispatch();
   const tickerInfo = useSelector(selectTickerInfo);
   const wallet = useSelector(selectWallet);
+  const leverage = useSelector(selectLeverage);
   const ticker = useSelector(selectTicker);
   const takeProfits = useSelector(selectTakeProfits);
   const stopLosses = useSelector(selectStopLosses);
   const positionSize = useSelector(selectPositionSize);
 
-
-
   if (!wallet || !tickerInfo || !ticker || !takeProfits || !stopLosses) {
     return <></>;
   }
 
-  //   //send data to chart tab
-  //   useEffect(() => {
-  //     var limitPriceEmpty = (limitPrice === '' || stopLoss === '' || takeProfit === '')
-  //     var marketOrderEmpty = (stopLoss === '' || takeProfit === '')
-
-  //     if (limitPriceEmpty && orderType === 'limitOrder') {
-  //         dispatch(setCalcInfo(null));
-  //         return;
-  //     } else if (marketOrderEmpty && orderType === 'marketOrder') {
-  //         dispatch(setCalcInfo(null));
-  //         return;
-  //     }
-  //     if (orderType === 'marketOrder') {
-
-  //         dispatch(setCalcInfo({
-  //             orderType: orderType,
-  //             stopLoss: stopLoss,
-  //             takeProfit: takeProfit,
-  //             price: null,
-  //             positionType: positionType,
-  //             checkBox: false,
-
-  //         }))
-  //     } else if (orderType === 'limitOrder') {
-
-  //         dispatch(setCalcInfo({
-  //             orderType: orderType,
-  //             takeProfit: takeProfit,
-  //             stopLoss: stopLoss,
-  //             price: limitPrice,
-  //             positionType: positionType,
-  //             checkBox: checkBox,
-  //         })
-
-  //         )
-  //     }
-  // }, [stopLoss, takeProfit, limitPrice, positionType, orderType, paramChartClicked, checkBox])
-
   const coin = wallet.coin[0];
-  // useEffect(() => {
-  //   if (!symbolInfo) {
-  //     return
-  //   }
-
-  //   setCoin(wallet.coin[0]);
-  //   const minOrderQty = tradingService.convertToNumber(symbolInfo.lotSizeFilter.minOrderQty);
-  //   setPositionSize(minOrderQty);
-  // }, [symbolInfo]);
 
   const orderQtyChanged = (value: number) => {
     dispatch(updatePositionSize(value));
   };
 
   const getMaxOrderQty = (): number => {
-    const maxWalletOrderAmmount = parseFloat(coin.availableToWithdraw) / parseFloat(ticker.lastPrice);
-    return maxWalletOrderAmmount || 0;
+    const maxWalletOrderAmmount = parseFloat(coin.availableToWithdraw) / parseFloat(ticker.lastPrice) * leverage;
+    return Math.min(Number(tickerInfo.lotSizeFilter.maxOrderQty), maxWalletOrderAmmount || 0);
   };
   const {
     lotSizeFilter: { minOrderQty, qtyStep },
@@ -121,26 +71,21 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({ tradingService, longTrade, sho
         </Col>
       </Row>
 
-        <LeverageSelector />
-        <PositionModeSelector />
-        <MarginModeSelector />
+      <LeverageSelector />
+      <PositionModeSelector />
+      <MarginModeSelector />
 
       <Row>
-        <Col>
-        
-          
-        </Col>
-        <Col>
-       
-        </Col>
+        <Col></Col>
+        <Col></Col>
       </Row>
 
       <SlidePicker
         showValue
-        min={tradingService.convertToNumber(minOrderQty)}
+        min={Number(minOrderQty)}
         value={positionSize}
         max={getMaxOrderQty()}
-        step={tradingService.convertToNumber(qtyStep)}
+        step={Number(qtyStep)}
         onValueChanged={orderQtyChanged}
       />
 

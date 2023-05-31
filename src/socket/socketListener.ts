@@ -3,8 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { mapKlineObjToCandleStickData } from '../mappers';
 import { useSocket } from '../providers';
 import {
-  selectInterval,
-  selectSymbol,
   selectTickerInfo,
   updateExecutions,
   updateLastKline,
@@ -15,16 +13,16 @@ import {
 } from '../slices/symbolSlice';
 
 export const SocketListener: React.FC = () => {
-  const symbol = useSelector(selectSymbol);
-  const interval = useSelector(selectInterval);
   const tickerInfo = useSelector(selectTickerInfo);
   const dispatch = useDispatch();
   const socket = useSocket();
 
-  const lastSymbolRef = useRef(symbol);
-  const lastIntervalRef = useRef(interval);
+  const lastTickerInfoRef = useRef(tickerInfo);
 
   useEffect(() => {
+    // subsribe one time
+    StartListeners();
+    socket.subscribeV5(['position', 'wallet', 'order', 'execution'], 'linear', true);
     return () => {
       socket.closeAll();
     };
@@ -34,36 +32,20 @@ export const SocketListener: React.FC = () => {
     if (!tickerInfo) {
       return;
     }
-    initializeSocketAndListeners();
+    if (lastTickerInfoRef.current && tickerInfo !== lastTickerInfoRef.current) {
+      StopTickSubscriptions(lastTickerInfoRef.current.symbol);
+    }
+    lastTickerInfoRef.current = tickerInfo;
+
+    StartTickSubscriptions(tickerInfo.symbol);
   }, [tickerInfo]);
 
-  useEffect(() => {
-    if (symbol !== lastSymbolRef.current) {
-      StopSubscriptions(lastSymbolRef.current as string, interval);
-    }
-    lastSymbolRef.current = symbol;
-  }, [symbol]);
-
-  useEffect(() => {
-    if (interval !== lastIntervalRef.current && symbol) {
-      StopSubscriptions(symbol, lastIntervalRef.current as string);
-    }
-    lastIntervalRef.current = interval;
-  }, [interval]);
-
-  const initializeSocketAndListeners = () => {
-    StartListeners();
-    StartSubscriptions();
+  const StartTickSubscriptions = (s: string) => {
+    socket.subscribeV5([`tickers.${s}`, `kline.1.${s}`], 'linear', false);
   };
 
-  const StartSubscriptions = () => {
-    socket.subscribeV5(['position', 'wallet', 'order', 'execution'], 'linear', true);
-    socket.subscribeV5([`tickers.${symbol}`, `kline.${interval}.${symbol}`], 'linear', false);
-  };
-
-  const StopSubscriptions = (s: string, i: string) => {
-    socket.unsubscribeV5(['position', 'wallet', 'order', 'execution'], 'linear', true);
-    socket.unsubscribeV5([`tickers.${s}`, `kline.${i}.${s}`], 'linear', false);
+  const StopTickSubscriptions = (s: string) => {
+    socket.unsubscribeV5([`tickers.${s}`, `kline.1.${s}`], 'linear', false);
   };
 
   const StartListeners = () => {

@@ -1,8 +1,8 @@
 import React, { ComponentType, useEffect } from 'react';
 import { useApi } from '../providers';
-import { LinearPositionIdx } from 'bybit-api';
+import { LinearPositionIdx, OrderSideV5 } from 'bybit-api';
 import { mapApiToWsPositionV5Response } from '../mappers';
-import { IOrder, IPosition } from '../types';
+import { IOrder } from '../types';
 import { isOrderStopLossOrTakeProfit } from '../utils/tradeUtils';
 import { DataService, IDataService, ITradingService, TradingService } from '../services';
 import { useSelector, useDispatch } from 'react-redux';
@@ -18,24 +18,17 @@ import {
 } from '../slices/symbolSlice';
 import { AppDispatch } from '../store';
 import { toast } from 'react-toastify';
-import { selectStopLosses, selectTakeProfits } from '../slices';
+import { selectPositionMode, selectStopLosses, selectTakeProfits } from '../slices';
 
 const accountType = 'CONTRACT';
 
 export interface WithTradingControlProps {
   tradingService: ITradingService;
   dataService: IDataService;
-  openLongTrade: (positionSize: string, price?: number) => Promise<void>;
   openMarketLongTrade: (positionSize: string) => Promise<void>;
   openMarketShortTrade: (positionSize: string) => Promise<void>;
-  closeLongTrade: (positionSize: string, price?: number) => Promise<void>;
-  openShortTrade: (positionSize: string, price?: number) => Promise<void>;
-  closeShortTrade: (positionSize: string, price?: number) => Promise<void>;
   closeAllOrders: () => void;
-  closePosition: (position: IPosition, qty: string) => Promise<void>;
   cancelOrder: (order: IOrder) => Promise<void>;
-  toggleChase: (order: IOrder) => Promise<void>;
-  addStopLoss: (symbol: string, positionSide: LinearPositionIdx, price: number) => Promise<void>;
 }
 
 function withTradingControl<P extends WithTradingControlProps>(
@@ -48,6 +41,7 @@ function withTradingControl<P extends WithTradingControlProps>(
     const tickerInfo = useSelector(selectTickerInfo);
     const takeProfits = useSelector(selectTakeProfits);
     const stopLosses = useSelector(selectStopLosses);
+    const positionMode = useSelector(selectPositionMode);
 
     const dispatch = useDispatch<AppDispatch>();
 
@@ -104,44 +98,9 @@ function withTradingControl<P extends WithTradingControlProps>(
         });
     };
 
-    const toggleChase = async (order: IOrder) => {
-      dispatch(updateOrder({ ...order, chase: !order.chase }));
-    };
-
     const closeAllOrders = () => {
       orders.filter((o) => !isOrderStopLossOrTakeProfit(o)).map(cancelOrder);
       reloadTradingInfo();
-    };
-
-    const openLongTrade = async (positionSize: string, price?: number) => {
-      if (!ticker || !tickerInfo) {
-        return;
-      }
-      const nearPrice = price ? price : parseFloat(ticker.bid1Price);
-
-      const tp = takeProfits[0].price;
-      const sl = stopLosses[0].price;
-      apiClient
-        .submitOrder({
-          positionIdx: LinearPositionIdx.BuySide,
-          category: 'linear',
-          symbol: tickerInfo.symbol,
-          side: 'Buy',
-          orderType: 'Limit',
-          qty: positionSize,
-          price: nearPrice.toString(),
-          timeInForce: 'PostOnly',
-          takeProfit: tp.toFixed(Number(tickerInfo.priceScale)),
-          stopLoss: sl.toFixed(Number(tickerInfo.priceScale)),
-        })
-        .then((r) => {
-          if (r.retCode !== 0) {
-            toast.error(r.retMsg);
-          }
-        })
-        .finally(() => {
-          reloadTradingInfo();
-        });
     };
 
     const openMarketLongTrade = async (positionSize: string) => {
@@ -154,7 +113,7 @@ function withTradingControl<P extends WithTradingControlProps>(
       const nearPrice = parseFloat(ticker.ask1Price);
       apiClient
         .submitOrder({
-          positionIdx: LinearPositionIdx.OneWayMode,
+          positionIdx: getPositionMode('Buy'),
           category: 'linear',
           symbol: tickerInfo.symbol,
           side: 'Buy',
@@ -176,20 +135,25 @@ function withTradingControl<P extends WithTradingControlProps>(
     };
 
     const openMarketShortTrade = async (positionSize: string) => {
-      if (!ticker || !symbol) {
+      if (!ticker || !tickerInfo) {
         return;
       }
+
+      const tp = takeProfits[0].price;
+      const sl = stopLosses[0].price;
       const nearPrice = parseFloat(ticker.bid1Price);
       apiClient
         .submitOrder({
-          positionIdx: LinearPositionIdx.SellSide,
+          positionIdx: getPositionMode('Sell'),
           category: 'linear',
-          symbol: symbol,
+          symbol: tickerInfo.symbol,
           side: 'Sell',
           orderType: 'Market',
           qty: positionSize,
           price: nearPrice.toString(),
           timeInForce: 'GTC',
+          takeProfit: tp.toFixed(Number(tickerInfo.priceScale)),
+          stopLoss: sl.toFixed(Number(tickerInfo.priceScale)),
         })
         .then((r) => {
           if (r.retCode !== 0) {
@@ -201,132 +165,9 @@ function withTradingControl<P extends WithTradingControlProps>(
         });
     };
 
-    const closeLongTrade = async (qty: string, price?: number) => {
-      if (!ticker || !symbol) {
-        return;
-      }
-
-      const nearPrice = price ? price : parseFloat(ticker.ask1Price);
-      apiClient
-        .submitOrder({
-          positionIdx: LinearPositionIdx.BuySide,
-          category: 'linear',
-          symbol: symbol,
-          side: 'Sell',
-          orderType: 'Limit',
-          qty: qty,
-          price: nearPrice.toString(),
-          timeInForce: 'PostOnly',
-          reduceOnly: true,
-        })
-        .then((r) => {
-          if (r.retCode !== 0) {
-            toast.error(r.retMsg);
-          }
-        })
-        .finally(() => {
-          reloadTradingInfo();
-        });
-    };
-
-    const openShortTrade = async (positionSize: string, price?: number) => {
-      if (!ticker || !symbol) {
-        return;
-      }
-      const nearPrice = price ? price : ticker.ask1Price;
-      apiClient
-        .submitOrder({
-          positionIdx: LinearPositionIdx.SellSide,
-          category: 'linear',
-          symbol: symbol,
-          side: 'Sell',
-          orderType: 'Limit',
-          qty: positionSize,
-          price: nearPrice.toString(),
-          timeInForce: 'PostOnly',
-        })
-        .then((r) => {
-          if (r.retCode !== 0) {
-            toast.error(r.retMsg);
-          }
-        })
-        .finally(() => {
-          reloadTradingInfo();
-        });
-    };
-
-    const closeShortTrade = async (qty: string, price?: number) => {
-      if (!ticker || !symbol) {
-        return;
-      }
-
-      const nearPrice = price ? price : parseFloat(ticker.bid1Price);
-      apiClient
-        .submitOrder({
-          positionIdx: LinearPositionIdx.SellSide,
-          category: 'linear',
-          symbol: symbol,
-          side: 'Buy',
-          orderType: 'Limit',
-          qty: qty,
-          price: nearPrice.toString(),
-          timeInForce: 'PostOnly',
-          reduceOnly: true,
-        })
-        .then((r) => {
-          if (r.retCode !== 0) {
-            toast.error(r.retMsg);
-          }
-        })
-        .finally(() => {
-          reloadTradingInfo();
-        });
-    };
-
-    // const closePosition = async (position: IPosition, qty: string) => {
-    //   if (!ticker) {
-    //     return;
-    //   }
-
-    //   const nearPrice = position.positionIdx === LinearPositionIdx.BuySide ? ticker.ask1Price : ticker.bid1Price;
-    //   apiClient
-    //     .submitOrder({
-    //       positionIdx: position.positionIdx,
-    //       category: 'linear',
-    //       symbol: position.symbol,
-    //       side: position.positionIdx === LinearPositionIdx.BuySide ? 'Sell' : 'Buy',
-    //       orderType: 'Limit',
-    //       qty: qty,
-    //       price: nearPrice,
-    //       timeInForce: 'PostOnly',
-    //       reduceOnly: true,
-    //     })
-    //     .then((r) => {
-    //       if (r.retCode !== 0) {
-    //         toast.error(r.retMsg);
-    //       }
-    //     })
-    //     .finally(() => {
-    //       reloadTradingInfo();
-    //     });
-    // };
-
-    const addStopLoss = async (symbol: string, positionSide: LinearPositionIdx, price: number) => {
-      apiClient
-        .setTradingStop({
-          positionIdx: positionSide,
-          category: 'linear',
-          symbol: symbol,
-          stopLoss: price.toString(),
-        })
-        .then((r) => {
-          if (r.retCode !== 0) {
-            toast.error(r.retMsg);
-          }
-        })
-        .finally(() => {
-          reloadTradingInfo();
-        });
+    const getPositionMode = (type: OrderSideV5): LinearPositionIdx => {
+      console.log('getPositionMode', type, positionMode, positionMode === 0 ? LinearPositionIdx.OneWayMode : type === 'Buy' ? LinearPositionIdx.BuySide : LinearPositionIdx.SellSide)
+      return positionMode === 0 ? LinearPositionIdx.OneWayMode : type === 'Buy' ? LinearPositionIdx.BuySide : LinearPositionIdx.SellSide;
     };
 
     const tradingService = TradingService(apiClient);
@@ -337,17 +178,10 @@ function withTradingControl<P extends WithTradingControlProps>(
         {...(props as P)}
         tradingService={tradingService}
         dataService={dataService}
-        openLongTrade={openLongTrade}
         openMarketLongTrade={openMarketLongTrade}
-        closeLongTrade={closeLongTrade}
-        openShortTrade={openShortTrade}
         openMarketShortTrade={openMarketShortTrade}
-        closeShortTrade={closeShortTrade}
         closeAllOrders={closeAllOrders}
-        closePosition={null}
         cancelOrder={cancelOrder}
-        toggleChase={toggleChase}
-        addStopLoss={addStopLoss}
       />
     );
   };

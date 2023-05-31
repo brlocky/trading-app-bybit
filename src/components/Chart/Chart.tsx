@@ -194,7 +194,6 @@ export const Chart: React.FC<Props> = (props) => {
         })
         .then((r) => {
           setChartData(r);
-
           if (r.length) {
             const price = r[r.length - 1].close;
             dispatch(updateTakeProfit([{ ...takeProfit1, price: Number(price) }]));
@@ -202,7 +201,7 @@ export const Chart: React.FC<Props> = (props) => {
           }
         });
     }
-  }, [tickerInfo]);
+  }, [tickerInfo, interval]);
 
   useEffect(() => {
     newSeries.current.setData(chartData);
@@ -258,11 +257,13 @@ export const Chart: React.FC<Props> = (props) => {
 
     let tp = takeProfit1.price,
       sl = stopLoss1.price,
-      entry = ticker?.lastPrice;
+      entry = ticker?.lastPrice,
+      coinAmount = positionSize;
     if (currentPosition) {
       entry = currentPosition.entryPrice;
       currentPosition.takeProfit ? (tp = Number(currentPosition.takeProfit)) : null;
       currentPosition.stopLoss ? (sl = Number(currentPosition.stopLoss)) : null;
+      coinAmount = Number(currentPosition.size);
     }
 
     takeProfPriceLine.current.applyOptions({
@@ -277,8 +278,8 @@ export const Chart: React.FC<Props> = (props) => {
       price: entry,
     });
 
-    const pnLTakeProfit = calculateTargetPnL(Number(tp), Number(entry), positionSize);
-    const pnLStopLoss = calculateTargetPnL(Number(sl), Number(entry), positionSize);
+    const pnLTakeProfit = calculateTargetPnL(Number(tp), Number(entry), coinAmount);
+    const pnLStopLoss = calculateTargetPnL(Number(sl), Number(entry), coinAmount);
     takeProfPriceLine.current.applyOptions({
       title: TP + ' ' + pnLTakeProfit + '€',
     });
