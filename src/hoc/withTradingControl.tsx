@@ -75,9 +75,11 @@ function withTradingControl<P extends WithTradingControlProps>(
       });
 
       Promise.all([activeOrdersPromise, positionInfoPromise, walletInfoPromise]).then(([orderInfo, positionInfo, walletInfo]) => {
-        orderInfo.retCode === 0 ? dispatch(updateOrders(orderInfo.result.list)) : toast.error('loading orders')
-        positionInfo.retCode === 0 ? dispatch(updatePositions(positionInfo.result.list.map(mapApiToWsPositionV5Response))) : toast.error('updatding position')
-        
+        orderInfo.retCode === 0 ? dispatch(updateOrders(orderInfo.result.list)) : toast.error('loading orders');
+        positionInfo.retCode === 0
+          ? dispatch(updatePositions(positionInfo.result.list.map(mapApiToWsPositionV5Response)))
+          : toast.error('updatding position');
+
         const usdtWallet = walletInfo.result.list[0];
         if (usdtWallet) {
           dispatch(updateWallet(usdtWallet));
@@ -149,7 +151,6 @@ function withTradingControl<P extends WithTradingControlProps>(
 
       const tp = takeProfits[0].price;
       const sl = stopLosses[0].price;
-      console.log(tp, sl, tickerInfo.priceScale);
       const nearPrice = parseFloat(ticker.ask1Price);
       apiClient
         .submitOrder({
@@ -282,33 +283,33 @@ function withTradingControl<P extends WithTradingControlProps>(
         });
     };
 
-    const closePosition = async (position: IPosition, qty: string) => {
-      if (!ticker) {
-        return;
-      }
+    // const closePosition = async (position: IPosition, qty: string) => {
+    //   if (!ticker) {
+    //     return;
+    //   }
 
-      const nearPrice = position.positionIdx === LinearPositionIdx.BuySide ? ticker.ask1Price : ticker.bid1Price;
-      apiClient
-        .submitOrder({
-          positionIdx: position.positionIdx,
-          category: 'linear',
-          symbol: position.symbol,
-          side: position.positionIdx === LinearPositionIdx.BuySide ? 'Sell' : 'Buy',
-          orderType: 'Limit',
-          qty: qty,
-          price: nearPrice,
-          timeInForce: 'PostOnly',
-          reduceOnly: true,
-        })
-        .then((r) => {
-          if (r.retCode !== 0) {
-            toast.error(r.retMsg);
-          }
-        })
-        .finally(() => {
-          reloadTradingInfo();
-        });
-    };
+    //   const nearPrice = position.positionIdx === LinearPositionIdx.BuySide ? ticker.ask1Price : ticker.bid1Price;
+    //   apiClient
+    //     .submitOrder({
+    //       positionIdx: position.positionIdx,
+    //       category: 'linear',
+    //       symbol: position.symbol,
+    //       side: position.positionIdx === LinearPositionIdx.BuySide ? 'Sell' : 'Buy',
+    //       orderType: 'Limit',
+    //       qty: qty,
+    //       price: nearPrice,
+    //       timeInForce: 'PostOnly',
+    //       reduceOnly: true,
+    //     })
+    //     .then((r) => {
+    //       if (r.retCode !== 0) {
+    //         toast.error(r.retMsg);
+    //       }
+    //     })
+    //     .finally(() => {
+    //       reloadTradingInfo();
+    //     });
+    // };
 
     const addStopLoss = async (symbol: string, positionSide: LinearPositionIdx, price: number) => {
       apiClient
@@ -343,7 +344,7 @@ function withTradingControl<P extends WithTradingControlProps>(
         openMarketShortTrade={openMarketShortTrade}
         closeShortTrade={closeShortTrade}
         closeAllOrders={closeAllOrders}
-        closePosition={closePosition}
+        closePosition={null}
         cancelOrder={cancelOrder}
         toggleChase={toggleChase}
         addStopLoss={addStopLoss}

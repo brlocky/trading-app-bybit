@@ -1,12 +1,12 @@
 import { createChart, ColorType, CrosshairMode, CustomPriceLineDraggedEventParams } from '@felipecsl/lightweight-charts';
 import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectInterval, selectLastKline, selectTicker, selectTickerInfo } from '../../slices/symbolSlice';
+import { selectInterval, selectLastKline, selectPositions, selectTicker, selectTickerInfo } from '../../slices/symbolSlice';
 import { selectPositionSize, selectStopLosses, selectTakeProfits, updateStopLoss, updateTakeProfit } from '../../slices';
 import { calculateTargetPnL } from '../../utils/tradeUtils';
 import { IDataService } from '../../services';
 import { KlineIntervalV3 } from 'bybit-api';
-import { CandlestickDataWithVolume } from '../../types';
+import { CandlestickDataWithVolume, IPosition } from '../../types';
 
 const TP = 'TP';
 const SL = 'SL';
@@ -50,6 +50,7 @@ export const Chart: React.FC<Props> = (props) => {
   const kline = useSelector(selectLastKline);
   const ticker = useSelector(selectTicker);
   const tickerInfo = useSelector(selectTickerInfo);
+  const positions = useSelector(selectPositions);
   const positionSize = useSelector(selectPositionSize);
 
   const takeProfits = useSelector(selectTakeProfits);
@@ -71,14 +72,14 @@ export const Chart: React.FC<Props> = (props) => {
   function priceLineHandler(params: CustomPriceLineDraggedEventParams) {
     const { customPriceLine } = params;
     const { title, price } = customPriceLine.options();
-    const formatedPrice = chartInstanceRef.current.priceScale('right').formatPrice(price);
+    const formatedPrice: string = chartInstanceRef.current.priceScale('right').formatPrice(price);
 
     if (title.startsWith(TP)) {
-      dispatch(updateTakeProfit([{ ...takeProfit1, price: formatedPrice }]));
+      dispatch(updateTakeProfit([{ ...takeProfit1, price: Number(formatedPrice) }]));
     }
 
     if (title.startsWith(SL)) {
-      dispatch(updateStopLoss([{ ...stopLoss1, price: formatedPrice }]));
+      dispatch(updateStopLoss([{ ...stopLoss1, price: Number(formatedPrice) }]));
     }
   }
 
@@ -195,10 +196,9 @@ export const Chart: React.FC<Props> = (props) => {
           setChartData(r);
 
           if (r.length) {
-            const price = r[r.length-1].close;
-            console.log('set prices', price)
-            dispatch(updateTakeProfit([{ ...takeProfit1, price: price + price * 0.01 }]));
-            dispatch(updateStopLoss([{ ...stopLoss1, price: price - price * 0.005 }]));
+            const price = r[r.length - 1].close;
+            dispatch(updateTakeProfit([{ ...takeProfit1, price: Number(price) }]));
+            dispatch(updateStopLoss([{ ...stopLoss1, price: Number(price) }]));
           }
         });
     }
@@ -216,51 +216,75 @@ export const Chart: React.FC<Props> = (props) => {
     if (kline) {
       newSeries.current.update(JSON.parse(JSON.stringify(kline)));
       newVolumeSeries.current.update({ time: kline.time, value: kline.volume, color: volumeColor });
-      updateTPnSLLabels(Number(kline.close));
+      updateTPnSL();
     }
   }, [kline]);
 
   useEffect(() => {
     if (kline) {
-      updateTPnSLPrices(Number(kline.close));
+      updateTPnSL();
     }
   }, [takeProfits, stopLosses]);
 
   useEffect(() => {
     if (kline) {
-      updateTPnSLLabels(Number(kline.close));
+      updateTPnSL();
     }
   }, [positionSize]);
 
-  const updateTPnSLPrices = (localPrice: number) => {
+  const getCurrentPosition = (): IPosition | undefined => {
+    return positions.find((p) => p.symbol === tickerInfo?.symbol && Number(p.positionValue) > 0);
+  };
+  useEffect(() => {
+    const currentSymbolPosition = getCurrentPosition();
+    if (currentSymbolPosition) {
+      takeProfPriceLine.current.applyOptions({
+        price: currentSymbolPosition.takeProfit,
+      });
+
+      stopLossPriceLine.current.applyOptions({
+        price: currentSymbolPosition.stopLoss,
+      });
+
+      entryPriceLine.current.applyOptions({
+        price: currentSymbolPosition.entryPrice,
+        draggable: false,
+      });
+    }
+  }, [positions]);
+
+  const updateTPnSL = () => {
+    const currentPosition = getCurrentPosition();
+
+    let tp = takeProfit1.price,
+      sl = stopLoss1.price,
+      entry = ticker?.lastPrice;
+    if (currentPosition) {
+      entry = currentPosition.entryPrice;
+      currentPosition.takeProfit ? (tp = Number(currentPosition.takeProfit)) : null;
+      currentPosition.stopLoss ? (sl = Number(currentPosition.stopLoss)) : null;
+    }
+
     takeProfPriceLine.current.applyOptions({
-      price: takeProfit1.price,
+      price: tp,
     });
 
     stopLossPriceLine.current.applyOptions({
-      price: stopLoss1.price,
+      price: sl,
     });
 
     entryPriceLine.current.applyOptions({
-      price: localPrice,
+      price: entry,
     });
 
-    updateTPnSLLabels(localPrice);
-  };
-
-  const updateTPnSLLabels = (localPrice: number) => {
-    if (tickerInfo) {
-      const pnLTakeProfit = calculateTargetPnL(takeProfit1.price, localPrice, positionSize);
-      const pnLStopLoss = calculateTargetPnL(stopLoss1.price, localPrice, positionSize);
-      takeProfPriceLine.current.applyOptions({
-        title: TP + ' ' + pnLTakeProfit + '€',
-      });
-      stopLossPriceLine.current.applyOptions({
-        title: SL + ' ' + pnLStopLoss + '€',
-      });
-
-      console.log(pnLTakeProfit, pnLStopLoss, localPrice);
-    }
+    const pnLTakeProfit = calculateTargetPnL(Number(tp), Number(entry), positionSize);
+    const pnLStopLoss = calculateTargetPnL(Number(sl), Number(entry), positionSize);
+    takeProfPriceLine.current.applyOptions({
+      title: TP + ' ' + pnLTakeProfit + '€',
+    });
+    stopLossPriceLine.current.applyOptions({
+      title: SL + ' ' + pnLStopLoss + '€',
+    });
   };
 
   return <div ref={chartContainerRef}></div>;

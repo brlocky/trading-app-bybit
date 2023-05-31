@@ -53,12 +53,12 @@ export default function CardPositions({ tradingService }: ICardPositionsProps) {
   const { closePosition, addStopLoss } = tradingService;
 
   const renderPositionActions = (p: IPosition) => {
-    const closePrice = p.positionIdx == LinearPositionIdx.BuySide ? ticker.ask1Price : ticker.bid1Price;
+    const closePrice = p.side === 'Buy' ? ticker.ask1Price : ticker.bid1Price;
     return (
       <PositionActionsContainer>
         <Button
           onClick={() => {
-            closePosition(p, calculateClosePositionSize(p, 25), closePrice);
+            closePosition(p, calculateClosePositionSize(p, 25));
           }}
           key={25}
         >
@@ -66,7 +66,7 @@ export default function CardPositions({ tradingService }: ICardPositionsProps) {
         </Button>
         <Button
           onClick={() => {
-            closePosition(p, calculateClosePositionSize(p, 50), closePrice);
+            closePosition(p, calculateClosePositionSize(p, 50));
           }}
           key={50}
         >
@@ -74,7 +74,7 @@ export default function CardPositions({ tradingService }: ICardPositionsProps) {
         </Button>
         <Button
           onClick={() => {
-            closePosition(p, calculateClosePositionSize(p, 75), closePrice);
+            closePosition(p, calculateClosePositionSize(p, 75));
           }}
           key={75}
         >
@@ -82,7 +82,7 @@ export default function CardPositions({ tradingService }: ICardPositionsProps) {
         </Button>
         <Button
           onClick={() => {
-            closePosition(p, calculateClosePositionSize(p, 100), closePrice);
+            closePosition(p, calculateClosePositionSize(p, 100));
           }}
           key={100}
         >
@@ -90,11 +90,19 @@ export default function CardPositions({ tradingService }: ICardPositionsProps) {
         </Button>
         <Button
           onClick={() => {
-            addStopLoss(p.symbol, p.positionIdx, p.entryPrice);
+            addStopLoss(p, p.entryPrice);
           }}
           key={'BE'}
         >
           BE
+        </Button>
+        <Button
+          onClick={() => {
+            closePosition(p);
+          }}
+          key={'Close'}
+        >
+          Close
         </Button>
       </PositionActionsContainer>
     );

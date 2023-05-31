@@ -3,8 +3,8 @@ import { IPosition } from '../types';
 import { toast } from 'react-toastify';
 
 export interface ITradingService {
-  addStopLoss: (symbol: string, positionSide: LinearPositionIdx, price: string) => Promise<void>;
-  closePosition: (position: IPosition, qty: string, price: string) => Promise<void>;
+  addStopLoss: (position: IPosition, price: string) => Promise<void>;
+  closePosition: (position: IPosition, qty?: string, price?: string) => Promise<void>;
   getDomNormalizedAggregatorValues: (tickInfo: LinearInverseInstrumentInfoV5) => string[];
   convertToNumber: (value: string) => number;
   formatCurrency: (value: string) => string;
@@ -14,7 +14,7 @@ export interface ITradingService {
 }
 
 export const TradingService = (apiClient: RestClientV5): ITradingService => {
-  const getDomNormalizedAggregatorValues = (tickInfo: LinearInverseInstrumentInfoV5):string[] => {
+  const getDomNormalizedAggregatorValues = (tickInfo: LinearInverseInstrumentInfoV5): string[] => {
     const multipliers = [1, 2, 4, 10, 20, 50, 100];
     const tickSizeValue = parseFloat(tickInfo.priceFilter.tickSize);
     return multipliers.map((m) => (m * tickSizeValue).toFixed(Number(tickInfo.priceScale)));
@@ -40,12 +40,12 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
     console.log('myFunction3');
   };
 
-  const addStopLoss = async (symbol: string, positionSide: LinearPositionIdx, price: string) => {
+  const addStopLoss = async (p: IPosition, price: string) => {
     apiClient
       .setTradingStop({
-        positionIdx: positionSide,
+        positionIdx: p.positionIdx,
         category: 'linear',
-        symbol: symbol,
+        symbol: p.symbol,
         stopLoss: price,
       })
       .then((r) => {
@@ -58,17 +58,17 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
       });
   };
 
-  const closePosition = async (position: IPosition, qty: string, price: string) => {
+  const closePosition = async (position: IPosition, qty?: string, price?: string) => {
     apiClient
       .submitOrder({
         positionIdx: position.positionIdx,
         category: 'linear',
         symbol: position.symbol,
-        side: position.positionIdx === LinearPositionIdx.BuySide ? 'Sell' : 'Buy',
-        orderType: 'Limit',
-        qty: qty,
-        price: price,
-        timeInForce: 'PostOnly',
+        side: position.side === 'Buy' ? 'Sell' : 'Buy',
+        orderType: price ? 'Limit' : 'Market',
+        qty: qty ? qty : position.size,
+        price: price || undefined,
+        timeInForce: price ? 'PostOnly' : 'GTC',
         reduceOnly: true,
       })
       .then((r) => {
