@@ -75,8 +75,9 @@ function withTradingControl<P extends WithTradingControlProps>(
       });
 
       Promise.all([activeOrdersPromise, positionInfoPromise, walletInfoPromise]).then(([orderInfo, positionInfo, walletInfo]) => {
-        dispatch(updateOrders(orderInfo.result.list));
-        dispatch(updatePositions(positionInfo.result.list.map(mapApiToWsPositionV5Response)));
+        orderInfo.retCode === 0 ? dispatch(updateOrders(orderInfo.result.list)) : toast.error('loading orders')
+        positionInfo.retCode === 0 ? dispatch(updatePositions(positionInfo.result.list.map(mapApiToWsPositionV5Response))) : toast.error('updatding position')
+        
         const usdtWallet = walletInfo.result.list[0];
         if (usdtWallet) {
           dispatch(updateWallet(usdtWallet));
@@ -148,7 +149,7 @@ function withTradingControl<P extends WithTradingControlProps>(
 
       const tp = takeProfits[0].price;
       const sl = stopLosses[0].price;
-      console.log(tp,sl, tickerInfo.priceScale);
+      console.log(tp, sl, tickerInfo.priceScale);
       const nearPrice = parseFloat(ticker.ask1Price);
       apiClient
         .submitOrder({
