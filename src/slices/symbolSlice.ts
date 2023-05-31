@@ -32,18 +32,10 @@ const symbolSlice = createSlice({
   initialState,
   reducers: {
     updateSymbol(state, action: PayloadAction<string>) {
-      return {
-        ...initialState,
-        symbol: action.payload,
-        interval: state.interval,
-      };
+      state.symbol = action.payload;
     },
     updateInterval(state, action: PayloadAction<string>) {
-      return {
-        ...state,
-        kline: undefined,
-        interval: action.payload,
-      };
+      state.interval = action.payload;
     },
     updateTicker(state, action: PayloadAction<ITicker>) {
       state.ticker = { ...state.ticker, ...action.payload };
