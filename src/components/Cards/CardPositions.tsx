@@ -101,7 +101,7 @@ export default function CardPositions({ tradingService }: ICardPositionsProps) {
   };
 
   const renderPositions = positions
-    // .filter((p) => parseFloat(p.size) > 0)
+    .filter((p) => parseFloat(p.size) > 0)
     .map((p, index) => {
       return (
         <PositionRowContainer key={index}>
