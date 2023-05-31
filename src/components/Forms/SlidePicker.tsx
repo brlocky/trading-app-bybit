@@ -1,33 +1,37 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 interface ISliderPickerProps {
-  value: number;
+  value?: number;
   min: number;
   max: number;
   step: number;
-  onValueChange?: (value: number) => void;
+  onValueChanged?: (n: number) => void;
   showValue?: boolean;
   className?: string;
 }
-const SlidePicker = ({ value, min, max, step, onValueChange, showValue, className }: ISliderPickerProps) => {
+const SlidePicker = ({ value, min, max, step, onValueChanged, showValue, className }: ISliderPickerProps) => {
+  const [currentValue, setCurrentValue] = useState<number>(value || min);
+
+  useEffect(() => {
+    if (value !== undefined) {
+      setCurrentValue(value);
+    }
+  }, [value]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (onValueChange) onValueChange(parseFloat(value));
+    const value = Number(e.target.value);
+    setCurrentValue(value);
+    onValueChanged && onValueChanged(value);
   };
 
   return (
     <div className={className || ''}>
-      {showValue ? (
-        <label htmlFor="minmax-range" className="mb-2 block text-sm font-medium text-gray-600">
-          {value}
-        </label>
-      ) : null}
+      {showValue ? <label className="mb-2 block text-sm font-medium text-gray-600">{value}</label> : null}
 
       <input
-        id="minmax-range"
         type="range"
         min={min}
         max={max}
-        value={value}
+        value={currentValue}
         step={step}
         className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200"
         onChange={handleChange}

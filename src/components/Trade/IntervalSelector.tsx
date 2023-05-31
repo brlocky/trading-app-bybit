@@ -2,7 +2,7 @@ import { ChevronDownIcon } from '@heroicons/react/24/solid';
 import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import tw from 'twin.macro';
-import { selectInterval, updateInterval } from '../slices/symbolSlice';
+import { selectInterval, updateInterval } from '../../slices/symbolSlice';
 
 const IntervalCol = tw.div`
 absolute 

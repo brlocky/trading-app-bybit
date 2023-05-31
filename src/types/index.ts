@@ -65,7 +65,6 @@ export type CandlestickDataWithVolume = CandlestickData & { volume: number };
 
 
 export interface ITarget {
-  ticks: number,
   price: number,
   qty: number,
 }

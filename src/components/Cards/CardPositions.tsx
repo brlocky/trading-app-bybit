@@ -1,19 +1,14 @@
-import React from 'react';
-import { IPosition, ITicker } from '../../types';
-import Button from '../Button/Button';
-import tw from 'twin.macro';
-import {
-  calculateClosePositionSize,
-  calculatePositionPnL,
-  formatCurrency,
-} from '../../utils/tradeUtils';
-import { ITradingService } from '../../services';
 import { LinearPositionIdx } from 'bybit-api';
+import { useSelector } from 'react-redux';
+import tw from 'twin.macro';
+import { ITradingService } from '../../services';
+import { selectPositions, selectTicker } from '../../slices';
+import { IPosition } from '../../types';
+import { calculateClosePositionSize, calculatePositionPnL, formatCurrency } from '../../utils/tradeUtils';
+import Button from '../Button/Button';
 
 interface ICardPositionsProps {
   tradingService: ITradingService;
-  positions: IPosition[];
-  tickerInfo: ITicker | undefined;
 }
 
 const PositionsContainer = tw.div`
@@ -46,22 +41,19 @@ border-b-2
 border-t-2
 `;
 
-export default function CardPositions({
-  tradingService,
-  positions,
-  tickerInfo,
-}: ICardPositionsProps) {
+export default function CardPositions({ tradingService }: ICardPositionsProps) {
+  const ticker = useSelector(selectTicker);
+  const positions = useSelector(selectPositions);
 
-  if (!tickerInfo) { 
-    return <></>
+  if (!ticker) {
+    return <></>;
   }
   const headers = ['Ticker', 'Entry', 'Qty', 'P&L'];
 
   const { closePosition, addStopLoss } = tradingService;
 
   const renderPositionActions = (p: IPosition) => {
-    const closePrice =
-      p.positionIdx == LinearPositionIdx.BuySide ? tickerInfo.ask1Price : tickerInfo.bid1Price;
+    const closePrice = p.positionIdx == LinearPositionIdx.BuySide ? ticker.ask1Price : ticker.bid1Price;
     return (
       <PositionActionsContainer>
         <Button
@@ -77,7 +69,6 @@ export default function CardPositions({
             closePosition(p, calculateClosePositionSize(p, 50), closePrice);
           }}
           key={50}
-          
         >
           50%
         </Button>
@@ -110,31 +101,20 @@ export default function CardPositions({
   };
 
   const renderPositions = positions
-    .filter((p) => parseFloat(p.size) > 0)
+    // .filter((p) => parseFloat(p.size) > 0)
     .map((p, index) => {
       return (
         <PositionRowContainer key={index}>
           <PositionPropContainer>
-            <i
-              className={
-                p.side === 'Buy'
-                  ? 'fas fa-arrow-up text-green-600'
-                  : 'fas fa-arrow-down text-red-600'
-              }
-            ></i>{' '}
-            {p.symbol}
+            <i className={p.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {p.symbol}
           </PositionPropContainer>
           <PositionPropContainer>{formatCurrency(p.entryPrice)}</PositionPropContainer>
           <PositionPropContainer>{p.size}</PositionPropContainer>
           <PositionPropContainer>
-            {parseFloat(calculatePositionPnL(p, tickerInfo)) >= 0 ? (
-              <span className="text-green-600">
-                {formatCurrency(calculatePositionPnL(p, tickerInfo))}
-              </span>
+            {parseFloat(calculatePositionPnL(p, ticker)) >= 0 ? (
+              <span className="text-green-600">{formatCurrency(calculatePositionPnL(p, ticker))}</span>
             ) : (
-              <span className="text-red-600">
-                {formatCurrency(calculatePositionPnL(p, tickerInfo))}
-              </span>
+              <span className="text-red-600">{formatCurrency(calculatePositionPnL(p, ticker))}</span>
             )}
           </PositionPropContainer>
           {renderPositionActions(p)}

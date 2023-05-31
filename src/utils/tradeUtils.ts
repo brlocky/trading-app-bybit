@@ -62,10 +62,6 @@ export const getOrderEntryFromPositions = (positions: IPosition[], order: IOrder
   return p ? p.entryPrice : '0';
 };
 
-export const calculateTargetPnL = (target: ITarget, ticker: ITicker, tickerInfo: LinearInverseInstrumentInfoV5, positionSize: number): string => {
-  const price = Number(ticker.lastPrice);
-  const ticks = target.ticks
-  const tickSize = Number(tickerInfo.priceFilter.tickSize);
-  const pnL = (price + ticks * tickSize - price) * positionSize;
-  return pnL.toFixed(4)
+export const calculateTargetPnL = (target: number, price: number, positionSize: number): string => {
+  return ((target - price) * positionSize).toFixed(4);
 };

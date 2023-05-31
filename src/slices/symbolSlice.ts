@@ -1,8 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { LinearInverseInstrumentInfoV5, WalletBalanceV5, ExecutionV5 } from 'bybit-api';
-import { OrderBooksStore } from 'orderbooks';
-import { ITicker, IOrder, IPosition, CandlestickDataWithVolume } from '../types';
+import { ExecutionV5, LinearInverseInstrumentInfoV5, WalletBalanceV5 } from 'bybit-api';
 import { RootState } from '../store';
+import { CandlestickDataWithVolume, IOrder, IPosition, ITicker } from '../types';
 
 interface ISymbolState {
   symbol: string | undefined;
@@ -13,9 +12,7 @@ interface ISymbolState {
   wallet: WalletBalanceV5 | undefined;
   positions: IPosition[];
   executions: ExecutionV5[];
-  orderbook: OrderBooksStore | undefined;
   kline: CandlestickDataWithVolume | undefined;
-  klineData: CandlestickDataWithVolume[];
 }
 
 const initialState: ISymbolState = {
@@ -27,9 +24,7 @@ const initialState: ISymbolState = {
   wallet: undefined,
   positions: [],
   executions: [],
-  orderbook: undefined,
   kline: undefined,
-  klineData: [],
 };
 
 const symbolSlice = createSlice({
@@ -46,7 +41,6 @@ const symbolSlice = createSlice({
     updateInterval(state, action: PayloadAction<string>) {
       return {
         ...state,
-        klineData: [],
         kline: undefined,
         interval: action.payload,
       };
@@ -57,26 +51,11 @@ const symbolSlice = createSlice({
     updateTickerInfo(state, action: PayloadAction<LinearInverseInstrumentInfoV5>) {
       state.tickerInfo = { ...action.payload };
     },
-    updateKline(state, action: PayloadAction<CandlestickDataWithVolume[]>) {
-      state.klineData = [...action.payload];
-    },
     updateLastKline(state, action: PayloadAction<CandlestickDataWithVolume>) {
       state.kline = { ...action.payload };
     },
-    closeLastKline(state, action: PayloadAction<CandlestickDataWithVolume>) {
-      if (!state.klineData.length) {
-        state.klineData = [action.payload];
-      } else if (state.klineData[state.klineData.length - 1].time === action.payload.time) {
-        state.klineData = [...state.klineData.slice(0, -1), action.payload];
-      } else {
-        state.klineData = [...state.klineData, action.payload];
-      }
-    },
     updateWallet(state, action: PayloadAction<WalletBalanceV5>) {
       state.wallet = action.payload;
-    },
-    updateOrderbook(state, action: PayloadAction<OrderBooksStore>) {
-      state.orderbook = action.payload;
     },
     updateOrders(state, action: PayloadAction<IOrder[]>) {
       const currentOrders = [...state.orders];
@@ -142,11 +121,8 @@ export const {
   updateInterval,
   updateTicker,
   updateTickerInfo,
-  updateKline,
   updateLastKline,
-  closeLastKline,
   updateWallet,
-  updateOrderbook,
   updateOrders,
   updateOrder,
   updateExecutions,
@@ -160,10 +136,8 @@ export const selectSymbol = (state: RootState) => state.symbol.symbol;
 export const selectInterval = (state: RootState) => state.symbol.interval;
 export const selectOrders = (state: RootState) => state.symbol.orders;
 export const selectLastKline = (state: RootState) => state.symbol.kline;
-export const selectKlineData = (state: RootState) => state.symbol.klineData;
 export const selectTicker = (state: RootState) => state.symbol.ticker;
 export const selectTickerInfo = (state: RootState) => state.symbol.tickerInfo;
 export const selectPositions = (state: RootState) => state.symbol.positions;
 export const selectWallet = (state: RootState) => state.symbol.wallet;
-export const selectOrderbook = (state: RootState) => state.symbol.orderbook;
 export const selectExecutions = (state: RootState) => state.symbol.executions;

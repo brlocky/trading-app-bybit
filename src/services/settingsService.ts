@@ -1,6 +1,7 @@
 interface ISettingsData {
   apiKey: string;
   apiSecret: string;
+  testnet: boolean;
 }
 
 export const SettingsService = {
@@ -11,8 +12,9 @@ export const SettingsService = {
     const data = localStorage.getItem('settings');
     if (!data) {
       return {
-        apiKey: '',
-        apiSecret: '',
+        apiKey: 'gmVkzV8nUbDMZLEgq9',
+        apiSecret: 'AcoaLvOQSyZfRFCoFVLMP5DkJnEXP1JOYE0s',
+        testnet: true,
       };
     }
     return JSON.parse(data);

@@ -6,20 +6,28 @@ interface ITradeSetupState {
   positionSize: number;
   takeProfits: ITarget[];
   stopLosses: ITarget[];
+  marginMode: 0 | 1; // Cross, Isolated
+  leverage: number; // 1.. 100
+  positionMode: 0 | 3; // OneWay Hedge
 }
 
 const initialState: ITradeSetupState = {
   positionSize: 0,
-  takeProfits: [{
-    ticks: 100,
-    price:0,
-    qty: 0,
-  }],
-  stopLosses: [{
-    ticks: 50,
-    price:0,
-    qty: 0,
-  }],
+  marginMode: 0,
+  leverage: 1,
+  positionMode: 0,
+  takeProfits: [
+    {
+      price: 0,
+      qty: 0,
+    },
+  ],
+  stopLosses: [
+    {
+      price: 0,
+      qty: 0,
+    },
+  ],
 };
 
 const tradeSetupSlice = createSlice({
@@ -35,10 +43,20 @@ const tradeSetupSlice = createSlice({
     updateStopLoss(state, action: PayloadAction<ITarget[]>) {
       state.stopLosses = [...action.payload];
     },
+    updateLeverage(state, action: PayloadAction<number>) {
+      state.leverage = action.payload;
+    },
+    updatePositionMode(state, action: PayloadAction<0 | 3>) {
+      state.positionMode = action.payload;
+    },
+    updateMarginMode(state, action: PayloadAction<0 | 1>) {
+      state.marginMode = action.payload;
+    },
   },
 });
 
-export const { updatePositionSize, updateTakeProfit, updateStopLoss } = tradeSetupSlice.actions;
+export const { updatePositionSize, updateTakeProfit, updateStopLoss, updateLeverage, updatePositionMode, updateMarginMode } =
+  tradeSetupSlice.actions;
 
 export const tradeSetupReducer = tradeSetupSlice.reducer;
 
@@ -46,3 +64,6 @@ export const tradeSetupReducer = tradeSetupSlice.reducer;
 export const selectPositionSize = (state: RootState) => state.tradeSetup.positionSize;
 export const selectTakeProfits = (state: RootState) => state.tradeSetup.takeProfits;
 export const selectStopLosses = (state: RootState) => state.tradeSetup.stopLosses;
+export const selectPositionMode = (state: RootState) => state.tradeSetup.positionMode;
+export const selectMarginMode = (state: RootState) => state.tradeSetup.marginMode;
+export const selectLeverage = (state: RootState) => state.tradeSetup.leverage;

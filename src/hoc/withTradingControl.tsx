@@ -17,6 +17,8 @@ import {
   updateOrders,
 } from '../slices/symbolSlice';
 import { AppDispatch } from '../store';
+import { toast } from 'react-toastify';
+import { selectStopLosses, selectTakeProfits } from '../slices';
 
 const accountType = 'CONTRACT';
 
@@ -44,6 +46,8 @@ function withTradingControl<P extends WithTradingControlProps>(
     const orders = useSelector(selectOrders);
     const ticker = useSelector(selectTicker);
     const tickerInfo = useSelector(selectTickerInfo);
+    const takeProfits = useSelector(selectTakeProfits);
+    const stopLosses = useSelector(selectStopLosses);
 
     const dispatch = useDispatch<AppDispatch>();
 
@@ -51,71 +55,6 @@ function withTradingControl<P extends WithTradingControlProps>(
     useEffect(() => {
       reloadTradingInfo();
     }, [tickerInfo]);
-
-    useEffect(() => {
-      let workingAmendOrder = false;
-      if (workingAmendOrder || !ticker) {
-        return;
-      }
-
-      const ammendOrders = [...orders.filter((o) => o.chase)];
-
-      if (!ammendOrders.length || !symbol) {
-        return;
-      }
-
-      ammendOrders.forEach((order) => {
-        let nearPrice = ticker.markPrice;
-        if (order.positionIdx === LinearPositionIdx.BuySide && order.side === 'Buy') {
-          nearPrice = ticker.bid1Price;
-          if (parseFloat(nearPrice) <= parseFloat(order.price)) {
-            return;
-          }
-        }
-
-        if (order.positionIdx === LinearPositionIdx.BuySide && order.side === 'Sell') {
-          nearPrice = ticker.ask1Price;
-          if (parseFloat(nearPrice) >= parseFloat(order.price)) {
-            return;
-          }
-        }
-
-        if (order.positionIdx === LinearPositionIdx.SellSide && order.side === 'Sell') {
-          nearPrice = ticker.ask1Price;
-          if (parseFloat(nearPrice) >= parseFloat(order.price)) {
-            return;
-          }
-        }
-
-        if (order.positionIdx === LinearPositionIdx.SellSide && order.side === 'Buy') {
-          nearPrice = ticker.bid1Price;
-          if (parseFloat(nearPrice) <= parseFloat(order.price)) {
-            return;
-          }
-        }
-
-        workingAmendOrder = true;
-        apiClient
-          .amendOrder({
-            orderId: order.orderId,
-            category: 'linear',
-            symbol: symbol,
-            price: nearPrice,
-          })
-          .then((i) => {
-            console.log('order changed ', i.retMsg);
-          })
-          .catch((e) => {
-            console.log(e);
-          })
-          .finally(() => {
-            setTimeout(() => {
-              workingAmendOrder = false;
-              reloadTradingInfo();
-            }, 100);
-          });
-      });
-    }, [ticker]);
 
     const reloadTradingInfo = () => {
       if (!symbol) return;
@@ -135,16 +74,14 @@ function withTradingControl<P extends WithTradingControlProps>(
         coin: 'USDT',
       });
 
-      Promise.all([activeOrdersPromise, positionInfoPromise, walletInfoPromise]).then(
-        ([orderInfo, positionInfo, walletInfo]) => {
-          dispatch(updateOrders(orderInfo.result.list));
-          dispatch(updatePositions(positionInfo.result.list.map(mapApiToWsPositionV5Response)));
-          const usdtWallet = walletInfo.result.list[0];
-          if (usdtWallet) {
-            dispatch(updateWallet(usdtWallet));
-          }
-        },
-      );
+      Promise.all([activeOrdersPromise, positionInfoPromise, walletInfoPromise]).then(([orderInfo, positionInfo, walletInfo]) => {
+        dispatch(updateOrders(orderInfo.result.list));
+        dispatch(updatePositions(positionInfo.result.list.map(mapApiToWsPositionV5Response)));
+        const usdtWallet = walletInfo.result.list[0];
+        if (usdtWallet) {
+          dispatch(updateWallet(usdtWallet));
+        }
+      });
     };
 
     const cancelOrder = async (order: IOrder) => {
@@ -153,6 +90,11 @@ function withTradingControl<P extends WithTradingControlProps>(
           category: 'linear',
           symbol: order.symbol,
           orderId: order.orderId,
+        })
+        .then((r) => {
+          if (r.retCode !== 0) {
+            toast.error(r.retMsg);
+          }
         })
         .finally(() => {
           reloadTradingInfo();
@@ -169,23 +111,30 @@ function withTradingControl<P extends WithTradingControlProps>(
     };
 
     const openLongTrade = async (positionSize: string, price?: number) => {
-      if (!ticker || !symbol) {
+      if (!ticker || !tickerInfo) {
         return;
       }
       const nearPrice = price ? price : parseFloat(ticker.bid1Price);
+
+      const tp = takeProfits[0].price;
+      const sl = stopLosses[0].price;
       apiClient
         .submitOrder({
           positionIdx: LinearPositionIdx.BuySide,
           category: 'linear',
-          symbol: symbol,
+          symbol: tickerInfo.symbol,
           side: 'Buy',
           orderType: 'Limit',
           qty: positionSize,
           price: nearPrice.toString(),
           timeInForce: 'PostOnly',
+          takeProfit: tp.toFixed(Number(tickerInfo.priceScale)),
+          stopLoss: sl.toFixed(Number(tickerInfo.priceScale)),
         })
-        .catch((e) => {
-          console.log(e);
+        .then((r) => {
+          if (r.retCode !== 0) {
+            toast.error(r.retMsg);
+          }
         })
         .finally(() => {
           reloadTradingInfo();
@@ -193,23 +142,31 @@ function withTradingControl<P extends WithTradingControlProps>(
     };
 
     const openMarketLongTrade = async (positionSize: string) => {
-      if (!ticker || !symbol) {
+      if (!ticker || !tickerInfo) {
         return;
       }
+
+      const tp = takeProfits[0].price;
+      const sl = stopLosses[0].price;
+      console.log(tp,sl, tickerInfo.priceScale);
       const nearPrice = parseFloat(ticker.ask1Price);
       apiClient
         .submitOrder({
-          positionIdx: LinearPositionIdx.BuySide,
+          positionIdx: LinearPositionIdx.OneWayMode,
           category: 'linear',
-          symbol: symbol,
+          symbol: tickerInfo.symbol,
           side: 'Buy',
           orderType: 'Market',
           qty: positionSize,
           price: nearPrice.toString(),
           timeInForce: 'GTC',
+          takeProfit: tp.toFixed(Number(tickerInfo.priceScale)),
+          stopLoss: sl.toFixed(Number(tickerInfo.priceScale)),
         })
-        .catch((e) => {
-          console.log(e);
+        .then((r) => {
+          if (r.retCode !== 0) {
+            toast.error(r.retMsg);
+          }
         })
         .finally(() => {
           reloadTradingInfo();
@@ -232,8 +189,10 @@ function withTradingControl<P extends WithTradingControlProps>(
           price: nearPrice.toString(),
           timeInForce: 'GTC',
         })
-        .catch((e) => {
-          console.log(e);
+        .then((r) => {
+          if (r.retCode !== 0) {
+            toast.error(r.retMsg);
+          }
         })
         .finally(() => {
           reloadTradingInfo();
@@ -258,8 +217,10 @@ function withTradingControl<P extends WithTradingControlProps>(
           timeInForce: 'PostOnly',
           reduceOnly: true,
         })
-        .catch((e) => {
-          console.log(e);
+        .then((r) => {
+          if (r.retCode !== 0) {
+            toast.error(r.retMsg);
+          }
         })
         .finally(() => {
           reloadTradingInfo();
@@ -282,8 +243,10 @@ function withTradingControl<P extends WithTradingControlProps>(
           price: nearPrice.toString(),
           timeInForce: 'PostOnly',
         })
-        .catch((e) => {
-          console.log(e);
+        .then((r) => {
+          if (r.retCode !== 0) {
+            toast.error(r.retMsg);
+          }
         })
         .finally(() => {
           reloadTradingInfo();
@@ -308,8 +271,10 @@ function withTradingControl<P extends WithTradingControlProps>(
           timeInForce: 'PostOnly',
           reduceOnly: true,
         })
-        .catch((e) => {
-          console.log(e);
+        .then((r) => {
+          if (r.retCode !== 0) {
+            toast.error(r.retMsg);
+          }
         })
         .finally(() => {
           reloadTradingInfo();
@@ -334,8 +299,10 @@ function withTradingControl<P extends WithTradingControlProps>(
           timeInForce: 'PostOnly',
           reduceOnly: true,
         })
-        .catch((e) => {
-          console.log(e);
+        .then((r) => {
+          if (r.retCode !== 0) {
+            toast.error(r.retMsg);
+          }
         })
         .finally(() => {
           reloadTradingInfo();
@@ -350,8 +317,10 @@ function withTradingControl<P extends WithTradingControlProps>(
           symbol: symbol,
           stopLoss: price.toString(),
         })
-        .catch((e) => {
-          console.log(e);
+        .then((r) => {
+          if (r.retCode !== 0) {
+            toast.error(r.retMsg);
+          }
         })
         .finally(() => {
           reloadTradingInfo();

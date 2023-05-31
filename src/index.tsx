@@ -12,19 +12,21 @@ import { persistor, store } from './store';
 import { SettingsService } from './services';
 import { SocketListener } from './socket/socketListener';
 import { PersistGate } from 'redux-persist/integration/react';
+import { ToastContainer } from 'react-toastify';
 
-const { apiKey, apiSecret } = SettingsService.loadSettings();
+const { apiKey, apiSecret, testnet } = SettingsService.loadSettings();
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
   <React.StrictMode>
+    <ToastContainer />
     <HashRouter>
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
-          <ApiProvider apiKey={apiKey} apiSecret={apiSecret}>
+          <ApiProvider apiKey={apiKey} apiSecret={apiSecret} testnet={testnet}>
             <App />
           </ApiProvider>
-          <SocketProvider socketKey={apiKey} socketSecret={apiSecret}>
+          <SocketProvider socketKey={apiKey} socketSecret={apiSecret} testnet={testnet}>
             <SocketListener />
           </SocketProvider>
         </PersistGate>

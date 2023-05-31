@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronDownIcon } from '@heroicons/react/24/solid';
-import { useApi } from '../providers';
+import { useApi } from '../../providers';
 import { TickerLinearInverseV5 } from 'bybit-api';
-import { selectSymbol, updateSymbol } from '../slices/symbolSlice';
+import { selectSymbol, updateSymbol } from '../../slices/symbolSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import tw from 'twin.macro';
 
@@ -33,6 +33,9 @@ export const SymbolSelector: React.FunctionComponent = () => {
       );
       setTickers(sorted as TickerLinearInverseV5[]);
     });
+
+
+
   }, []);
 
   const toggleDropdown = () => {

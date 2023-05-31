@@ -16,6 +16,7 @@ import {
   selectPositionSize,
   updatePositionSize,
 } from '../../slices';
+import { LeverageSelector, MarginModeSelector, PositionModeSelector } from '../Trade';
 
 const Row = tw.div`inline-flex w-full justify-between pb-3`;
 const Col = tw.div`flex flex-col md:flex-row items-center gap-x-5`;
@@ -27,13 +28,7 @@ interface ICardSymbolProps {
   closeAll: () => void;
 }
 
-const CardSymbol: React.FC<ICardSymbolProps> = ({
-  tradingService,
-  longTrade,
-  shortTrade,
-  closeAll,
-}: ICardSymbolProps) => {
-
+const CardSymbol: React.FC<ICardSymbolProps> = ({ tradingService, longTrade, shortTrade, closeAll }: ICardSymbolProps) => {
   const dispatch = useDispatch();
   const tickerInfo = useSelector(selectTickerInfo);
   const wallet = useSelector(selectWallet);
@@ -42,50 +37,49 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
   const stopLosses = useSelector(selectStopLosses);
   const positionSize = useSelector(selectPositionSize);
 
+
+
   if (!wallet || !tickerInfo || !ticker || !takeProfits || !stopLosses) {
     return <></>;
   }
 
+  //   //send data to chart tab
+  //   useEffect(() => {
+  //     var limitPriceEmpty = (limitPrice === '' || stopLoss === '' || takeProfit === '')
+  //     var marketOrderEmpty = (stopLoss === '' || takeProfit === '')
 
-//   //send data to chart tab
-//   useEffect(() => {
-//     var limitPriceEmpty = (limitPrice === '' || stopLoss === '' || takeProfit === '')
-//     var marketOrderEmpty = (stopLoss === '' || takeProfit === '')
+  //     if (limitPriceEmpty && orderType === 'limitOrder') {
+  //         dispatch(setCalcInfo(null));
+  //         return;
+  //     } else if (marketOrderEmpty && orderType === 'marketOrder') {
+  //         dispatch(setCalcInfo(null));
+  //         return;
+  //     }
+  //     if (orderType === 'marketOrder') {
 
-//     if (limitPriceEmpty && orderType === 'limitOrder') {
-//         dispatch(setCalcInfo(null));
-//         return;
-//     } else if (marketOrderEmpty && orderType === 'marketOrder') {
-//         dispatch(setCalcInfo(null));
-//         return;
-//     }
-//     if (orderType === 'marketOrder') {
+  //         dispatch(setCalcInfo({
+  //             orderType: orderType,
+  //             stopLoss: stopLoss,
+  //             takeProfit: takeProfit,
+  //             price: null,
+  //             positionType: positionType,
+  //             checkBox: false,
 
-//         dispatch(setCalcInfo({
-//             orderType: orderType,
-//             stopLoss: stopLoss,
-//             takeProfit: takeProfit,
-//             price: null,
-//             positionType: positionType,
-//             checkBox: false,
+  //         }))
+  //     } else if (orderType === 'limitOrder') {
 
-//         }))
-//     } else if (orderType === 'limitOrder') {
+  //         dispatch(setCalcInfo({
+  //             orderType: orderType,
+  //             takeProfit: takeProfit,
+  //             stopLoss: stopLoss,
+  //             price: limitPrice,
+  //             positionType: positionType,
+  //             checkBox: checkBox,
+  //         })
 
-
-//         dispatch(setCalcInfo({
-//             orderType: orderType,
-//             takeProfit: takeProfit,
-//             stopLoss: stopLoss,
-//             price: limitPrice,
-//             positionType: positionType,
-//             checkBox: checkBox,
-//         })
-
-//         )
-//     }
-// }, [stopLoss, takeProfit, limitPrice, positionType, orderType, paramChartClicked, checkBox])
-
+  //         )
+  //     }
+  // }, [stopLoss, takeProfit, limitPrice, positionType, orderType, paramChartClicked, checkBox])
 
   const coin = wallet.coin[0];
   // useEffect(() => {
@@ -99,26 +93,13 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
   // }, [symbolInfo]);
 
   const orderQtyChanged = (value: number) => {
-    dispatch(updatePositionSize(value))
+    dispatch(updatePositionSize(value));
   };
 
   const getMaxOrderQty = (): number => {
     const maxWalletOrderAmmount = parseFloat(coin.availableToWithdraw) / parseFloat(ticker.lastPrice);
     return maxWalletOrderAmmount || 0;
   };
-
-  const takeProfit1 = { ...takeProfits[0] };
-  const stopLoss1 = { ...stopLosses[0] };
-  const updateTakeProfitHandler = (v: number) => {
-    takeProfit1.ticks = v;
-    dispatch(updateTakeProfit([takeProfit1]));
-  };
-
-  const updateStopLossHandler = (v: number) => {
-    stopLoss1.ticks = v;
-    dispatch(updateStopLoss([stopLoss1]));
-  };
-
   const {
     lotSizeFilter: { minOrderQty, qtyStep },
   } = tickerInfo;
@@ -139,18 +120,18 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
           </span>
         </Col>
       </Row>
+
+        <LeverageSelector />
+        <PositionModeSelector />
+        <MarginModeSelector />
+
       <Row>
         <Col>
-          <span>TP</span>
-          <span>
-            <NumericInput value={takeProfit1.ticks} onChange={updateTakeProfitHandler} />
-          </span>
+        
+          
         </Col>
         <Col>
-          <span>SL</span>
-          <span>
-            <NumericInput value={stopLoss1.ticks} onChange={updateStopLossHandler} />
-          </span>
+       
         </Col>
       </Row>
 
@@ -160,7 +141,7 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({
         value={positionSize}
         max={getMaxOrderQty()}
         step={tradingService.convertToNumber(qtyStep)}
-        onValueChange={orderQtyChanged}
+        onValueChanged={orderQtyChanged}
       />
 
       <div className="inline-flex w-full justify-center space-x-4 pt-3">

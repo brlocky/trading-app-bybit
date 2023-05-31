@@ -1,18 +1,8 @@
 import { LinearInverseInstrumentInfoV5, LinearPositionIdx, RestClientV5 } from 'bybit-api';
 import { IPosition } from '../types';
+import { toast } from 'react-toastify';
 
 export interface ITradingService {
-  // openLongTrade: (positionSize: string, price?: number) => Promise<void>;
-  // openMarketLongTrade: (positionSize: string) => Promise<void>;
-  // openMarketShortTrade: (positionSize: string) => Promise<void>;
-  // closeLongTrade: (positionSize: string, price?: number) => Promise<void>;
-  // openShortTrade: (positionSize: string, price?: number) => Promise<void>;
-  // closeShortTrade: (positionSize: string, price?: number) => Promise<void>;
-  // closeAllOrders: () => void;
-
-  // cancelOrder: (order: IOrder) => Promise<void>;
-  // toggleChase: (order: IOrder) => Promise<void>;
-
   addStopLoss: (symbol: string, positionSide: LinearPositionIdx, price: string) => Promise<void>;
   closePosition: (position: IPosition, qty: string, price: string) => Promise<void>;
   getDomNormalizedAggregatorValues: (tickInfo: LinearInverseInstrumentInfoV5) => string[];
@@ -58,6 +48,11 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
         symbol: symbol,
         stopLoss: price,
       })
+      .then((r) => {
+        if (r.retCode !== 0) {
+          toast.error(r.retMsg);
+        }
+      })
       .catch((e) => {
         console.log(e);
       });
@@ -75,6 +70,11 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
         price: price,
         timeInForce: 'PostOnly',
         reduceOnly: true,
+      })
+      .then((r) => {
+        if (r.retCode !== 0) {
+          toast.error(r.retMsg);
+        }
       })
       .catch((e) => {
         console.log(e);

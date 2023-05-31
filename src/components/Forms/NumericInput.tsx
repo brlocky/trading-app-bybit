@@ -5,17 +5,12 @@ const StyledInputWrapper = tw.div`flex h-10 bg-white text-black`;
 const StyledButton = tw.button`w-8 h-full cursor-pointer bg-gray-200`;
 const StyledNumericInputValue = tw.input`text-center w-10`;
 
-interface Props extends Omit<HtmlHTMLAttributes<HTMLDivElement>, 'onChange'> {
-  value?: number;
+interface Props extends HtmlHTMLAttributes<HTMLInputElement> {
+  value: number;
   name?: string;
-  onChange?: (value: number) => void;
 }
 
-export const NumericInput: React.FC<Props> = ({
-  value = 0,
-  onChange,
-  ...restProps
-}: Props) => {
+export const NumericInput: React.FC<Props> = ({ value = 0, onChange, ...restProps }: Props) => {
   const [inputValue, setInputValue] = useState(value);
 
   useEffect(() => {
@@ -26,14 +21,24 @@ export const NumericInput: React.FC<Props> = ({
     if (inputValue - 1 >= 0) {
       const newValue = inputValue - 1;
       setInputValue(newValue);
-      onChange && onChange(newValue);
+      onChange &&
+        onChange({
+          target: {
+            value: newValue.toString(),
+          },
+        } as React.ChangeEvent<HTMLInputElement>);
     }
   };
 
   const handleIncrement = () => {
     const newValue = inputValue + 1;
     setInputValue(newValue);
-    onChange && onChange(newValue);
+    onChange &&
+      onChange({
+        target: {
+          value: newValue.toString(),
+        },
+      } as React.ChangeEvent<HTMLInputElement>);
   };
 
   return (
@@ -41,7 +46,7 @@ export const NumericInput: React.FC<Props> = ({
       <StyledButton onClick={handleDecrement}>
         <span>−</span>
       </StyledButton>
-      <StyledNumericInputValue value={inputValue}/>
+      <StyledNumericInputValue value={value} readOnly />
       <StyledButton onClick={handleIncrement}>
         <span>+</span>
       </StyledButton>
