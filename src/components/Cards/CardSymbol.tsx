@@ -35,7 +35,6 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({ tradingService, longTrade, sho
   const takeProfits = useSelector(selectTakeProfits);
   const stopLosses = useSelector(selectStopLosses);
   const positionSize = useSelector(selectPositionSize);
-
   if (!wallet || !tickerInfo || !ticker || !takeProfits || !stopLosses) {
     return <></>;
   }
@@ -60,7 +59,7 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({ tradingService, longTrade, sho
         <Col>
           <span>Equity:</span>
           <span className="w-full justify-end">
-            <b>{tradingService.formatCurrency(coin.equity)}</b> USDT
+            <b>{tradingService.formatCurrency((Number(coin.equity) * leverage).toString())}</b> USDT
           </span>
         </Col>
         <Col>

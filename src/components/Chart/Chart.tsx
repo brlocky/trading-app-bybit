@@ -10,6 +10,7 @@ import { CandlestickDataWithVolume } from '../../types';
 
 const TP = 'TP';
 const SL = 'SL';
+const ENTRY = 'Entry';
 interface Props {
   dataService: IDataService;
   tradingService: ITradingService;
@@ -144,8 +145,8 @@ export const Chart: React.FC<Props> = (props) => {
 
       // create price lines (current price) - subject to change
       entryPriceLine.current = newSeries.current.createPriceLine({
-        title: 'entry @',
-        color: '#b0c4de',
+        title: ENTRY + ' @',
+        color: 'blue',
         lineWidth: 1,
         lineStyle: null,
         axisLabelVisible: true,
@@ -157,7 +158,7 @@ export const Chart: React.FC<Props> = (props) => {
       stopLossPriceLine.current = newSeries.current.createPriceLine({
         title: SL + ' @',
         color: 'red',
-        lineWidth: 2,
+        lineWidth: 1,
         lineStyle: null,
         axisLabelVisible: true,
         lineVisible: true,
@@ -168,7 +169,7 @@ export const Chart: React.FC<Props> = (props) => {
       takeProfPriceLine.current = newSeries.current.createPriceLine({
         title: TP + ' @',
         color: 'green',
-        lineWidth: 2,
+        lineWidth: 1,
         lineStyle: null,
         axisLabelVisible: true,
         lineVisible: true,
@@ -297,25 +298,25 @@ export const Chart: React.FC<Props> = (props) => {
       coinAmount = Number(currentPosition.size);
     }
 
-    takeProfPriceLine.current.applyOptions({
-      price: tp,
-    });
-
-    stopLossPriceLine.current.applyOptions({
-      price: sl,
-    });
-
-    entryPriceLine.current.applyOptions({
-      price: entry,
-    });
-
+    const pnLCurrent = calculateTargetPnL(Number(kline?.close), Number(entry), coinAmount);
     const pnLTakeProfit = calculateTargetPnL(Number(tp), Number(entry), coinAmount);
     const pnLStopLoss = calculateTargetPnL(Number(sl), Number(entry), coinAmount);
     takeProfPriceLine.current.applyOptions({
       title: TP + ' ' + pnLTakeProfit + '€',
+      lineWidth: currentPosition ? 2 : 1,
+      price: tp,
     });
+
     stopLossPriceLine.current.applyOptions({
       title: SL + ' ' + pnLStopLoss + '€',
+      lineWidth: currentPosition ? 2 : 1,
+      price: sl,
+    });
+
+    entryPriceLine.current.applyOptions({
+      title: currentPosition ? pnLCurrent + '€' : ENTRY + '@',
+      lineWidth: currentPosition ? 2 : 1,
+      price: entry,
     });
   };
 

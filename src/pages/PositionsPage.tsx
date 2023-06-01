@@ -87,7 +87,7 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
 
         <div className="grid gap-4 ">
           <CardPositions tradingService={tradingService} />
-          <CardOrders positions={positions} orders={orders} cancelOrder={cancelOrder} />
+          {/* <CardOrders positions={positions} orders={orders} cancelOrder={cancelOrder} /> */}
         </div>
       </PositionPageContent>
     </ContentWrapper>

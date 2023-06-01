@@ -89,18 +89,26 @@ const symbolSlice = createSlice({
     },
     updateExecutions(state, action: PayloadAction<ExecutionV5[]>) {
       const currentOrders = [...state.orders];
+      const currentPositions = [...state.positions];
       const executions = action.payload;
 
       executions.forEach((execution) => {
-        const index = currentOrders.findIndex((o) => o.orderId === execution.orderId);
+        const index = currentOrders.findIndex((o) => o.symbol === execution.symbol && o.side === execution.side && o.qty === execution.execQty);
 
         // Remove Order
         if (index !== -1) {
           currentOrders.splice(index, 1);
         }
+
+        const index2 = currentPositions.findIndex((c) => c.symbol === execution.symbol && c.side === execution.side && c.size === execution.execQty);
+        // Remove Position
+        if (index2 === -1) {
+          currentPositions.splice(index, 1);
+        }
       });
 
       state.orders = currentOrders;
+      state.positions = currentPositions;
     },
     updatePositions(state, action: PayloadAction<PositionV5[]>) {
       const currentPositions = [...state.positions];
