@@ -59,7 +59,7 @@ function withTradingControl<P extends WithTradingControlProps>(
 
       const positionInfoPromise = apiClient.getPositionInfo({
         category: 'linear',
-        symbol: symbol,
+        settleCoin: 'USDT',
       });
 
       const walletInfoPromise = apiClient.getWalletBalance({
