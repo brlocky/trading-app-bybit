@@ -1,5 +1,5 @@
-import { LinearInverseInstrumentInfoV5, LinearPositionIdx } from 'bybit-api';
-import { IOrder, IPosition, ITicker, ITarget } from '../types';
+import { LinearPositionIdx, PositionV5 } from 'bybit-api';
+import { IOrder, ITicker } from '../types';
 
 export const calculateOrderPnL = (entryPrice: string, order: IOrder): string | null => {
   const startPrice = parseFloat(entryPrice);
@@ -34,13 +34,13 @@ export const isOpenShort = (order: IOrder): boolean => order.positionIdx === Lin
 export const isCloseShort = (order: IOrder): boolean => order.positionIdx === LinearPositionIdx.SellSide && order.side === 'Buy';
 export const isOrderStopLossOrTakeProfit = (o: IOrder): boolean => ['TakeProfit', 'StopLoss'].includes(o.stopOrderType || '');
 
-export const calculatePositionPnL = (position: IPosition, price: ITicker): string => {
+export const calculatePositionPnL = (position: PositionV5, price: ITicker): string => {
   let diff = 0;
   if (position.side === 'Sell') {
-    diff = parseFloat(position.entryPrice) - parseFloat(price.lastPrice);
+    diff = parseFloat(position.avgPrice) - parseFloat(price.lastPrice);
   }
   if (position.side === 'Buy') {
-    diff = parseFloat(price.lastPrice) - parseFloat(position.entryPrice);
+    diff = parseFloat(price.lastPrice) - parseFloat(position.avgPrice);
   }
 
   const pl = diff * parseFloat(position.size);
@@ -48,18 +48,18 @@ export const calculatePositionPnL = (position: IPosition, price: ITicker): strin
   return pl.toFixed(4);
 };
 
-export const formatCurrency = (value: string) => {
-  return parseFloat(value).toFixed(2) + ' USDT';
+export const formatCurrency = (value: string, precision?: string) => {
+  return parseFloat(value).toFixed(Number(precision) || 2) + ' USDT';
 };
 
-export const calculateClosePositionSize = (order: IPosition, percentage: number): string => {
+export const calculateClosePositionSize = (order: PositionV5, percentage: number): string => {
   return ((parseFloat(order.size) * percentage) / 100).toFixed(3);
 };
 
-export const getOrderEntryFromPositions = (positions: IPosition[], order: IOrder): string => {
+export const getOrderEntryFromPositions = (positions: PositionV5[], order: IOrder): string => {
   const p = positions.find((p) => p.symbol === order.symbol && p.positionIdx === order.positionIdx);
 
-  return p ? p.entryPrice : '0';
+  return p ? p.avgPrice : '0';
 };
 
 export const calculateTargetPnL = (target: number, price: number, positionSize: number): string => {

@@ -1,7 +1,6 @@
 import React, { ComponentType, useEffect } from 'react';
 import { useApi } from '../providers';
 import { LinearPositionIdx, OrderSideV5 } from 'bybit-api';
-import { mapApiToWsPositionV5Response } from '../mappers';
 import { IOrder } from '../types';
 import { isOrderStopLossOrTakeProfit } from '../utils/tradeUtils';
 import { DataService, IDataService, ITradingService, TradingService } from '../services';
@@ -69,10 +68,10 @@ function withTradingControl<P extends WithTradingControlProps>(
       });
 
       Promise.all([activeOrdersPromise, positionInfoPromise, walletInfoPromise]).then(([orderInfo, positionInfo, walletInfo]) => {
-        orderInfo.retCode === 0 ? dispatch(updateOrders(orderInfo.result.list)) : toast.error('loading orders');
+        orderInfo.retCode === 0 ? dispatch(updateOrders(orderInfo.result.list)) : toast.error('Error loading orders');
         positionInfo.retCode === 0
-          ? dispatch(updatePositions(positionInfo.result.list.map(mapApiToWsPositionV5Response)))
-          : toast.error('updatding position');
+          ? dispatch(updatePositions(positionInfo.result.list))
+          : toast.error('Error loading positions');
 
         const usdtWallet = walletInfo.result.list[0];
         if (usdtWallet) {
@@ -166,7 +165,6 @@ function withTradingControl<P extends WithTradingControlProps>(
     };
 
     const getPositionMode = (type: OrderSideV5): LinearPositionIdx => {
-      console.log('getPositionMode', type, positionMode, positionMode === 0 ? LinearPositionIdx.OneWayMode : type === 'Buy' ? LinearPositionIdx.BuySide : LinearPositionIdx.SellSide)
       return positionMode === 0 ? LinearPositionIdx.OneWayMode : type === 'Buy' ? LinearPositionIdx.BuySide : LinearPositionIdx.SellSide;
     };
 

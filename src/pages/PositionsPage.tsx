@@ -1,4 +1,4 @@
-import { KlineIntervalV3, LinearInverseInstrumentInfoV5 } from 'bybit-api';
+import { LinearInverseInstrumentInfoV5 } from 'bybit-api';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import tw from 'twin.macro';
@@ -11,14 +11,7 @@ import { SymbolSelector } from '../components/Trade/SymbolSelector';
 import withTradingControl, { WithTradingControlProps } from '../hoc/withTradingControl';
 import { useApi } from '../providers';
 import { selectPositionSize } from '../slices';
-import {
-  selectInterval,
-  selectOrders,
-  selectPositions,
-  selectSymbol,
-  selectTicker,
-  updateTickerInfo,
-} from '../slices/symbolSlice';
+import { selectOrders, selectPositions, selectSymbol, updateTickerInfo } from '../slices/symbolSlice';
 import { AppDispatch } from '../store';
 
 const ContentWrapper = tw.div`
@@ -50,10 +43,8 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
   cancelOrder,
 }) => {
   const symbol = useSelector(selectSymbol);
-  const interval = useSelector(selectInterval);
   const orders = useSelector(selectOrders);
   const positions = useSelector(selectPositions);
-  const ticker = useSelector(selectTicker);
   const positionSize = useSelector(selectPositionSize);
 
   const dispatch = useDispatch<AppDispatch>();
@@ -82,7 +73,7 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
 
         <div className="grid grid-cols-10 gap-x-2">
           <div className="col-span-7">
-            <Chart dataService={dataService} />
+            <Chart dataService={dataService} tradingService={tradingService} />
           </div>
           <div className="col-span-3">
             <CardSymbol

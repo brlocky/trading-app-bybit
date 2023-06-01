@@ -1,5 +1,5 @@
 import React from 'react';
-import { LinearPositionIdx } from 'bybit-api';
+import { LinearPositionIdx, PositionV5 } from 'bybit-api';
 import Button from '../Button/Button';
 import tw from 'twin.macro';
 import {
@@ -8,11 +8,11 @@ import {
   getOrderEntryFromPositions,
   isOrderStopLossOrTakeProfit,
 } from '../../utils/tradeUtils';
-import { IOrder, IPosition } from '../../types';
+import { IOrder } from '../../types';
 
 interface ICardOrdersProps {
   orders: IOrder[];
-  positions: IPosition[];
+  positions: PositionV5[];
   cancelOrder: (o: IOrder) => void;
 }
 

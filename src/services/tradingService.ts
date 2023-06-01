@@ -1,10 +1,10 @@
-import { LinearInverseInstrumentInfoV5, LinearPositionIdx, RestClientV5 } from 'bybit-api';
-import { IPosition } from '../types';
+import { LinearInverseInstrumentInfoV5, PositionV5, RestClientV5 } from 'bybit-api';
 import { toast } from 'react-toastify';
 
 export interface ITradingService {
-  addStopLoss: (position: IPosition, price: string) => Promise<void>;
-  closePosition: (position: IPosition, qty?: string, price?: string) => Promise<void>;
+  addStopLoss: (position: PositionV5, price: string) => Promise<void>;
+  addTakeProfit: (position: PositionV5, price: string) => Promise<void>;
+  closePosition: (position: PositionV5, qty?: string, price?: string) => Promise<void>;
   getDomNormalizedAggregatorValues: (tickInfo: LinearInverseInstrumentInfoV5) => string[];
   convertToNumber: (value: string) => number;
   formatCurrency: (value: string) => string;
@@ -40,7 +40,7 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
     console.log('myFunction3');
   };
 
-  const addStopLoss = async (p: IPosition, price: string) => {
+  const addStopLoss = async (p: PositionV5, price: string) => {
     apiClient
       .setTradingStop({
         positionIdx: p.positionIdx,
@@ -58,7 +58,25 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
       });
   };
 
-  const closePosition = async (position: IPosition, qty?: string, price?: string) => {
+  const addTakeProfit = async (p: PositionV5, price: string) => {
+    apiClient
+      .setTradingStop({
+        positionIdx: p.positionIdx,
+        category: 'linear',
+        symbol: p.symbol,
+        takeProfit: price,
+      })
+      .then((r) => {
+        if (r.retCode !== 0) {
+          toast.error(r.retMsg);
+        }
+      })
+      .catch((e) => {
+        console.log(e);
+      });
+  };
+
+  const closePosition = async (position: PositionV5, qty?: string, price?: string) => {
     apiClient
       .submitOrder({
         positionIdx: position.positionIdx,
@@ -83,6 +101,7 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
 
   return {
     addStopLoss,
+    addTakeProfit,
     closePosition,
     getDomNormalizedAggregatorValues,
     convertToNumber,

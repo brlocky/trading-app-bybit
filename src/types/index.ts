@@ -1,10 +1,4 @@
-import {
-  AccountOrderV5,
-  PositionIdx,
-  TPSLModeV5,
-  TickerLinearInverseV5,
-  TradeModeV5,
-} from 'bybit-api';
+import { AccountOrderV5, TickerLinearInverseV5 } from 'bybit-api';
 import { CandlestickData } from '@felipecsl/lightweight-charts';
 
 export interface IWsConfig {
@@ -19,39 +13,11 @@ export interface IWsResponseData<T> {
   data: T;
 }
 
-export type ITicker = TickerLinearInverseV5
-
-export interface IPosition {
-  bustPrice?: string;
-  createdTime: string;
-  cumRealisedPnl: string;
-  entryPrice: string;
-  leverage?: string;
-  liqPrice: string;
-  markPrice: string;
-  positionBalance: string;
-  positionIdx: PositionIdx;
-  positionMM?: string;
-  positionIM?: string;
-  positionStatus: 'Normal' | 'Liq' | 'Adl';
-  positionValue: string;
-  riskId: number;
-  riskLimitValue: string;
-  side: string;
-  size: string;
-  stopLoss?: string;
-  symbol: string;
-  takeProfit?: string;
-  tpslMode?: TPSLModeV5;
-  tradeMode: TradeModeV5;
-  trailingStop?: string;
-  unrealisedPnl: string;
-}
+export type ITicker = TickerLinearInverseV5;
 
 export interface IOrder extends AccountOrderV5 {
   chase?: boolean;
 }
-
 
 export interface IOrderbookResponse {
   s: string;
@@ -63,8 +29,7 @@ export interface IOrderbookResponse {
 
 export type CandlestickDataWithVolume = CandlestickData & { volume: number };
 
-
 export interface ITarget {
-  price: number,
-  qty: number,
+  price: number;
+  qty: number;
 }

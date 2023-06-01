@@ -4,14 +4,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import { selectInterval, selectLastKline, selectPositions, selectTicker, selectTickerInfo } from '../../slices/symbolSlice';
 import { selectPositionSize, selectStopLosses, selectTakeProfits, updateStopLoss, updateTakeProfit } from '../../slices';
 import { calculateTargetPnL } from '../../utils/tradeUtils';
-import { IDataService } from '../../services';
-import { KlineIntervalV3 } from 'bybit-api';
-import { CandlestickDataWithVolume, IPosition } from '../../types';
+import { IDataService, ITradingService } from '../../services';
+import { KlineIntervalV3, PositionV5 } from 'bybit-api';
+import { CandlestickDataWithVolume } from '../../types';
 
 const TP = 'TP';
 const SL = 'SL';
 interface Props {
   dataService: IDataService;
+  tradingService: ITradingService;
   colors?: {
     backgroundColor?: string;
     lineColor?: string;
@@ -25,6 +26,7 @@ interface Props {
 export const Chart: React.FC<Props> = (props) => {
   const {
     dataService,
+    tradingService,
     colors: {
       backgroundColor = 'white',
       lineColor = '#2962FF',
@@ -56,9 +58,6 @@ export const Chart: React.FC<Props> = (props) => {
   const takeProfits = useSelector(selectTakeProfits);
   const stopLosses = useSelector(selectStopLosses);
 
-  const takeProfit1 = takeProfits[0];
-  const stopLoss1 = stopLosses[0];
-
   const dispatch = useDispatch();
 
   const handleResize = () => {
@@ -69,19 +68,40 @@ export const Chart: React.FC<Props> = (props) => {
     }
   };
 
-  function priceLineHandler(params: CustomPriceLineDraggedEventParams) {
+  const priceLineHandler = (params: CustomPriceLineDraggedEventParams) => {
     const { customPriceLine } = params;
     const { title, price } = customPriceLine.options();
     const formatedPrice: string = chartInstanceRef.current.priceScale('right').formatPrice(price);
 
     if (title.startsWith(TP)) {
-      dispatch(updateTakeProfit([{ ...takeProfit1, price: Number(formatedPrice) }]));
+      if (Number(formatedPrice) >= 0) {
+        dispatch(updateTakeProfit([{ ...takeProfits[0], price: Number(formatedPrice) }]));
+      }
     }
 
     if (title.startsWith(SL)) {
-      dispatch(updateStopLoss([{ ...stopLoss1, price: Number(formatedPrice) }]));
+      if (Number(formatedPrice) >= 0) {
+        dispatch(updateStopLoss([{ ...stopLosses[0], price: Number(formatedPrice) }]));
+      }
     }
-  }
+  };
+
+  const updateCurrentOrderTPnSL = () => {
+    const currentPosition = getCurrentPosition();
+    if (!currentPosition) {
+      return;
+    }
+
+    if (Number(currentPosition?.takeProfit) !== takeProfits[0].price) {
+      const tpPrice: string = chartInstanceRef.current.priceScale('right').formatPrice(takeProfits[0].price);
+      tradingService.addTakeProfit(currentPosition, tpPrice);
+    }
+
+    if (Number(currentPosition?.stopLoss) !== stopLosses[0].price) {
+      const slPrice: string = chartInstanceRef.current.priceScale('right').formatPrice(stopLosses[0].price);
+      tradingService.addStopLoss(currentPosition, slPrice);
+    }
+  };
 
   useEffect(() => {
     if (chartContainerRef.current) {
@@ -194,14 +214,23 @@ export const Chart: React.FC<Props> = (props) => {
         })
         .then((r) => {
           setChartData(r);
-          if (r.length) {
+          const position = getCurrentPosition();
+          if (r.length && !position) {
             const price = r[r.length - 1].close;
-            dispatch(updateTakeProfit([{ ...takeProfit1, price: Number(price) }]));
-            dispatch(updateStopLoss([{ ...stopLoss1, price: Number(price) }]));
+            dispatch(updateTakeProfit([{ ...takeProfits[0], price: Number(price) }]));
+            dispatch(updateStopLoss([{ ...stopLosses[0], price: Number(price) }]));
           }
         });
     }
   }, [tickerInfo, interval]);
+
+  useEffect(() => {
+    const position = getCurrentPosition();
+    if (position) {
+      dispatch(updateTakeProfit([{ ...takeProfits[0], price: Number(position.takeProfit) }]));
+      dispatch(updateStopLoss([{ ...stopLosses[0], price: Number(position.stopLoss) }]));
+    }
+  }, [positions]);
 
   useEffect(() => {
     newSeries.current.setData(chartData);
@@ -221,6 +250,7 @@ export const Chart: React.FC<Props> = (props) => {
 
   useEffect(() => {
     if (kline) {
+      updateCurrentOrderTPnSL();
       updateTPnSL();
     }
   }, [takeProfits, stopLosses]);
@@ -231,22 +261,22 @@ export const Chart: React.FC<Props> = (props) => {
     }
   }, [positionSize]);
 
-  const getCurrentPosition = (): IPosition | undefined => {
+  const getCurrentPosition = (): PositionV5 | undefined => {
     return positions.find((p) => p.symbol === tickerInfo?.symbol && Number(p.positionValue) > 0);
   };
   useEffect(() => {
-    const currentSymbolPosition = getCurrentPosition();
-    if (currentSymbolPosition) {
+    const currentPosition = getCurrentPosition();
+    if (currentPosition) {
       takeProfPriceLine.current.applyOptions({
-        price: currentSymbolPosition.takeProfit,
+        price: currentPosition.takeProfit,
       });
 
       stopLossPriceLine.current.applyOptions({
-        price: currentSymbolPosition.stopLoss,
+        price: currentPosition.stopLoss,
       });
 
       entryPriceLine.current.applyOptions({
-        price: currentSymbolPosition.entryPrice,
+        price: currentPosition.avgPrice,
         draggable: false,
       });
     }
@@ -255,14 +285,15 @@ export const Chart: React.FC<Props> = (props) => {
   const updateTPnSL = () => {
     const currentPosition = getCurrentPosition();
 
-    let tp = takeProfit1.price,
-      sl = stopLoss1.price,
+    let tp = takeProfits[0].price,
+      sl = stopLosses[0].price,
       entry = ticker?.lastPrice,
       coinAmount = positionSize;
+
     if (currentPosition) {
-      entry = currentPosition.entryPrice;
-      currentPosition.takeProfit ? (tp = Number(currentPosition.takeProfit)) : null;
-      currentPosition.stopLoss ? (sl = Number(currentPosition.stopLoss)) : null;
+      entry = currentPosition.avgPrice;
+      currentPosition.takeProfit ? (tp = Number(currentPosition.takeProfit)) : 0;
+      currentPosition.stopLoss ? (sl = Number(currentPosition.stopLoss)) : 0;
       coinAmount = Number(currentPosition.size);
     }
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { mapKlineObjToCandleStickData } from '../mappers';
+import { mapApiToWsPositionV5Response, mapKlineObjToCandleStickData } from '../mappers';
 import { useSocket } from '../providers';
 import {
   selectTickerInfo,
@@ -65,7 +65,7 @@ export const SocketListener: React.FC = () => {
 
       switch (topic) {
         case 'position':
-          dispatch(updatePositions(data));
+          dispatch(updatePositions(data.map(mapApiToWsPositionV5Response)));
           break;
 
         case 'wallet':

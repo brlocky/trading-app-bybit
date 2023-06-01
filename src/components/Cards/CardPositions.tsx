@@ -1,11 +1,10 @@
-import { LinearPositionIdx } from 'bybit-api';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import tw from 'twin.macro';
 import { ITradingService } from '../../services';
-import { selectPositions, selectTicker } from '../../slices';
-import { IPosition } from '../../types';
+import { selectPositions, selectTicker, selectTickerInfo, updateSymbol } from '../../slices';
 import { calculateClosePositionSize, calculatePositionPnL, formatCurrency } from '../../utils/tradeUtils';
 import Button from '../Button/Button';
+import { PositionV5 } from 'bybit-api';
 
 interface ICardPositionsProps {
   tradingService: ITradingService;
@@ -44,7 +43,9 @@ border-t-2
 export default function CardPositions({ tradingService }: ICardPositionsProps) {
   const ticker = useSelector(selectTicker);
   const positions = useSelector(selectPositions);
+  const tickerInfo = useSelector(selectTickerInfo);
 
+  const dispatch = useDispatch();
   if (!ticker) {
     return <></>;
   }
@@ -52,8 +53,7 @@ export default function CardPositions({ tradingService }: ICardPositionsProps) {
 
   const { closePosition, addStopLoss } = tradingService;
 
-  const renderPositionActions = (p: IPosition) => {
-    const closePrice = p.side === 'Buy' ? ticker.ask1Price : ticker.bid1Price;
+  const renderPositionActions = (p: PositionV5) => {
     return (
       <PositionActionsContainer>
         <Button
@@ -90,7 +90,7 @@ export default function CardPositions({ tradingService }: ICardPositionsProps) {
         </Button>
         <Button
           onClick={() => {
-            addStopLoss(p, p.entryPrice);
+            addStopLoss(p, p.avgPrice);
           }}
           key={'BE'}
         >
@@ -112,11 +112,11 @@ export default function CardPositions({ tradingService }: ICardPositionsProps) {
     .filter((p) => parseFloat(p.size) > 0)
     .map((p, index) => {
       return (
-        <PositionRowContainer key={index}>
-          <PositionPropContainer>
+        <PositionRowContainer key={index} onClick={() => dispatch(updateSymbol(p.symbol))}>
+          <PositionPropContainer >
             <i className={p.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {p.symbol}
           </PositionPropContainer>
-          <PositionPropContainer>{formatCurrency(p.entryPrice)}</PositionPropContainer>
+          <PositionPropContainer>{formatCurrency(p.avgPrice, tickerInfo?.priceScale)}</PositionPropContainer>
           <PositionPropContainer>{p.size}</PositionPropContainer>
           <PositionPropContainer>
             {parseFloat(calculatePositionPnL(p, ticker)) >= 0 ? (

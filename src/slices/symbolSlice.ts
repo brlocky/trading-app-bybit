@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { ExecutionV5, LinearInverseInstrumentInfoV5, WalletBalanceV5 } from 'bybit-api';
+import { ExecutionV5, LinearInverseInstrumentInfoV5, PositionV5, WalletBalanceV5 } from 'bybit-api';
 import { RootState } from '../store';
-import { CandlestickDataWithVolume, IOrder, IPosition, ITicker } from '../types';
+import { CandlestickDataWithVolume, IOrder, ITicker } from '../types';
 
 interface ISymbolState {
   symbol: string | undefined;
@@ -10,7 +10,7 @@ interface ISymbolState {
   tickerInfo: LinearInverseInstrumentInfoV5 | undefined;
   orders: IOrder[];
   wallet: WalletBalanceV5 | undefined;
-  positions: IPosition[];
+  positions: PositionV5[];
   executions: ExecutionV5[];
   kline: CandlestickDataWithVolume | undefined;
 }
@@ -102,8 +102,21 @@ const symbolSlice = createSlice({
 
       state.orders = currentOrders;
     },
-    updatePositions(state, action: PayloadAction<IPosition[]>) {
-      state.positions = [...action.payload];
+    updatePositions(state, action: PayloadAction<PositionV5[]>) {
+      const currentPositions = [...state.positions];
+
+      action.payload.forEach((p) => {
+        const index = currentPositions.findIndex((c) => c.symbol === p.symbol && c.positionIdx === p.positionIdx && c.side === p.side);
+        // add
+        if (index === -1) {
+          currentPositions.push(p);
+        } else {
+          // update
+          currentPositions[index] = { ...currentPositions[index], ...p };
+        }
+      });
+
+      state.positions = [...currentPositions];
     },
   },
 });
