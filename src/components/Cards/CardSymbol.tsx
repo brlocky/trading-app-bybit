@@ -1,23 +1,11 @@
 import React from 'react';
-import SlidePicker from '../Forms/SlidePicker';
-import Button from '../Button/Button';
-import { ITradingService } from '../../services';
 import { useDispatch, useSelector } from 'react-redux';
 import tw from 'twin.macro';
-import {
-  selectTickerInfo,
-  selectWallet,
-  selectTakeProfits,
-  selectStopLosses,
-  selectPositionSize,
-  updatePositionSize,
-  selectLeverage,
-  selectTicker,
-} from '../../slices';
+import { ITradingService } from '../../services';
+import { selectLeverage, selectPositionSize, selectTicker, selectTickerInfo, selectWallet, updatePositionSize } from '../../slices';
+import Button from '../Button/Button';
+import SlidePicker from '../Forms/SlidePicker';
 import { LeverageSelector, MarginModeSelector, PositionModeSelector } from '../Trade';
-
-const Row = tw.div`inline-flex w-full justify-between pb-3`;
-const Col = tw.div`flex flex-col md:flex-row items-center gap-x-5`;
 
 interface ICardSymbolProps {
   tradingService: ITradingService;
@@ -32,10 +20,8 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({ tradingService, longTrade, sho
   const wallet = useSelector(selectWallet);
   const leverage = useSelector(selectLeverage);
   const ticker = useSelector(selectTicker);
-  const takeProfits = useSelector(selectTakeProfits);
-  const stopLosses = useSelector(selectStopLosses);
   const positionSize = useSelector(selectPositionSize);
-  if (!wallet || !tickerInfo || !ticker || !takeProfits || !stopLosses) {
+  if (!wallet || !tickerInfo || !ticker) {
     return <></>;
   }
 
@@ -45,49 +31,47 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({ tradingService, longTrade, sho
     dispatch(updatePositionSize(value));
   };
 
-  const getMaxOrderQty = (): number => {
-    const maxWalletOrderAmmount = parseFloat(coin.availableToWithdraw) / parseFloat(ticker.lastPrice) * leverage;
-    return Math.min(Number(tickerInfo.lotSizeFilter.maxOrderQty), maxWalletOrderAmmount || 0);
-  };
   const {
     lotSizeFilter: { minOrderQty, qtyStep },
   } = tickerInfo;
 
   return (
-    <div className="flex flex-col">
-      <Row>
-        <Col>
-          <span>Equity:</span>
+    <div className="flex h-full flex-col justify-around">
+      <div className="flex justify-between pb-5">
+        <div className="flex flex-col">
+          <span>Equity</span>
           <span className="w-full justify-end">
             <b>{tradingService.formatCurrency((Number(coin.equity) * leverage).toString())}</b> USDT
           </span>
-        </Col>
-        <Col>
-          <span>Available Balance:</span>
+        </div>
+        <div className="flex flex-col text-right">
+          <span>Balance</span>
           <span>
             <b>{tradingService.formatCurrency(coin.availableToWithdraw)}</b> USDT
           </span>
-        </Col>
-      </Row>
+        </div>
+      </div>
 
       <LeverageSelector />
       <PositionModeSelector />
       <MarginModeSelector />
 
-      <Row>
-        <Col></Col>
-        <Col></Col>
-      </Row>
-
-      <SlidePicker
-        showValue
-        min={Number(minOrderQty)}
-        value={positionSize}
-        max={getMaxOrderQty()}
-        step={Number(qtyStep)}
-        onValueChanged={orderQtyChanged}
-      />
-
+      <div>
+        <div className="flex justify-between">
+          <span>
+            {positionSize} {tickerInfo.baseCoin}
+          </span>
+          <span>Value: {(positionSize * Number(ticker.lastPrice)).toFixed(2)} €</span>
+          <span>Fee: {((positionSize * Number(ticker.lastPrice) * 0.06) / 100).toFixed(2)} €</span>
+        </div>
+        <SlidePicker
+          min={Number(minOrderQty)}
+          value={positionSize}
+          max={Number(tickerInfo.lotSizeFilter.maxOrderQty)}
+          step={Number(qtyStep)}
+          onValueChanged={orderQtyChanged}
+        />
+      </div>
       <div className="inline-flex w-full justify-center space-x-4 pt-3">
         <Button onClick={longTrade} className="bg-green-300">
           Long

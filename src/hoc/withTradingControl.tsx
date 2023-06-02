@@ -1,7 +1,6 @@
 import React, { ComponentType, useEffect } from 'react';
 import { useApi } from '../providers';
-import { LinearPositionIdx, OrderSideV5 } from 'bybit-api';
-import { IOrder } from '../types';
+import { AccountOrderV5, LinearPositionIdx, OrderSideV5 } from 'bybit-api';
 import { isOrderStopLossOrTakeProfit } from '../utils/tradeUtils';
 import { DataService, IDataService, ITradingService, TradingService } from '../services';
 import { useSelector, useDispatch } from 'react-redux';
@@ -26,7 +25,7 @@ export interface WithTradingControlProps {
   openMarketLongTrade: (positionSize: string) => Promise<void>;
   openMarketShortTrade: (positionSize: string) => Promise<void>;
   closeAllOrders: () => void;
-  cancelOrder: (order: IOrder) => Promise<void>;
+  cancelOrder: (order: AccountOrderV5) => Promise<void>;
 }
 
 function withTradingControl<P extends WithTradingControlProps>(
@@ -79,7 +78,7 @@ function withTradingControl<P extends WithTradingControlProps>(
       });
     };
 
-    const cancelOrder = async (order: IOrder) => {
+    const cancelOrder = async (order: AccountOrderV5) => {
       apiClient
         .cancelOrder({
           category: 'linear',

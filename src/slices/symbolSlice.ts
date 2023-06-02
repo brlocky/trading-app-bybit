@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { ExecutionV5, LinearInverseInstrumentInfoV5, PositionV5, WalletBalanceV5 } from 'bybit-api';
+import { AccountOrderV5, ExecutionV5, LinearInverseInstrumentInfoV5, PositionV5, WalletBalanceV5 } from 'bybit-api';
 import { RootState } from '../store';
-import { CandlestickDataWithVolume, IOrder, ITicker } from '../types';
+import { CandlestickDataWithVolume, ITicker } from '../types';
 
 interface ArrayTicker {
   [name: string]: {
@@ -16,7 +16,7 @@ interface ISymbolState {
   ticker: ITicker | undefined;
   tickers: ArrayTicker;
   tickerInfo: LinearInverseInstrumentInfoV5 | undefined;
-  orders: IOrder[];
+  orders: AccountOrderV5[];
   wallet: WalletBalanceV5 | undefined;
   positions: PositionV5[];
   executions: ExecutionV5[];
@@ -47,14 +47,18 @@ const symbolSlice = createSlice({
       state.interval = action.payload;
     },
     updateTicker(state, action: PayloadAction<ITicker>) {
-      state.ticker = { ...state.ticker, ...action.payload };
+      if (action.payload.symbol === state.symbol) {
+        state.ticker = { ...state.ticker, ...action.payload };
+      }
       state.tickers[action.payload.symbol] = {
         ...state.tickers[action.payload.symbol],
         ticker: { ...state.tickers[action.payload.symbol]?.ticker, ...action.payload },
       };
     },
     updateTickerInfo(state, action: PayloadAction<LinearInverseInstrumentInfoV5>) {
-      state.tickerInfo = { ...action.payload };
+      if (action.payload.symbol === state.symbol) {
+        state.tickerInfo = { ...state.tickerInfo, ...action.payload };
+      }
       state.tickers[action.payload.symbol] = {
         ...state.tickers[action.payload.symbol],
         tickerInfo: { ...action.payload },
@@ -66,7 +70,7 @@ const symbolSlice = createSlice({
     updateWallet(state, action: PayloadAction<WalletBalanceV5>) {
       state.wallet = action.payload;
     },
-    updateOrders(state, action: PayloadAction<IOrder[]>) {
+    updateOrders(state, action: PayloadAction<AccountOrderV5[]>) {
       const currentOrders = [...state.orders];
       const newOrders = action.payload;
 
@@ -94,16 +98,6 @@ const symbolSlice = createSlice({
 
       state.orders = currentOrders;
     },
-    updateOrder(state, action: PayloadAction<IOrder>) {
-      const updateOrder = action.payload;
-      const currentOrders = [...state.orders];
-      const indexOrderToUpdate = currentOrders.findIndex((o) => o.orderId === updateOrder.orderId);
-
-      if (indexOrderToUpdate !== -1) {
-        currentOrders[indexOrderToUpdate] = updateOrder;
-        state.orders = currentOrders;
-      }
-    },
     updateExecutions(state, action: PayloadAction<ExecutionV5[]>) {
       const currentOrders = [...state.orders];
       const currentPositions = [...state.positions];
@@ -113,7 +107,6 @@ const symbolSlice = createSlice({
         const index = currentOrders.findIndex(
           (o) => o.symbol === execution.symbol && o.side === execution.side && o.qty === execution.execQty,
         );
-
         // Remove Order
         if (index !== -1) {
           currentOrders.splice(index, 1);
@@ -158,7 +151,6 @@ export const {
   updateLastKline,
   updateWallet,
   updateOrders,
-  updateOrder,
   updateExecutions,
   updatePositions,
 } = symbolSlice.actions;

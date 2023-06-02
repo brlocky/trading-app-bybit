@@ -1,4 +1,4 @@
-import { AccountOrderV5, TickerLinearInverseV5 } from 'bybit-api';
+import { TickerLinearInverseV5 } from 'bybit-api';
 import { CandlestickData } from '@felipecsl/lightweight-charts';
 
 export interface IWsConfig {
@@ -15,9 +15,6 @@ export interface IWsResponseData<T> {
 
 export type ITicker = TickerLinearInverseV5;
 
-export interface IOrder extends AccountOrderV5 {
-  chase?: boolean;
-}
 
 export interface IOrderbookResponse {
   s: string;

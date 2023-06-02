@@ -8,7 +8,7 @@ import {
   selectTickerInfo,
   updateExecutions,
   updateLastKline,
-  updateOrder,
+  updateOrders,
   updatePositions,
   updateTicker,
   updateWallet,
@@ -103,7 +103,7 @@ export const SocketListener: React.FC = () => {
           break;
 
         case 'order':
-          dispatch(updateOrder(data));
+          dispatch(updateOrders(data));
           break;
 
         case 'execution':

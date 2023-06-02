@@ -1,7 +1,7 @@
-import { LinearPositionIdx, PositionV5 } from 'bybit-api';
-import { IOrder, ITicker } from '../types';
+import { AccountOrderV5, LinearPositionIdx, PositionV5 } from 'bybit-api';
+import { ITicker } from '../types';
 
-export const calculateOrderPnL = (entryPrice: string, order: IOrder): string | null => {
+export const calculateOrderPnL = (entryPrice: string, order: AccountOrderV5): string | null => {
   const startPrice = parseFloat(entryPrice);
   const orderClosePrice = isOrderStopLossOrTakeProfit(order) ? parseFloat(order.triggerPrice || '0') : parseFloat(order.price);
   const orderCloseQty = parseFloat(order.qty);
@@ -28,11 +28,11 @@ export const calculateOrderPnL = (entryPrice: string, order: IOrder): string | n
 };
 
 // Order types
-export const isOpenLong = (order: IOrder): boolean => order.positionIdx === LinearPositionIdx.BuySide && order.side === 'Buy';
-export const isCloseLong = (order: IOrder): boolean => order.positionIdx === LinearPositionIdx.BuySide && order.side === 'Sell';
-export const isOpenShort = (order: IOrder): boolean => order.positionIdx === LinearPositionIdx.SellSide && order.side === 'Sell';
-export const isCloseShort = (order: IOrder): boolean => order.positionIdx === LinearPositionIdx.SellSide && order.side === 'Buy';
-export const isOrderStopLossOrTakeProfit = (o: IOrder): boolean => ['TakeProfit', 'StopLoss'].includes(o.stopOrderType || '');
+export const isOpenLong = (order: AccountOrderV5): boolean => order.positionIdx === LinearPositionIdx.BuySide && order.side === 'Buy';
+export const isCloseLong = (order: AccountOrderV5): boolean => order.positionIdx === LinearPositionIdx.BuySide && order.side === 'Sell';
+export const isOpenShort = (order: AccountOrderV5): boolean => order.positionIdx === LinearPositionIdx.SellSide && order.side === 'Sell';
+export const isCloseShort = (order: AccountOrderV5): boolean => order.positionIdx === LinearPositionIdx.SellSide && order.side === 'Buy';
+export const isOrderStopLossOrTakeProfit = (o: AccountOrderV5): boolean => ['TakeProfit', 'StopLoss'].includes(o.stopOrderType || '');
 
 export const calculatePositionPnL = (position: PositionV5, price: ITicker): string => {
   let diff = 0;
@@ -56,7 +56,7 @@ export const calculateClosePositionSize = (order: PositionV5, percentage: number
   return ((parseFloat(order.size) * percentage) / 100).toFixed(3);
 };
 
-export const getOrderEntryFromPositions = (positions: PositionV5[], order: IOrder): string => {
+export const getOrderEntryFromPositions = (positions: PositionV5[], order: AccountOrderV5): string => {
   const p = positions.find((p) => p.symbol === order.symbol && p.positionIdx === order.positionIdx);
 
   return p ? p.avgPrice : '0';
