@@ -47,7 +47,6 @@ const symbolSlice = createSlice({
       state.interval = action.payload;
     },
     updateTicker(state, action: PayloadAction<ITicker>) {
-      console.log('updateTicker', action.payload.symbol, state.tickers[action.payload.symbol])
       state.ticker = { ...state.ticker, ...action.payload };
       state.tickers[action.payload.symbol] = {
         ...state.tickers[action.payload.symbol],
