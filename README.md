@@ -1,6 +1,6 @@
 # Zcalping non-official ByBit webapp
 
-[Click] (https://trading-app-bybit.vercel.app/) to view it in the browser.
+[Click](https://trading-app-bybit.vercel.app/) to view it in the browser.
 
 
 
