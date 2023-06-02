@@ -45,7 +45,7 @@ export const calculatePositionPnL = (position: PositionV5, price: ITicker): stri
 
   const pl = diff * parseFloat(position.size);
 
-  return pl.toFixed(4);
+  return pl.toFixed(2);
 };
 
 export const formatCurrency = (value: string, precision?: string) => {
@@ -63,5 +63,5 @@ export const getOrderEntryFromPositions = (positions: PositionV5[], order: IOrde
 };
 
 export const calculateTargetPnL = (target: number, price: number, positionSize: number): string => {
-  return ((target - price) * positionSize).toFixed(4);
+  return ((target - price) * positionSize).toFixed(2);
 };

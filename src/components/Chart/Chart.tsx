@@ -1,12 +1,12 @@
-import { createChart, ColorType, CrosshairMode, CustomPriceLineDraggedEventParams } from '@felipecsl/lightweight-charts';
+import { ColorType, CrosshairMode, CustomPriceLineDraggedEventParams, createChart } from '@felipecsl/lightweight-charts';
+import { KlineIntervalV3, PositionV5 } from 'bybit-api';
 import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectInterval, selectLastKline, selectPositions, selectTicker, selectTickerInfo } from '../../slices/symbolSlice';
-import { selectPositionSize, selectStopLosses, selectTakeProfits, updateStopLoss, updateTakeProfit } from '../../slices';
-import { calculateTargetPnL } from '../../utils/tradeUtils';
 import { IDataService, ITradingService } from '../../services';
-import { KlineIntervalV3, PositionV5 } from 'bybit-api';
+import { selectPositionSize, selectStopLosses, selectTakeProfits, updateStopLoss, updateTakeProfit } from '../../slices';
+import { selectInterval, selectLastKline, selectPositions, selectTicker, selectTickerInfo } from '../../slices/symbolSlice';
 import { CandlestickDataWithVolume } from '../../types';
+import { calculateTargetPnL } from '../../utils/tradeUtils';
 
 const TP = 'TP';
 const SL = 'SL';
@@ -284,11 +284,12 @@ export const Chart: React.FC<Props> = (props) => {
   }, [positions]);
 
   const updateTPnSL = () => {
+    if (!tickerInfo || !ticker) return;
     const currentPosition = getCurrentPosition();
 
     let tp = takeProfits[0].price,
       sl = stopLosses[0].price,
-      entry = ticker?.lastPrice,
+      entry = ticker.lastPrice,
       coinAmount = positionSize;
 
     if (currentPosition) {

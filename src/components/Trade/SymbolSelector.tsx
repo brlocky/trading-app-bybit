@@ -26,8 +26,6 @@ export const SymbolSelector: React.FunctionComponent = () => {
 
   useEffect(() => {
     apiClient.getTickers({ category: 'linear' }).then((t) => {
-      // const sorted = t.result.list.sort((a, b) => a.symbol.localeCompare(b.symbol));
-      // const sorted = t.result.list.sort((a, b) => Number(Number(b.volume24h)/Number(b.lastPrice)) - Number(Number(a.volume24h)/Number(a.lastPrice)));
       const sorted = t.result.list.sort(
         (a, b) => Number((b as TickerLinearInverseV5).price24hPcnt) - Number((a as TickerLinearInverseV5).price24hPcnt),
       );

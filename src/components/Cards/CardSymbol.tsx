@@ -7,12 +7,12 @@ import tw from 'twin.macro';
 import {
   selectTickerInfo,
   selectWallet,
-  selectTicker,
   selectTakeProfits,
   selectStopLosses,
   selectPositionSize,
   updatePositionSize,
   selectLeverage,
+  selectTicker,
 } from '../../slices';
 import { LeverageSelector, MarginModeSelector, PositionModeSelector } from '../Trade';
 

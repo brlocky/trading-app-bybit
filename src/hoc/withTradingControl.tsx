@@ -8,12 +8,11 @@ import { useSelector, useDispatch } from 'react-redux';
 import {
   selectSymbol,
   selectOrders,
-  selectTicker,
   selectTickerInfo,
-  updateOrder,
   updatePositions,
   updateWallet,
   updateOrders,
+  selectTicker,
 } from '../slices/symbolSlice';
 import { AppDispatch } from '../store';
 import { toast } from 'react-toastify';

@@ -1,8 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { mapApiToWsPositionV5Response, mapKlineObjToCandleStickData } from '../mappers';
 import { useSocket } from '../providers';
 import {
+  selectInterval,
+  selectPositions,
   selectTickerInfo,
   updateExecutions,
   updateLastKline,
@@ -14,10 +16,37 @@ import {
 
 export const SocketListener: React.FC = () => {
   const tickerInfo = useSelector(selectTickerInfo);
+  const interval = useSelector(selectInterval);
+  const positions = useSelector(selectPositions);
   const dispatch = useDispatch();
   const socket = useSocket();
 
-  const lastTickerInfoRef = useRef(tickerInfo);
+  const [listeningSymbols, setListeningSymbols] = useState<string[]>([]);
+  const [kline, setKline] = useState<string | null>(null);
+
+  const subscribeTicker = (newSymbol: string) => {
+    if (listeningSymbols.find((s) => s === newSymbol)) {
+      return;
+    }
+
+    setListeningSymbols([...listeningSymbols, newSymbol]);
+    socket.subscribeV5([`tickers.${newSymbol}`], 'linear', false);
+  };
+
+  const unsubscribeTicker = (s: string) => {
+    socket.unsubscribeV5([`tickers.${s}`], 'linear', false);
+    setListeningSymbols([...listeningSymbols.filter((l) => l !== s)]);
+  };
+
+  const resubscribeKline = (s: string, i: string) => {
+    if (kline) {
+      socket.unsubscribeV5([kline], 'linear', false);
+    }
+    const newKline = `kline.${i}.${s}`;
+    socket.subscribeV5([newKline], 'linear', false);
+
+    setKline(newKline);
+  };
 
   useEffect(() => {
     // subsribe one time
@@ -29,24 +58,22 @@ export const SocketListener: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    positions.map((p) => subscribeTicker(p.symbol));
+
+    const symbolsToRemove = listeningSymbols.filter((s) => !positions.find((p) => p.symbol === s) && s !== tickerInfo?.symbol);
+    symbolsToRemove.map((s) => {
+      unsubscribeTicker(s);
+    });
+  }, [positions]);
+
+  useEffect(() => {
     if (!tickerInfo) {
       return;
     }
-    if (lastTickerInfoRef.current && tickerInfo !== lastTickerInfoRef.current) {
-      StopTickSubscriptions(lastTickerInfoRef.current.symbol);
-    }
-    lastTickerInfoRef.current = tickerInfo;
 
-    StartTickSubscriptions(tickerInfo.symbol);
-  }, [tickerInfo]);
-
-  const StartTickSubscriptions = (s: string) => {
-    socket.subscribeV5([`tickers.${s}`, `kline.1.${s}`], 'linear', false);
-  };
-
-  const StopTickSubscriptions = (s: string) => {
-    socket.unsubscribeV5([`tickers.${s}`, `kline.1.${s}`], 'linear', false);
-  };
+    subscribeTicker(tickerInfo.symbol);
+    resubscribeKline(tickerInfo.symbol, interval);
+  }, [tickerInfo, interval]);
 
   const StartListeners = () => {
     /** Messages */

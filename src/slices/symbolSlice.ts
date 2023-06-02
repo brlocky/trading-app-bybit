@@ -3,10 +3,18 @@ import { ExecutionV5, LinearInverseInstrumentInfoV5, PositionV5, WalletBalanceV5
 import { RootState } from '../store';
 import { CandlestickDataWithVolume, IOrder, ITicker } from '../types';
 
+interface ArrayTicker {
+  [name: string]: {
+    ticker: ITicker | undefined;
+    tickerInfo: LinearInverseInstrumentInfoV5 | undefined;
+  };
+}
+
 interface ISymbolState {
   symbol: string | undefined;
   interval: string;
   ticker: ITicker | undefined;
+  tickers: ArrayTicker;
   tickerInfo: LinearInverseInstrumentInfoV5 | undefined;
   orders: IOrder[];
   wallet: WalletBalanceV5 | undefined;
@@ -19,6 +27,7 @@ const initialState: ISymbolState = {
   symbol: undefined,
   interval: '1',
   ticker: undefined,
+  tickers: {},
   tickerInfo: undefined,
   orders: [],
   wallet: undefined,
@@ -39,9 +48,17 @@ const symbolSlice = createSlice({
     },
     updateTicker(state, action: PayloadAction<ITicker>) {
       state.ticker = { ...state.ticker, ...action.payload };
+      state.tickers[action.payload.symbol] = {
+        ...state.tickers[action.payload.symbol],
+        ticker: { ...state.tickers[action.payload.symbol].ticker, ...action.payload },
+      };
     },
     updateTickerInfo(state, action: PayloadAction<LinearInverseInstrumentInfoV5>) {
       state.tickerInfo = { ...action.payload };
+      state.tickers[action.payload.symbol] = {
+        tickerInfo: { ...action.payload },
+        ticker: undefined,
+      };
     },
     updateLastKline(state, action: PayloadAction<CandlestickDataWithVolume>) {
       state.kline = { ...action.payload };
@@ -93,14 +110,18 @@ const symbolSlice = createSlice({
       const executions = action.payload;
 
       executions.forEach((execution) => {
-        const index = currentOrders.findIndex((o) => o.symbol === execution.symbol && o.side === execution.side && o.qty === execution.execQty);
+        const index = currentOrders.findIndex(
+          (o) => o.symbol === execution.symbol && o.side === execution.side && o.qty === execution.execQty,
+        );
 
         // Remove Order
         if (index !== -1) {
           currentOrders.splice(index, 1);
         }
 
-        const index2 = currentPositions.findIndex((c) => c.symbol === execution.symbol && c.side === execution.side && c.size === execution.execQty);
+        const index2 = currentPositions.findIndex(
+          (c) => c.symbol === execution.symbol && c.side === execution.side && c.size === execution.execQty,
+        );
         // Remove Position
         if (index2 === -1) {
           currentPositions.splice(index, 1);
@@ -150,6 +171,7 @@ export const selectInterval = (state: RootState) => state.symbol.interval;
 export const selectOrders = (state: RootState) => state.symbol.orders;
 export const selectLastKline = (state: RootState) => state.symbol.kline;
 export const selectTicker = (state: RootState) => state.symbol.ticker;
+export const selectTickers = (state: RootState) => state.symbol.tickers;
 export const selectTickerInfo = (state: RootState) => state.symbol.tickerInfo;
 export const selectPositions = (state: RootState) => state.symbol.positions;
 export const selectWallet = (state: RootState) => state.symbol.wallet;

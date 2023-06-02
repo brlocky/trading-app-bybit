@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from 'react-redux';
 import tw from 'twin.macro';
 import { ITradingService } from '../../services';
-import { selectPositions, selectTicker, selectTickerInfo, updateSymbol } from '../../slices';
+import { selectPositions, selectTickers, selectTickerInfo, updateSymbol } from '../../slices';
 import { calculateClosePositionSize, calculatePositionPnL, formatCurrency } from '../../utils/tradeUtils';
 import Button from '../Button/Button';
 import { PositionV5 } from 'bybit-api';
@@ -41,14 +41,15 @@ border-t-2
 `;
 
 export default function CardPositions({ tradingService }: ICardPositionsProps) {
-  const ticker = useSelector(selectTicker);
+  const tickers = useSelector(selectTickers);
   const positions = useSelector(selectPositions);
   const tickerInfo = useSelector(selectTickerInfo);
 
   const dispatch = useDispatch();
-  if (!ticker) {
+  if (!tickerInfo) {
     return <></>;
   }
+
   const headers = ['Ticker', 'Entry', 'Qty', 'P&L'];
 
   const { closePosition, addStopLoss } = tradingService;
@@ -111,18 +112,29 @@ export default function CardPositions({ tradingService }: ICardPositionsProps) {
   const renderPositions = positions
     .filter((p) => parseFloat(p.size) > 0)
     .map((p, index) => {
+      const currentTicker = tickers[p.symbol]?.ticker;
+      const currentTickerInfo = tickers[p.symbol]?.tickerInfo;
+      if (!currentTicker || !currentTickerInfo) {
+        return (
+          <PositionRowContainer key={index} onClick={() => dispatch(updateSymbol(p.symbol))}>
+            {p.symbol}
+          </PositionRowContainer>
+        );
+      }
+
+      const pnl = calculatePositionPnL(p, currentTicker);
       return (
         <PositionRowContainer key={index} onClick={() => dispatch(updateSymbol(p.symbol))}>
-          <PositionPropContainer >
+          <PositionPropContainer>
             <i className={p.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {p.symbol}
           </PositionPropContainer>
-          <PositionPropContainer>{formatCurrency(p.avgPrice, tickerInfo?.priceScale)}</PositionPropContainer>
+          <PositionPropContainer>{formatCurrency(p.avgPrice, currentTickerInfo.priceScale)}</PositionPropContainer>
           <PositionPropContainer>{p.size}</PositionPropContainer>
           <PositionPropContainer>
-            {parseFloat(calculatePositionPnL(p, ticker)) >= 0 ? (
-              <span className="text-green-600">{formatCurrency(calculatePositionPnL(p, ticker))}</span>
+            {Number(pnl) >= 0 ? (
+              <span className="text-green-600">{formatCurrency(pnl)}</span>
             ) : (
-              <span className="text-red-600">{formatCurrency(calculatePositionPnL(p, ticker))}</span>
+              <span className="text-red-600">{formatCurrency(pnl)}</span>
             )}
           </PositionPropContainer>
           {renderPositionActions(p)}
