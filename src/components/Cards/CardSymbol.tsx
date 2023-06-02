@@ -57,12 +57,12 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({ tradingService, longTrade, sho
       <MarginModeSelector />
 
       <div>
-        <div className="flex justify-between">
+        <div className="flex justify-between flex-col xl:flex-row">
           <span>
             {positionSize} {tickerInfo.baseCoin}
           </span>
-          <span>Value: {(positionSize * Number(ticker.lastPrice)).toFixed(2)} €</span>
-          <span>Fee: {((positionSize * Number(ticker.lastPrice) * 0.06) / 100).toFixed(2)} €</span>
+          <span>{(positionSize * Number(ticker.lastPrice)).toFixed(2)} €</span>
+          <span>Fee: -{((positionSize * Number(ticker.lastPrice) * 0.06) / 100).toFixed(2)} €</span>
         </div>
         <SlidePicker
           min={Number(minOrderQty)}
