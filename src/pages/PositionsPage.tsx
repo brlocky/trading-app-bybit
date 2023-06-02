@@ -2,7 +2,6 @@ import { LinearInverseInstrumentInfoV5 } from 'bybit-api';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import tw from 'twin.macro';
-import CardOrders from '../components/Cards/CardOrders';
 import CardPositions from '../components/Cards/CardPositions';
 import CardSymbol from '../components/Cards/CardSymbol';
 import { Chart } from '../components/Chart';
@@ -11,7 +10,7 @@ import { SymbolSelector } from '../components/Trade/SymbolSelector';
 import withTradingControl, { WithTradingControlProps } from '../hoc/withTradingControl';
 import { useApi } from '../providers';
 import { selectPositionSize } from '../slices';
-import { selectOrders, selectPositions, selectSymbol, updateTickerInfo } from '../slices/symbolSlice';
+import { selectSymbol, updateTickerInfo } from '../slices/symbolSlice';
 import { AppDispatch } from '../store';
 
 const ContentWrapper = tw.div`
@@ -40,11 +39,8 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
   openMarketLongTrade,
   openMarketShortTrade,
   closeAllOrders,
-  cancelOrder,
 }) => {
   const symbol = useSelector(selectSymbol);
-  const orders = useSelector(selectOrders);
-  const positions = useSelector(selectPositions);
   const positionSize = useSelector(selectPositionSize);
 
   const dispatch = useDispatch<AppDispatch>();

@@ -47,17 +47,18 @@ const symbolSlice = createSlice({
       state.interval = action.payload;
     },
     updateTicker(state, action: PayloadAction<ITicker>) {
+      console.log('updateTicker', action.payload.symbol, state.tickers[action.payload.symbol])
       state.ticker = { ...state.ticker, ...action.payload };
       state.tickers[action.payload.symbol] = {
         ...state.tickers[action.payload.symbol],
-        ticker: { ...state.tickers[action.payload.symbol].ticker, ...action.payload },
+        ticker: { ...state.tickers[action.payload.symbol]?.ticker, ...action.payload },
       };
     },
     updateTickerInfo(state, action: PayloadAction<LinearInverseInstrumentInfoV5>) {
       state.tickerInfo = { ...action.payload };
       state.tickers[action.payload.symbol] = {
+        ...state.tickers[action.payload.symbol],
         tickerInfo: { ...action.payload },
-        ticker: undefined,
       };
     },
     updateLastKline(state, action: PayloadAction<CandlestickDataWithVolume>) {

@@ -64,6 +64,7 @@ export const SocketListener: React.FC = () => {
     symbolsToRemove.map((s) => {
       unsubscribeTicker(s);
     });
+
   }, [positions]);
 
   useEffect(() => {
