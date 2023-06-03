@@ -9,17 +9,14 @@ interface ICardSymbolProps {
 }
 
 const CardSymbol: React.FC<ICardSymbolProps> = ({ tradingService }: ICardSymbolProps) => {
-  const tickerInfo = useSelector(selectTickerInfo);
   const wallet = useSelector(selectWallet);
   const leverage = useSelector(selectLeverage);
-  const ticker = useSelector(selectTicker);
-  if (!wallet || !tickerInfo || !ticker) {
+
+  if (!wallet) {
     return <></>;
   }
 
   const coin = wallet.coin[0];
-
-
 
   return (
     <div className="flex h-full flex-col justify-around">
@@ -42,7 +39,7 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({ tradingService }: ICardSymbolP
       <OrderTypeSelector />
       <PositionModeSelector />
       <MarginModeSelector />
-      <PositionSizeSelector />      
+      <PositionSizeSelector />
       {/* <pre>{JSON.stringify(wallet, null, 2)}</pre> */}
       {/* <pre>{JSON.stringify(symbolProps, null, 2)}</pre> */}
       {/* <pre>{JSON.stringify(symbolInfo, null, 2)}</pre> */}
