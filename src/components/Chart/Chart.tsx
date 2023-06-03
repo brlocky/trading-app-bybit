@@ -1,10 +1,16 @@
 import { ColorType, CrosshairMode, CustomPriceLineDraggedEventParams, createChart } from '@felipecsl/lightweight-charts';
-import { KlineIntervalV3, PositionV5 } from 'bybit-api';
+import { KlineIntervalV3 } from 'bybit-api';
 import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { IDataService, ITradingService } from '../../services';
 import { selectPositionSize, selectStopLoss, selectTakeProfit, updateStopLoss, updateTakeProfit } from '../../slices';
-import { selectInterval, selectLastKline, selectPositions, selectTicker, selectTickerInfo } from '../../slices/symbolSlice';
+import {
+  selectCurrentPosition,
+  selectInterval,
+  selectLastKline,
+  selectTicker,
+  selectTickerInfo
+} from '../../slices/symbolSlice';
 import { CandlestickDataWithVolume } from '../../types';
 import { calculateTargetPnL } from '../../utils/tradeUtils';
 
@@ -53,7 +59,7 @@ export const Chart: React.FC<Props> = (props) => {
   const kline = useSelector(selectLastKline);
   const ticker = useSelector(selectTicker);
   const tickerInfo = useSelector(selectTickerInfo);
-  const positions = useSelector(selectPositions);
+  const currentPosition = useSelector(selectCurrentPosition);
   const positionSize = useSelector(selectPositionSize);
 
   const takeProfit = useSelector(selectTakeProfit);
@@ -88,7 +94,6 @@ export const Chart: React.FC<Props> = (props) => {
   };
 
   const updateCurrentOrderTPnSL = () => {
-    const currentPosition = getCurrentPosition();
     if (!currentPosition) {
       return;
     }
@@ -215,23 +220,22 @@ export const Chart: React.FC<Props> = (props) => {
         })
         .then((r) => {
           setChartData(r);
-          // const position = getCurrentPosition();
-          // if (r.length && !position) {
-          //   const price = r[r.length - 1].close;
-          //   dispatch(updateTakeProfit([{ ...takeProfits[0], price: Number(price) }]));
-          //   dispatch(updateStopLoss([{ ...stopLosses[0], price: Number(price) }]));
-          // }
+
+          if (!currentPosition && r.length) {
+            const price = r[r.length - 1].close;
+            dispatch(updateTakeProfit([{ ...takeProfit, price: Number(price) }]));
+            dispatch(updateStopLoss([{ ...stopLoss, price: Number(price) }]));
+          }
         });
     }
   }, [tickerInfo, interval]);
 
   useEffect(() => {
-    const position = getCurrentPosition();
-    if (position) {
-      dispatch(updateTakeProfit([{ ...takeProfit, price: Number(position.takeProfit) }]));
-      dispatch(updateStopLoss([{ ...stopLoss, price: Number(position.stopLoss) }]));
+    if (currentPosition) {
+      dispatch(updateTakeProfit([{ ...takeProfit, price: Number(currentPosition.takeProfit) }]));
+      dispatch(updateStopLoss([{ ...stopLoss, price: Number(currentPosition.stopLoss) }]));
     }
-  }, [positions]);
+  }, [currentPosition]);
 
   useEffect(() => {
     newSeries.current.setData(chartData);
@@ -262,11 +266,7 @@ export const Chart: React.FC<Props> = (props) => {
     }
   }, [positionSize]);
 
-  const getCurrentPosition = (): PositionV5 | undefined => {
-    return positions.find((p) => p.symbol === tickerInfo?.symbol && Number(p.positionValue) > 0);
-  };
   useEffect(() => {
-    const currentPosition = getCurrentPosition();
     if (currentPosition) {
       takeProfPriceLine.current.applyOptions({
         price: currentPosition.takeProfit,
@@ -281,12 +281,10 @@ export const Chart: React.FC<Props> = (props) => {
         draggable: false,
       });
     }
-  }, [positions]);
+  }, [currentPosition]);
 
   const updateTPnSL = () => {
     if (!tickerInfo || !ticker) return;
-    const currentPosition = getCurrentPosition();
-
     let tp = takeProfit.price,
       sl = stopLoss.price,
       entry = ticker.lastPrice,
