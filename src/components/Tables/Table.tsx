@@ -1,77 +1,31 @@
 import React from 'react';
-import tw from 'twin.macro';
 
-export interface TableProps {
-  headers: string[];
-  data: (string| React.ReactNode)[][];
-}
+const Table: React.FC<React.PropsWithChildren> = ({ children }) => (
+  <table className={'w-full text-left text-sm text-gray-500 dark:text-gray-400'}>{children}</table>
+);
 
-const TableWrapper = tw.table`
-  min-w-full
-  divide-y
-  divide-gray-200
-  bg-white
-  shadow
-  sm:rounded-lg
-`;
+const Row: React.FC<React.HTMLAttributes<HTMLTableRowElement>> = ({ children, ...props }) => (
+  <tr className="border-b bg-white dark:border-gray-700 dark:bg-gray-800" {...props}>
+    {children}
+  </tr>
+);
 
-const TableHead = tw.thead`
-  bg-gray-50
-`;
+const Col: React.FC<React.HTMLProps<HTMLTableCellElement>> = ({ children, ...props }) => (
+  <td className="px-6 py-3" {...props}>
+    {children}
+  </td>
+);
 
-const TableRow = tw.tr`
-  hover:bg-gray-100
-`;
+const HeaderCol: React.FC<React.HTMLAttributes<HTMLTableCellElement>> = ({ children, ...props }) => (
+  <td className="px-6 py-3" {...props}>
+    {children}
+  </td>
+);
 
-const TableHeader = tw.th`
-  px-6
-  py-3
-  text-xs
-  font-medium
-  tracking-wider
-  text-left
-  text-gray-500
-  uppercase
-`;
+const HeaderRow: React.FC<React.HTMLAttributes<HTMLTableRowElement>> = ({ children, ...props }) => (
+  <tr className="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-700 dark:text-gray-400" {...props}>
+    {children}
+  </tr>
+);
 
-const TableBody = tw.tbody`
-  divide-y
-  divide-gray-200
-`;
-
-const TableCell = tw.td`
-  px-6
-  py-4
-  text-sm
-  text-gray-900
-  whitespace-nowrap
-`;
-
-
-export const Table: React.FC<TableProps> = ({ headers, data }) => {
-  return (
-    <TableWrapper>
-      <TableHead>
-        <TableRow>
-          {headers.map((header) => (
-            <TableHeader key={header}>{header}</TableHeader>
-          ))}
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {data.length
-          ? data.map((row, index) => (
-              <TableRow key={index}>
-                {row.map((cell, index) => (
-                  <TableCell key={index}>{cell}</TableCell>
-                ))}
-              </TableRow>
-            ))
-          :
-          (<TableRow>
-              <TableCell colSpan={headers.length}> - </TableCell>
-          </TableRow>)}
-      </TableBody>
-    </TableWrapper>
-  );
-};
+export { Table, Row, Col, HeaderRow, HeaderCol };

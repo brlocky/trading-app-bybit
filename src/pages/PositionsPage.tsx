@@ -8,6 +8,8 @@ import { Chart } from '../components/Chart';
 import { IntervalSelector } from '../components/Trade/IntervalSelector';
 import { SymbolSelector } from '../components/Trade/SymbolSelector';
 import withTradingControl, { WithTradingControlProps } from '../hoc/withTradingControl';
+import CardOrders from '../components/Cards/CardOrders';
+import { Tabs } from '../components/Tabs';
 
 const ContentWrapper = tw.div`
 flex
@@ -50,11 +52,27 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({ isLoading, 
               </div>
             </div>
 
-            <div className="grid gap-4 ">
-              <CardPositions tradingService={tradingService} />
-              <CardExecutions />
-              <CardClosedPnLs />
-              {/* <CardOrders positions={positions} orders={orders} cancelOrder={cancelOrder} /> */}
+            <div >
+              <Tabs
+                tabs={[
+                  {
+                    title: 'Positions',
+                    content: <CardPositions />,
+                  },
+                  {
+                    title: 'Orders',
+                    content: <CardOrders />,
+                  },
+                  {
+                    title: 'Executions',
+                    content: <CardExecutions />,
+                  },
+                  {
+                    title: 'PnLs',
+                    content: <CardClosedPnLs />,
+                  },
+                ]}
+              />
             </div>
           </>
         )}

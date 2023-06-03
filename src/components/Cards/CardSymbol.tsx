@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { ITradingService } from '../../services';
-import { selectLeverage, selectTicker, selectTickerInfo, selectWallet } from '../../slices';
+import { selectLeverage, selectWallet } from '../../slices';
 import { LeverageSelector, MarginModeSelector, OrderTypeSelector, PositionModeSelector, PositionSizeSelector } from '../Trade';
 
 interface ICardSymbolProps {

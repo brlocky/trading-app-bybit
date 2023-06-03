@@ -1,34 +1,11 @@
-import { useEffect, useState } from 'react';
-import tw from 'twin.macro';
-import { useApi } from '../../providers';
 import { ClosedPnLV5 } from 'bybit-api';
-import { useSelector } from 'react-redux';
-import { selectPositions } from '../../slices';
+import { useEffect, useState } from 'react';
+import { useApi } from '../../providers';
 import { formatCurrency } from '../../utils/tradeUtils';
-
-const Container = tw.div`
-  grid
-  grid-cols-6
-  auto-rows-max
-`;
-
-const Row = tw.div`
-grid
-bg-green-50
-col-span-full
-grid-cols-6
-p-1
-`;
-
-const Col = tw.div`
-col-span-1
-self-center
-text-left
-`;
+import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
 
 export default function CardClosedPnLs() {
   const [list, setList] = useState<ClosedPnLV5[] | undefined>();
-  const positions = useSelector(selectPositions);
   const apiClient = useApi();
 
   useEffect(() => {
@@ -37,31 +14,38 @@ export default function CardClosedPnLs() {
         category: 'linear',
       })
       .then((r) => {
-        setList(r.result.list.splice(0, 10));
+        setList(r.result.list.splice(0, 20));
       });
-  }, [positions]);
+  }, []);
+
   return (
     <>
-      <h3>Closed PnLs</h3>
-      <Container>
+      <Table>
+        <HeaderRow>
+          <HeaderCol>Symbol</HeaderCol>
+          <HeaderCol>PnL</HeaderCol>
+          <HeaderCol>Date</HeaderCol>
+        </HeaderRow>
         {list?.map((l, index) => {
           const closedPnL = Number(l.closedPnl);
           return (
             <Row key={index}>
-              <Col>{l.symbol}</Col>
+              <Col>
+                <i className={l.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {l.symbol} (
+                {l.leverage}x)
+              </Col>
               <Col>
                 {closedPnL >= 0 ? (
-                  <span className="text-green-600">{formatCurrency(closedPnL)}</span>
+                  <span className="text-green-600">{formatCurrency(closedPnL)} €</span>
                 ) : (
-                  <span className="text-red-600">{formatCurrency(closedPnL)}</span>
+                  <span className="text-red-600">{formatCurrency(closedPnL)} €</span>
                 )}
               </Col>
               <Col>{new Date(Number(l.updatedTime)).toLocaleTimeString()}</Col>
             </Row>
           );
         })}
-      </Container>
-      {/* <pre>{JSON.stringify(closedpnls, null, 2)}</pre> */}
+      </Table>
     </>
   );
 }

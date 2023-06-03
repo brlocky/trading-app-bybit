@@ -17,7 +17,6 @@ import {
 import { formatPriceWithTickerInfo } from '../../utils/tradeUtils';
 import Button from '../Button/Button';
 import SlidePicker from '../Forms/SlidePicker';
-import { WalletBalanceV5, WalletBalanceV5Coin } from 'bybit-api';
 
 export const PositionSizeSelector: React.FC = () => {
   const dispatch = useDispatch();
