@@ -21,23 +21,25 @@ const PositionPropContainer = tw.div`
   p-2
 `;
 
+const PositionPropContainerLink = tw(PositionPropContainer)`
+  cursor-pointer
+`;
+
 const PositionRowContainer = tw.div`
 grid
 bg-green-50
-col-span-4
+col-span-full
 grid-cols-4
+border-b-gray-400
+border-b-2
 `;
 
 const PositionActionsContainer = tw.div`
-col-span-full
 flex
-justify-between
+col-span-full
 space-x-4
-w-full
 p-2
-border-b-gray-400
-border-b-2
-border-t-2
+justify-end
 `;
 
 export default function CardPositions({ tradingService }: ICardPositionsProps) {
@@ -46,7 +48,7 @@ export default function CardPositions({ tradingService }: ICardPositionsProps) {
 
   const dispatch = useDispatch();
 
-  const headers = ['Ticker', 'Entry', 'Qty', 'P&L'];
+  const headers = ['Ticker', 'Entry', 'Qty/Value', 'P&L'];
 
   const { closePosition, addStopLoss } = tradingService;
 
@@ -106,7 +108,6 @@ export default function CardPositions({ tradingService }: ICardPositionsProps) {
   };
 
   const renderPositions = () => {
-
     return positions
       .filter((p) => parseFloat(p.size) > 0)
       .map((p, index) => {
@@ -122,18 +123,22 @@ export default function CardPositions({ tradingService }: ICardPositionsProps) {
 
         const pnl = calculatePositionPnL(p, currentTicker);
         return (
-          <PositionRowContainer key={index} onClick={() => dispatch(updateSymbol(p.symbol))}>
-            <PositionPropContainer>
+          <PositionRowContainer key={index}>
+            <PositionPropContainerLink onClick={() => dispatch(updateSymbol(p.symbol))}>
               <i className={p.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {p.symbol}
+            </PositionPropContainerLink>
+            <PositionPropContainer>
+              {formatCurrency(p.avgPrice, currentTickerInfo?.priceScale || '0')} ({p.leverage}x)
             </PositionPropContainer>
-            <PositionPropContainer>{formatCurrency(p.avgPrice, currentTickerInfo?.priceScale || '0')}</PositionPropContainer>
-            <PositionPropContainer>{p.size}</PositionPropContainer>
+            <PositionPropContainer>
+              {p.size} / {formatCurrency(p.positionValue)} €
+            </PositionPropContainer>
             <PositionPropContainer>
               {Number(pnl) >= 0 ? (
                 <span className="text-green-600">{formatCurrency(pnl)}</span>
               ) : (
                 <span className="text-red-600">{formatCurrency(pnl)}</span>
-              )} 
+              )}
               {/* / {formatCurrency(p.cumRealisedPnl)} */}
             </PositionPropContainer>
             {renderPositionActions(p)}
