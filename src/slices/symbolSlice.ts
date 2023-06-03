@@ -154,5 +154,6 @@ export const selectTicker = (state: RootState) => state.symbol.ticker;
 export const selectTickers = (state: RootState) => state.symbol.tickers;
 export const selectTickerInfo = (state: RootState) => state.symbol.tickerInfo;
 export const selectPositions = (state: RootState) => state.symbol.positions;
+export const selectCurrentPosition = (state: RootState) => state.symbol.positions.find(p => p.symbol === state.symbol.symbol);
 export const selectWallet = (state: RootState) => state.symbol.wallet;
 export const selectExecutions = (state: RootState) => state.symbol.executions;
