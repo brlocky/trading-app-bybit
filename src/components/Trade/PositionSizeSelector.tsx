@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '../../providers';
 import { TradingService } from '../../services';
@@ -17,6 +17,7 @@ import {
 import { formatPriceWithTickerInfo } from '../../utils/tradeUtils';
 import Button from '../Button/Button';
 import SlidePicker from '../Forms/SlidePicker';
+import { WalletBalanceV5, WalletBalanceV5Coin } from 'bybit-api';
 
 export const PositionSizeSelector: React.FC = () => {
   const dispatch = useDispatch();
@@ -31,13 +32,18 @@ export const PositionSizeSelector: React.FC = () => {
   const entryPrice = useSelector(selectEntryPrice);
 
   const tradingService = TradingService(useApi());
-  if (!tickerInfo || !wallet || !ticker) {
-    return <></>;
-  }
 
-  const coin = wallet.coin[0];
+  useEffect(() => {
+    if (tickerInfo?.symbol) {
+      orderQtyChanged(Number(tickerInfo.lotSizeFilter.minOrderQty));
+    }
+  }, [tickerInfo?.symbol]);
 
   const getMaxOrderQty = (): number => {
+    if (!wallet || !tickerInfo || !ticker) {
+      return 0;
+    }
+    const coin = wallet.coin[0];
     const maxWalletOrderAmmount = (parseFloat(coin.availableToWithdraw) / parseFloat(ticker.lastPrice)) * leverage;
     return Math.min(Number(tickerInfo.lotSizeFilter.maxOrderQty), maxWalletOrderAmmount || 0);
   };
@@ -46,9 +52,9 @@ export const PositionSizeSelector: React.FC = () => {
     dispatch(updatePositionSize(value));
   };
 
-  const {
-    lotSizeFilter: { minOrderQty, qtyStep },
-  } = tickerInfo;
+  if (!tickerInfo || !wallet || !ticker) {
+    return <></>;
+  }
 
   const longTrade = () => {
     tradingService.openLongTrade({
@@ -70,6 +76,10 @@ export const PositionSizeSelector: React.FC = () => {
       stopLoss: formatPriceWithTickerInfo(stopLoss.price, tickerInfo),
     });
   };
+
+  const {
+    lotSizeFilter: { minOrderQty, qtyStep },
+  } = tickerInfo;
 
   return (
     <>
