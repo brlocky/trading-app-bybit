@@ -215,12 +215,12 @@ export const Chart: React.FC<Props> = (props) => {
         })
         .then((r) => {
           setChartData(r);
-          const position = getCurrentPosition();
-          if (r.length && !position) {
-            const price = r[r.length - 1].close;
-            dispatch(updateTakeProfit([{ ...takeProfits[0], price: Number(price) }]));
-            dispatch(updateStopLoss([{ ...stopLosses[0], price: Number(price) }]));
-          }
+          // const position = getCurrentPosition();
+          // if (r.length && !position) {
+          //   const price = r[r.length - 1].close;
+          //   dispatch(updateTakeProfit([{ ...takeProfits[0], price: Number(price) }]));
+          //   dispatch(updateStopLoss([{ ...stopLosses[0], price: Number(price) }]));
+          // }
         });
     }
   }, [tickerInfo, interval]);
