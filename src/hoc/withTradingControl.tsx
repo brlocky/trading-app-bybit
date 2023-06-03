@@ -29,7 +29,7 @@ function withTradingControl<P extends WithTradingControlProps>(
     useEffect(() => {
       const activeOrdersPromise = apiClient.getActiveOrders({
         category: 'linear',
-        symbol: symbol,
+        settleCoin: 'USDT',
       });
 
       const positionInfoPromise = apiClient.getPositionInfo({
