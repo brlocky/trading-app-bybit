@@ -29,8 +29,7 @@ w-full
 p-2
 `;
 
-const PositionsPageComponent: React.FC<WithTradingControlProps> = ({ tradingService, dataService }) => {
-
+const PositionsPageComponent: React.FC<WithTradingControlProps> = ({ isLoading, tradingService, dataService }) => {
   return (
     <ContentWrapper>
       <PositionPageContent>
@@ -38,22 +37,27 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({ tradingServ
           <SymbolSelector />
           <IntervalSelector />
         </TopComponent>
+        {isLoading ? (
+          <p>Loading</p>
+        ) : (
+          <>
+            <div className="grid grid-cols-10 gap-x-10">
+              <div className="col-span-7">
+                <Chart dataService={dataService} tradingService={tradingService} />
+              </div>
+              <div className="col-span-3">
+                <CardSymbol tradingService={tradingService} />
+              </div>
+            </div>
 
-        <div className="grid grid-cols-10 gap-x-10">
-          <div className="col-span-7">
-            <Chart dataService={dataService} tradingService={tradingService} />
-          </div>
-          <div className="col-span-3">
-            <CardSymbol tradingService={tradingService} />
-          </div>
-        </div>
-
-        <div className="grid gap-4 ">
-          <CardPositions tradingService={tradingService} />
-          <CardExecutions />
-          <CardClosedPnLs />
-          {/* <CardOrders positions={positions} orders={orders} cancelOrder={cancelOrder} /> */}
-        </div>
+            <div className="grid gap-4 ">
+              <CardPositions tradingService={tradingService} />
+              <CardExecutions />
+              <CardClosedPnLs />
+              {/* <CardOrders positions={positions} orders={orders} cancelOrder={cancelOrder} /> */}
+            </div>
+          </>
+        )}
       </PositionPageContent>
     </ContentWrapper>
   );

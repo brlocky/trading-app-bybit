@@ -34,10 +34,10 @@ export default function CardExecutions() {
           const closedPnL = Number(l.execFee);
           return (
             <Row key={index}>
-              <Col>{l.symbol}</Col>
-              <Col>{formatCurrency(l.execValue)}</Col>
+              <Col>{l.symbol} {l.orderType}</Col>
+              <Col>{formatCurrency(l.execQty)}</Col>
               <Col>
-                <span className="text-red-600">{formatCurrency(closedPnL)}</span>
+                <span className="text-red-600">{formatCurrency(closedPnL)} €</span>
               </Col>
               <Col>{new Date(Number(l.execTime)).toLocaleTimeString()}</Col>
             </Row>
