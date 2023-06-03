@@ -1,14 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import tw from 'twin.macro';
-import { selectLeverage, selectSymbol, selectTickerInfo, updateLeverage } from '../../slices';
+import { selectCurrentPosition, selectLeverage, selectSymbol, selectTickerInfo, updateLeverage } from '../../slices';
 import SlidePicker from '../Forms/SlidePicker';
 import { useApi } from '../../providers';
 import { toast } from 'react-toastify';
 import { debounce } from 'lodash';
-
-const Row = tw.div`inline-flex w-full justify-between pb-3`;
-const Col = tw.div`flex flex-col md:flex-row items-center gap-x-5`;
 
 export const LeverageSelector: React.FC = () => {
   const dispatch = useDispatch();
@@ -16,7 +12,7 @@ export const LeverageSelector: React.FC = () => {
   const symbol = useSelector(selectSymbol);
   const leverage = useSelector(selectLeverage);
   const tickerInfo = useSelector(selectTickerInfo);
-  const [currentLeverage, setCurrentLeverage] = useState<number>(leverage);
+  const currentPosition = useSelector(selectCurrentPosition);
 
   const max = tickerInfo?.leverageFilter.maxLeverage || '100';
   const min = tickerInfo?.leverageFilter.minLeverage || '1';
@@ -29,20 +25,31 @@ export const LeverageSelector: React.FC = () => {
     [],
   );
 
-  useEffect(() => {
-    if (tickerInfo && leverage > 1) {
-      onLeverageChange(1);
-    }
-  }, [tickerInfo]);
-
-  const onLeverageChange = (v: number) => {
-    setCurrentLeverage(v);
+  const setLeverage = (v: number) => {
     dispatch(updateLeverage(v));
     onLeverageChanged(v);
   };
 
+  useEffect(() => {
+    if (currentPosition) {
+      dispatch(updateLeverage(Number(currentPosition.leverage)));
+    } else {
+      if (leverage > 1) {
+        setLeverage(1);
+      }
+    }
+  }, [tickerInfo]);
+
   const updateApiLeverage = (v: number) => {
     if (!symbol) return;
+
+    console.log({
+      category: 'linear',
+      symbol: symbol,
+      buyLeverage: v.toString(),
+      sellLeverage: v.toString(),
+    });
+
     api
       .setLeverage({
         category: 'linear',
@@ -60,7 +67,7 @@ export const LeverageSelector: React.FC = () => {
   return (
     <div className="flex flex-col">
       <h1>Leverage {leverage}x</h1>
-      <SlidePicker value={leverage} min={Number(min)} max={Number(max)} step={Number(step)} onValueChanged={onLeverageChange} />
+      <SlidePicker value={leverage} min={Number(min)} max={Number(max)} step={Number(step)} onValueChanged={setLeverage} />
     </div>
   );
 };
