@@ -1,32 +1,25 @@
+import { LinearInverseInstrumentInfoV5 } from 'bybit-api';
 import React, { ComponentType, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { toast } from 'react-toastify';
 import { useApi } from '../providers';
-import { AccountOrderV5, LinearPositionIdx, OrderSideV5 } from 'bybit-api';
-import { isOrderStopLossOrTakeProfit } from '../utils/tradeUtils';
 import { DataService, IDataService, ITradingService, TradingService } from '../services';
-import { useSelector, useDispatch } from 'react-redux';
 import {
   selectSymbol,
-  selectOrders,
   selectTickerInfo,
-  updatePositions,
-  updateWallet,
-  updateOrders,
-  selectTicker,
   updateExecutions,
+  updateOrders,
+  updatePositions,
+  updateTickerInfo,
+  updateWallet,
 } from '../slices/symbolSlice';
 import { AppDispatch } from '../store';
-import { toast } from 'react-toastify';
-import { selectPositionMode, selectStopLosses, selectTakeProfits } from '../slices';
 
 const accountType = 'CONTRACT';
 
 export interface WithTradingControlProps {
   tradingService: ITradingService;
   dataService: IDataService;
-  openMarketLongTrade: (positionSize: string) => Promise<void>;
-  openMarketShortTrade: (positionSize: string) => Promise<void>;
-  closeAllOrders: () => void;
-  cancelOrder: (order: AccountOrderV5) => Promise<void>;
 }
 
 function withTradingControl<P extends WithTradingControlProps>(
@@ -34,16 +27,25 @@ function withTradingControl<P extends WithTradingControlProps>(
 ): React.FC<Omit<P, keyof WithTradingControlProps>> {
   const WithTradingControl: React.FC<Omit<P, keyof WithTradingControlProps>> = (props) => {
     const symbol = useSelector(selectSymbol);
-    const orders = useSelector(selectOrders);
-    const ticker = useSelector(selectTicker);
     const tickerInfo = useSelector(selectTickerInfo);
-    const takeProfits = useSelector(selectTakeProfits);
-    const stopLosses = useSelector(selectStopLosses);
-    const positionMode = useSelector(selectPositionMode);
 
     const dispatch = useDispatch<AppDispatch>();
 
     const apiClient = useApi(); // Use the useApi hook to access the API context
+
+    useEffect(() => {
+      if (symbol) {
+        apiClient
+          .getInstrumentsInfo({
+            category: 'linear',
+            symbol: symbol,
+          })
+          .then((res) => {
+            dispatch(updateTickerInfo(res.result.list[0] as LinearInverseInstrumentInfoV5));
+          });
+      }
+    }, [symbol]);
+
     useEffect(() => {
       reloadTradingInfo();
     }, [tickerInfo]);
@@ -84,108 +86,10 @@ function withTradingControl<P extends WithTradingControlProps>(
       );
     };
 
-    const cancelOrder = async (order: AccountOrderV5) => {
-      apiClient
-        .cancelOrder({
-          category: 'linear',
-          symbol: order.symbol,
-          orderId: order.orderId,
-        })
-        .then((r) => {
-          if (r.retCode !== 0) {
-            toast.error(r.retMsg);
-          }
-        })
-        .finally(() => {
-          reloadTradingInfo();
-        });
-    };
-
-    const closeAllOrders = () => {
-      orders.filter((o) => !isOrderStopLossOrTakeProfit(o)).map(cancelOrder);
-      reloadTradingInfo();
-    };
-
-    const openMarketLongTrade = async (positionSize: string) => {
-      if (!ticker || !tickerInfo) {
-        return;
-      }
-
-      const tp = takeProfits[0].price;
-      const sl = stopLosses[0].price;
-      const nearPrice = parseFloat(ticker.ask1Price);
-      apiClient
-        .submitOrder({
-          positionIdx: getPositionMode('Buy'),
-          category: 'linear',
-          symbol: tickerInfo.symbol,
-          side: 'Buy',
-          orderType: 'Market',
-          qty: positionSize,
-          price: nearPrice.toString(),
-          timeInForce: 'GTC',
-          takeProfit: tp.toFixed(Number(tickerInfo.priceScale)),
-          stopLoss: sl.toFixed(Number(tickerInfo.priceScale)),
-        })
-        .then((r) => {
-          if (r.retCode !== 0) {
-            toast.error(r.retMsg);
-          }
-        })
-        .finally(() => {
-          reloadTradingInfo();
-        });
-    };
-
-    const openMarketShortTrade = async (positionSize: string) => {
-      if (!ticker || !tickerInfo) {
-        return;
-      }
-
-      const tp = takeProfits[0].price;
-      const sl = stopLosses[0].price;
-      const nearPrice = parseFloat(ticker.bid1Price);
-      apiClient
-        .submitOrder({
-          positionIdx: getPositionMode('Sell'),
-          category: 'linear',
-          symbol: tickerInfo.symbol,
-          side: 'Sell',
-          orderType: 'Market',
-          qty: positionSize,
-          price: nearPrice.toString(),
-          timeInForce: 'GTC',
-          takeProfit: tp.toFixed(Number(tickerInfo.priceScale)),
-          stopLoss: sl.toFixed(Number(tickerInfo.priceScale)),
-        })
-        .then((r) => {
-          if (r.retCode !== 0) {
-            toast.error(r.retMsg);
-          }
-        })
-        .finally(() => {
-          reloadTradingInfo();
-        });
-    };
-
-    const getPositionMode = (type: OrderSideV5): LinearPositionIdx => {
-      return positionMode === 0 ? LinearPositionIdx.OneWayMode : type === 'Buy' ? LinearPositionIdx.BuySide : LinearPositionIdx.SellSide;
-    };
-
     const tradingService = TradingService(apiClient);
     const dataService = DataService(apiClient);
 
-    return (
-      <WrappedComponent
-        {...(props as P)}
-        tradingService={tradingService}
-        dataService={dataService}
-        openMarketLongTrade={openMarketLongTrade}
-        openMarketShortTrade={openMarketShortTrade}
-        closeAllOrders={closeAllOrders}
-        cancelOrder={cancelOrder}
-      />
-    );
+    return <WrappedComponent {...(props as P)} tradingService={tradingService} dataService={dataService} />;
   };
 
   return WithTradingControl;

@@ -1,19 +1,13 @@
-import { LinearInverseInstrumentInfoV5 } from 'bybit-api';
-import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React from 'react';
 import tw from 'twin.macro';
+import CardClosedPnLs from '../components/Cards/CardClosedPnL';
+import CardExecutions from '../components/Cards/CardExecutions';
 import CardPositions from '../components/Cards/CardPositions';
 import CardSymbol from '../components/Cards/CardSymbol';
 import { Chart } from '../components/Chart';
 import { IntervalSelector } from '../components/Trade/IntervalSelector';
 import { SymbolSelector } from '../components/Trade/SymbolSelector';
 import withTradingControl, { WithTradingControlProps } from '../hoc/withTradingControl';
-import { useApi } from '../providers';
-import { selectPositionSize } from '../slices';
-import { selectSymbol, updateTickerInfo } from '../slices/symbolSlice';
-import { AppDispatch } from '../store';
-import CardClosedPnLs from '../components/Cards/CardClosedPnL';
-import CardExecutions from '../components/Cards/CardExecutions';
 
 const ContentWrapper = tw.div`
 flex
@@ -35,31 +29,7 @@ w-full
 p-2
 `;
 
-const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
-  tradingService,
-  dataService,
-  openMarketLongTrade,
-  openMarketShortTrade,
-  closeAllOrders,
-}) => {
-  const symbol = useSelector(selectSymbol);
-  const positionSize = useSelector(selectPositionSize);
-
-  const dispatch = useDispatch<AppDispatch>();
-  const apiClient = useApi();
-
-  useEffect(() => {
-    if (symbol) {
-      apiClient
-        .getInstrumentsInfo({
-          category: 'linear',
-          symbol: symbol,
-        })
-        .then((res) => {
-          dispatch(updateTickerInfo(res.result.list[0] as LinearInverseInstrumentInfoV5));
-        });
-    }
-  }, [symbol]);
+const PositionsPageComponent: React.FC<WithTradingControlProps> = ({ tradingService, dataService }) => {
 
   return (
     <ContentWrapper>
@@ -74,12 +44,7 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
             <Chart dataService={dataService} tradingService={tradingService} />
           </div>
           <div className="col-span-3">
-            <CardSymbol
-              tradingService={tradingService}
-              longTrade={() => openMarketLongTrade(positionSize.toString())}
-              shortTrade={() => openMarketShortTrade(positionSize.toString())}
-              closeAll={closeAllOrders}
-            />
+            <CardSymbol tradingService={tradingService} />
           </div>
         </div>
 

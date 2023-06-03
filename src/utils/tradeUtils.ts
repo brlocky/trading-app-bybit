@@ -1,6 +1,7 @@
-import { AccountOrderV5, LinearPositionIdx, PositionV5 } from 'bybit-api';
+import { AccountOrderV5, LinearInverseInstrumentInfoV5, LinearPositionIdx, PositionV5 } from 'bybit-api';
 import { ITicker } from '../types';
 import { isNumber } from 'lodash';
+import { format } from 'path';
 
 export const calculateOrderPnL = (entryPrice: string, order: AccountOrderV5): string | null => {
   const startPrice = parseFloat(entryPrice);
@@ -49,7 +50,7 @@ export const calculatePositionPnL = (position: PositionV5, price: ITicker): stri
   return pl.toFixed(2);
 };
 
-export const formatCurrency = (value: string|number, precision?: string) => {
+export const formatCurrency = (value: string | number, precision?: string) => {
   const newValue = isNumber(value) ? value.toString() : value;
   return parseFloat(newValue).toFixed(Number(precision) || 2);
 };
@@ -66,4 +67,9 @@ export const getOrderEntryFromPositions = (positions: PositionV5[], order: Accou
 
 export const calculateTargetPnL = (target: number, price: number, positionSize: number): string => {
   return ((target - price) * positionSize).toFixed(2);
+};
+
+export const formatPriceWithTickerInfo = (value: string | number, tickerInfo: LinearInverseInstrumentInfoV5) => {
+  const numericPrice = isNumber(value) ? value : Number(value);
+  return numericPrice.toFixed(Number(tickerInfo.priceScale));
 };

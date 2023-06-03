@@ -1,4 +1,4 @@
-import { LinearInverseInstrumentInfoV5, PositionV5, RestClientV5 } from 'bybit-api';
+import { LinearInverseInstrumentInfoV5, LinearPositionIdx, OrderSideV5, PositionV5, RestClientV5 } from 'bybit-api';
 import { toast } from 'react-toastify';
 
 export interface ITradingService {
@@ -8,9 +8,17 @@ export interface ITradingService {
   getDomNormalizedAggregatorValues: (tickInfo: LinearInverseInstrumentInfoV5) => string[];
   convertToNumber: (value: string) => number;
   formatCurrency: (value: string) => string;
-  myFunction1: () => void;
-  myFunction2: () => void;
-  myFunction3: () => void;
+  openLongTrade: (props: INewTrade) => void;
+  openShortTrade: (props: INewTrade) => void;
+}
+
+interface INewTrade {
+  symbol: string;
+  qty: string;
+  orderType: 'Limit' | 'Market';
+  price?: string;
+  takeProfit?: string;
+  stopLoss?: string;
 }
 
 export const TradingService = (apiClient: RestClientV5): ITradingService => {
@@ -28,16 +36,9 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
     return convertToNumber(value).toFixed(2);
   };
 
-  const myFunction1 = () => {
-    console.log('myFunction1');
-  };
-
-  const myFunction2 = () => {
-    console.log('myFunction2');
-  };
-
-  const myFunction3 = () => {
-    console.log('myFunction3');
+  const getPositionMode = (type: OrderSideV5): LinearPositionIdx => {
+    // return type === 'Buy' ? LinearPositionIdx.BuySide : LinearPositionIdx.SellSide;
+    return LinearPositionIdx.OneWayMode;
   };
 
   const addStopLoss = async (p: PositionV5, price: string) => {
@@ -99,6 +100,49 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
       });
   };
 
+  const openLongTrade = async (props: INewTrade) => {
+    console.log({
+      positionIdx: getPositionMode('Buy'),
+      category: 'linear',
+      timeInForce: 'GTC',
+      side: 'Buy',
+      ...props,
+    })
+    apiClient
+      .submitOrder({
+        positionIdx: getPositionMode('Sell'),
+        category: 'linear',
+        timeInForce: 'GTC',
+        side: 'Buy',
+        ...props,
+      })
+      .then((r) => {
+        if (r.retCode !== 0) {
+          toast.error(r.retMsg);
+        } else {
+          toast.success('Long open ' + props.symbol);
+        }
+      });
+  };
+
+  const openShortTrade = async (props: INewTrade) => {
+    apiClient
+      .submitOrder({
+        positionIdx: getPositionMode('Sell'),
+        category: 'linear',
+        timeInForce: 'GTC',
+        side: 'Sell',
+        ...props,
+      })
+      .then((r) => {
+        if (r.retCode !== 0) {
+          toast.error(r.retMsg);
+        } else {
+          toast.success('Short open ' + props.symbol);
+        }
+      });
+  };
+
   return {
     addStopLoss,
     addTakeProfit,
@@ -106,8 +150,7 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
     getDomNormalizedAggregatorValues,
     convertToNumber,
     formatCurrency,
-    myFunction1,
-    myFunction2,
-    myFunction3,
+    openLongTrade,
+    openShortTrade,
   };
 };

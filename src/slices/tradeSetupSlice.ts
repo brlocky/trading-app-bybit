@@ -63,7 +63,9 @@ export const tradeSetupReducer = tradeSetupSlice.reducer;
 // Other code such as selectors can use the imported `RootState` type
 export const selectPositionSize = (state: RootState) => state.tradeSetup.positionSize;
 export const selectTakeProfits = (state: RootState) => state.tradeSetup.takeProfits;
+export const selectTakeProfit = (state: RootState) => state.tradeSetup.takeProfits[0];
 export const selectStopLosses = (state: RootState) => state.tradeSetup.stopLosses;
+export const selectStopLoss = (state: RootState) => state.tradeSetup.stopLosses[0];
 export const selectPositionMode = (state: RootState) => state.tradeSetup.positionMode;
 export const selectMarginMode = (state: RootState) => state.tradeSetup.marginMode;
 export const selectLeverage = (state: RootState) => state.tradeSetup.leverage;
