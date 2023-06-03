@@ -43,7 +43,7 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({ isLoading, 
           <p>Loading</p>
         ) : (
           <>
-            <div className="grid grid-cols-10 gap-x-10">
+            <div className="grid grid-cols-10 gap-x-10 pb-10">
               <div className="col-span-7">
                 <Chart dataService={dataService} tradingService={tradingService} />
               </div>
