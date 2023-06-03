@@ -51,7 +51,7 @@ export const calculatePositionPnL = (position: PositionV5, price: ITicker): stri
 
 export const formatCurrency = (value: string|number, precision?: string) => {
   const newValue = isNumber(value) ? value.toString() : value;
-  return parseFloat(newValue).toFixed(Number(precision) || 2) + ' USDT';
+  return parseFloat(newValue).toFixed(Number(precision) || 2);
 };
 
 export const calculateClosePositionSize = (order: PositionV5, percentage: number): string => {
