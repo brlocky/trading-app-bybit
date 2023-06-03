@@ -2,7 +2,7 @@ import { PositionV5 } from 'bybit-api';
 import { useDispatch, useSelector } from 'react-redux';
 import tw from 'twin.macro';
 import { ITradingService } from '../../services';
-import { selectPositions, selectTickers, updateSymbol } from '../../slices';
+import { selectPositions, selectTickerInfo, selectTickers, updateSymbol } from '../../slices';
 import { calculateClosePositionSize, calculatePositionPnL, formatCurrency } from '../../utils/tradeUtils';
 import Button from '../Button/Button';
 
@@ -44,6 +44,7 @@ justify-end
 
 export default function CardPositions({ tradingService }: ICardPositionsProps) {
   const tickers = useSelector(selectTickers);
+  const tickerInfo = useSelector(selectTickerInfo);
   const positions = useSelector(selectPositions);
 
   const dispatch = useDispatch();
@@ -108,9 +109,13 @@ export default function CardPositions({ tradingService }: ICardPositionsProps) {
   };
 
   const renderPositions = () => {
-    return positions
-      .filter((p) => parseFloat(p.size) > 0)
-      .map((p, index) => {
+    const sortedPositions = [...positions].sort((a, b) => {
+      if (b.symbol === tickerInfo?.symbol) return 1;
+      if (a.symbol === tickerInfo?.symbol) return -1;
+      return 0;
+    });
+
+    return sortedPositions.map((p, index) => {
         const currentTicker = tickers[p.symbol]?.ticker;
         const currentTickerInfo = tickers[p.symbol]?.tickerInfo;
         if (!currentTicker) {
@@ -125,7 +130,8 @@ export default function CardPositions({ tradingService }: ICardPositionsProps) {
         return (
           <PositionRowContainer key={index}>
             <PositionPropContainerLink onClick={() => dispatch(updateSymbol(p.symbol))}>
-              <i className={p.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {p.symbol} ({p.leverage}x)
+              <i className={p.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {p.symbol} (
+              {p.leverage}x)
             </PositionPropContainerLink>
             <PositionPropContainer>
               {formatCurrency(p.avgPrice, currentTickerInfo?.priceScale || '0')} / {p.liqPrice}
