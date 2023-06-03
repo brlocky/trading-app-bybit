@@ -3,14 +3,8 @@ import { KlineIntervalV3 } from 'bybit-api';
 import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { IDataService, ITradingService } from '../../services';
-import { selectPositionSize, selectStopLoss, selectTakeProfit, updateStopLoss, updateTakeProfit } from '../../slices';
-import {
-  selectCurrentPosition,
-  selectInterval,
-  selectLastKline,
-  selectTicker,
-  selectTickerInfo
-} from '../../slices/symbolSlice';
+import { selectPositionSize, selectStopLoss, selectTakeProfit, updateEntryPrice, updateStopLoss, updateTakeProfit } from '../../slices';
+import { selectCurrentPosition, selectInterval, selectLastKline, selectTicker, selectTickerInfo } from '../../slices/symbolSlice';
 import { CandlestickDataWithVolume } from '../../types';
 import { calculateTargetPnL } from '../../utils/tradeUtils';
 
@@ -45,7 +39,6 @@ export const Chart: React.FC<Props> = (props) => {
   } = props;
 
   const [chartData, setChartData] = useState<CandlestickDataWithVolume[]>([]);
-
   const newSeries = useRef<any>(null);
   const newVolumeSeries = useRef<any>(null);
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -89,6 +82,12 @@ export const Chart: React.FC<Props> = (props) => {
     if (title.startsWith(SL)) {
       if (Number(formatedPrice) >= 0) {
         dispatch(updateStopLoss([{ ...stopLoss, price: Number(formatedPrice) }]));
+      }
+    }
+
+    if (title.startsWith(ENTRY)) {
+      if (Number(formatedPrice) >= 0) {
+        dispatch(updateEntryPrice(formatedPrice));
       }
     }
   };
@@ -279,6 +278,11 @@ export const Chart: React.FC<Props> = (props) => {
       entryPriceLine.current.applyOptions({
         price: currentPosition.avgPrice,
         draggable: false,
+      });
+    } else {
+      entryPriceLine.current.applyOptions({
+        price: ticker?.lastPrice,
+        draggable: true,
       });
     }
   }, [currentPosition]);

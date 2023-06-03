@@ -4,3 +4,4 @@ export * from './MarginModeSelector';
 export * from './PositionModeSelector';
 export * from './PositionSizeSelector';
 export * from './SymbolSelector';
+export * from './OrderTypeSelector';

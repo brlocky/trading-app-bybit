@@ -2,7 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import { ITradingService } from '../../services';
 import { selectLeverage, selectTicker, selectTickerInfo, selectWallet } from '../../slices';
-import { LeverageSelector, MarginModeSelector, PositionModeSelector, PositionSizeSelector } from '../Trade';
+import { LeverageSelector, MarginModeSelector, OrderTypeSelector, PositionModeSelector, PositionSizeSelector } from '../Trade';
 
 interface ICardSymbolProps {
   tradingService: ITradingService;
@@ -39,6 +39,7 @@ const CardSymbol: React.FC<ICardSymbolProps> = ({ tradingService }: ICardSymbolP
       </div>
 
       <LeverageSelector />
+      <OrderTypeSelector />
       <PositionModeSelector />
       <MarginModeSelector />
       <PositionSizeSelector />      

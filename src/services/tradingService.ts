@@ -1,4 +1,4 @@
-import { LinearInverseInstrumentInfoV5, LinearPositionIdx, OrderSideV5, PositionV5, RestClientV5 } from 'bybit-api';
+import { LinearInverseInstrumentInfoV5, LinearPositionIdx, OrderSideV5, OrderTypeV5, PositionV5, RestClientV5 } from 'bybit-api';
 import { toast } from 'react-toastify';
 
 export interface ITradingService {
@@ -15,7 +15,7 @@ export interface ITradingService {
 interface INewTrade {
   symbol: string;
   qty: string;
-  orderType: 'Limit' | 'Market';
+  orderType: OrderTypeV5;
   price?: string;
   takeProfit?: string;
   stopLoss?: string;

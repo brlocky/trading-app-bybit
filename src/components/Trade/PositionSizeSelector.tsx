@@ -3,14 +3,16 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '../../providers';
 import { TradingService } from '../../services';
 import {
-    selectLeverage,
-    selectPositionSize,
-    selectStopLoss,
-    selectTakeProfit,
-    selectTicker,
-    selectTickerInfo,
-    selectWallet,
-    updatePositionSize
+  selectEntryPrice,
+  selectLeverage,
+  selectOrderType,
+  selectPositionSize,
+  selectStopLoss,
+  selectTakeProfit,
+  selectTicker,
+  selectTickerInfo,
+  selectWallet,
+  updatePositionSize,
 } from '../../slices';
 import { formatPriceWithTickerInfo } from '../../utils/tradeUtils';
 import Button from '../Button/Button';
@@ -25,6 +27,8 @@ export const PositionSizeSelector: React.FC = () => {
   const wallet = useSelector(selectWallet);
   const takeProfit = useSelector(selectTakeProfit);
   const stopLoss = useSelector(selectStopLoss);
+  const orderType = useSelector(selectOrderType);
+  const entryPrice = useSelector(selectEntryPrice);
 
   const tradingService = TradingService(useApi());
   if (!tickerInfo || !wallet || !ticker) {
@@ -50,7 +54,8 @@ export const PositionSizeSelector: React.FC = () => {
     tradingService.openLongTrade({
       symbol: tickerInfo.symbol,
       qty: positionSize.toString(),
-      orderType: 'Market',
+      orderType: orderType,
+      price: orderType === 'Limit' ? entryPrice : undefined,
       takeProfit: formatPriceWithTickerInfo(takeProfit.price, tickerInfo),
       stopLoss: formatPriceWithTickerInfo(stopLoss.price, tickerInfo),
     });
@@ -59,7 +64,8 @@ export const PositionSizeSelector: React.FC = () => {
     tradingService.openShortTrade({
       symbol: tickerInfo.symbol,
       qty: positionSize.toString(),
-      orderType: 'Market',
+      orderType: orderType,
+      price: orderType === 'Limit' ? entryPrice : undefined,
       takeProfit: formatPriceWithTickerInfo(takeProfit.price, tickerInfo),
       stopLoss: formatPriceWithTickerInfo(stopLoss.price, tickerInfo),
     });
