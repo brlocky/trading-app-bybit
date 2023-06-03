@@ -53,8 +53,6 @@ export const LeverageSelector: React.FC = () => {
       .then((r) => {
         if (r.retCode !== 0) {
           toast.error(r.retMsg);
-        } else {
-          toast.success(`Leverage changed ${v}x`);
         }
       });
   };
