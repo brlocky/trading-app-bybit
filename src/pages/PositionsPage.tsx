@@ -12,6 +12,8 @@ import { useApi } from '../providers';
 import { selectPositionSize } from '../slices';
 import { selectSymbol, updateTickerInfo } from '../slices/symbolSlice';
 import { AppDispatch } from '../store';
+import CardClosedPnLs from '../components/Cards/CardClosedPnL';
+import CardExecutions from '../components/Cards/CardExecutions';
 
 const ContentWrapper = tw.div`
 flex
@@ -83,6 +85,8 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({
 
         <div className="grid gap-4 ">
           <CardPositions tradingService={tradingService} />
+          <CardExecutions />
+          <CardClosedPnLs />
           {/* <CardOrders positions={positions} orders={orders} cancelOrder={cancelOrder} /> */}
         </div>
       </PositionPageContent>

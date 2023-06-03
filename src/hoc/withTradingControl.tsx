@@ -12,6 +12,7 @@ import {
   updateWallet,
   updateOrders,
   selectTicker,
+  updateExecutions,
 } from '../slices/symbolSlice';
 import { AppDispatch } from '../store';
 import { toast } from 'react-toastify';
@@ -60,22 +61,27 @@ function withTradingControl<P extends WithTradingControlProps>(
         settleCoin: 'USDT',
       });
 
+      const excutionListPromise = apiClient.getExecutionList({
+        category: 'linear',
+      });
+
       const walletInfoPromise = apiClient.getWalletBalance({
         accountType: accountType,
         coin: 'USDT',
       });
 
-      Promise.all([activeOrdersPromise, positionInfoPromise, walletInfoPromise]).then(([orderInfo, positionInfo, walletInfo]) => {
-        orderInfo.retCode === 0 ? dispatch(updateOrders(orderInfo.result.list)) : toast.error('Error loading orders');
-        positionInfo.retCode === 0
-          ? dispatch(updatePositions(positionInfo.result.list))
-          : toast.error('Error loading positions');
+      Promise.all([activeOrdersPromise, positionInfoPromise, walletInfoPromise, excutionListPromise]).then(
+        ([orderInfo, positionInfo, walletInfo, excutionList]) => {
+          orderInfo.retCode === 0 ? dispatch(updateOrders(orderInfo.result.list)) : toast.error('Error loading orders');
+          excutionList.retCode === 0 ? dispatch(updateExecutions(excutionList.result.list)) : toast.error('Error loading executions');
+          positionInfo.retCode === 0 ? dispatch(updatePositions(positionInfo.result.list)) : toast.error('Error loading positions');
 
-        const usdtWallet = walletInfo.result.list[0];
-        if (usdtWallet) {
-          dispatch(updateWallet(usdtWallet));
-        }
-      });
+          const usdtWallet = walletInfo.result.list[0];
+          if (usdtWallet) {
+            dispatch(updateWallet(usdtWallet));
+          }
+        },
+      );
     };
 
     const cancelOrder = async (order: AccountOrderV5) => {

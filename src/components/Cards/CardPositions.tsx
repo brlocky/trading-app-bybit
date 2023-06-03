@@ -133,7 +133,8 @@ export default function CardPositions({ tradingService }: ICardPositionsProps) {
                 <span className="text-green-600">{formatCurrency(pnl)}</span>
               ) : (
                 <span className="text-red-600">{formatCurrency(pnl)}</span>
-              )}
+              )} 
+              {/* / {formatCurrency(p.cumRealisedPnl)} */}
             </PositionPropContainer>
             {renderPositionActions(p)}
           </PositionRowContainer>

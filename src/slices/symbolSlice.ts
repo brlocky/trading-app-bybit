@@ -99,46 +99,34 @@ const symbolSlice = createSlice({
       state.orders = currentOrders;
     },
     updateExecutions(state, action: PayloadAction<ExecutionV5[]>) {
-      const currentOrders = [...state.orders];
-      const currentPositions = [...state.positions];
-      const executions = action.payload;
-
-      executions.forEach((execution) => {
-        const index = currentOrders.findIndex(
-          (o) => o.symbol === execution.symbol && o.side === execution.side && o.qty === execution.execQty,
-        );
-        // Remove Order
-        if (index !== -1) {
-          currentOrders.splice(index, 1);
-        }
-
-        const index2 = currentPositions.findIndex(
-          (c) => c.symbol === execution.symbol && c.side === execution.side && c.size === execution.execQty,
-        );
-        // Remove Position
-        if (index2 === -1) {
-          currentPositions.splice(index, 1);
-        }
-      });
-
-      state.orders = currentOrders;
-      state.positions = currentPositions;
+      const newExecutions = action.payload.filter((e) => !state.executions.find((s) => s.execId === e.execId));
+      state.executions = [...state.executions, ...newExecutions].slice(0, 20);
     },
     updatePositions(state, action: PayloadAction<PositionV5[]>) {
       const currentPositions = [...state.positions];
 
       action.payload.forEach((p) => {
-        const index = currentPositions.findIndex((c) => c.symbol === p.symbol && c.positionIdx === p.positionIdx && c.side === p.side);
+        const index = currentPositions.findIndex((c) => {
+          return c.symbol == p.symbol && c.positionIdx == p.positionIdx;
+        });
+
         // add
         if (index === -1) {
-          currentPositions.push(p);
+          if (Number(p.size) > 0) {
+            currentPositions.push(p);
+          }
         } else {
-          // update
-          currentPositions[index] = { ...currentPositions[index], ...p };
+          // remove
+          if (Number(p.size) === 0) {
+            currentPositions.splice(index, 1);
+          } else {
+            // update
+            currentPositions[index] = { ...currentPositions[index], ...p };
+          }
         }
       });
 
-      state.positions = [...currentPositions];
+      state.positions = currentPositions;
     },
   },
 });
