@@ -48,7 +48,7 @@ export default function CardPositions({ tradingService }: ICardPositionsProps) {
 
   const dispatch = useDispatch();
 
-  const headers = ['Ticker', 'Entry', 'Qty/Value', 'P&L'];
+  const headers = ['Ticker', 'Entry / Liq', 'Qty/Value', 'P&L'];
 
   const { closePosition, addStopLoss } = tradingService;
 
@@ -125,10 +125,10 @@ export default function CardPositions({ tradingService }: ICardPositionsProps) {
         return (
           <PositionRowContainer key={index}>
             <PositionPropContainerLink onClick={() => dispatch(updateSymbol(p.symbol))}>
-              <i className={p.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {p.symbol}
+              <i className={p.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {p.symbol} ({p.leverage}x)
             </PositionPropContainerLink>
             <PositionPropContainer>
-              {formatCurrency(p.avgPrice, currentTickerInfo?.priceScale || '0')} ({p.leverage}x)
+              {formatCurrency(p.avgPrice, currentTickerInfo?.priceScale || '0')} / {p.liqPrice}
             </PositionPropContainer>
             <PositionPropContainer>
               {p.size} / {formatCurrency(p.positionValue)} €
