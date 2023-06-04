@@ -25,16 +25,24 @@ export const SymbolSelector: React.FunctionComponent = () => {
   const apiClient = useApi();
 
   useEffect(() => {
+    loadTicker();
+    const intervalId = setInterval(() => {
+      loadTicker()
+    }, 60000)
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
+
+  const loadTicker = () => {
     apiClient.getTickers({ category: 'linear' }).then((t) => {
       const sorted = t.result.list.sort(
         (a, b) => Number((b as TickerLinearInverseV5).price24hPcnt) - Number((a as TickerLinearInverseV5).price24hPcnt),
       );
       setTickers(sorted as TickerLinearInverseV5[]);
     });
-
-
-
-  }, []);
+  };
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);

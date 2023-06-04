@@ -43,7 +43,9 @@ export const SocketListener: React.FC = () => {
       socket.unsubscribeV5([kline], 'linear', false);
     }
     const newKline = `kline.${i}.${s}`;
-    socket.subscribeV5([newKline], 'linear', false);
+
+    // add delay to avoid issues with main chart data
+    setTimeout(() => socket.subscribeV5([newKline], 'linear', false), 500);
 
     setKline(newKline);
   };
@@ -64,7 +66,6 @@ export const SocketListener: React.FC = () => {
     symbolsToRemove.map((s) => {
       unsubscribeTicker(s);
     });
-
   }, [positions]);
 
   useEffect(() => {
