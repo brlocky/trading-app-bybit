@@ -13,9 +13,7 @@ interface ArrayTicker {
 interface ISymbolState {
   symbol: string | undefined;
   interval: string;
-  ticker: ITicker | undefined;
   tickers: ArrayTicker;
-  tickerInfo: LinearInverseInstrumentInfoV5 | undefined;
   orders: AccountOrderV5[];
   wallet: WalletBalanceV5 | undefined;
   positions: PositionV5[];
@@ -26,9 +24,7 @@ interface ISymbolState {
 const initialState: ISymbolState = {
   symbol: undefined,
   interval: '1',
-  ticker: undefined,
   tickers: {},
-  tickerInfo: undefined,
   orders: [],
   wallet: undefined,
   positions: [],
@@ -47,18 +43,12 @@ const symbolSlice = createSlice({
       state.interval = action.payload;
     },
     updateTicker(state, action: PayloadAction<ITicker>) {
-      if (action.payload.symbol === state.symbol) {
-        state.ticker = { ...state.ticker, ...action.payload };
-      }
       state.tickers[action.payload.symbol] = {
         ...state.tickers[action.payload.symbol],
         ticker: { ...state.tickers[action.payload.symbol]?.ticker, ...action.payload },
       };
     },
     updateTickerInfo(state, action: PayloadAction<LinearInverseInstrumentInfoV5>) {
-      if (action.payload.symbol === state.symbol) {
-        state.tickerInfo = { ...state.tickerInfo, ...action.payload };
-      }
       state.tickers[action.payload.symbol] = {
         ...state.tickers[action.payload.symbol],
         tickerInfo: { ...action.payload },
@@ -150,9 +140,10 @@ export const selectSymbol = (state: RootState) => state.symbol.symbol;
 export const selectInterval = (state: RootState) => state.symbol.interval;
 export const selectOrders = (state: RootState) => state.symbol.orders;
 export const selectLastKline = (state: RootState) => state.symbol.kline;
-export const selectTicker = (state: RootState) => state.symbol.ticker;
 export const selectTickers = (state: RootState) => state.symbol.tickers;
-export const selectTickerInfo = (state: RootState) => state.symbol.tickerInfo;
+export const selectTicker = (state: RootState) => (state.symbol.symbol ? state.symbol.tickers[state.symbol.symbol]?.ticker : undefined);
+export const selectTickerInfo = (state: RootState) =>
+  state.symbol.symbol ? state.symbol.tickers[state.symbol.symbol]?.tickerInfo : undefined;
 export const selectPositions = (state: RootState) => state.symbol.positions;
 export const selectCurrentPosition = (state: RootState) => state.symbol.positions.find((p) => p.symbol === state.symbol.symbol);
 export const selectWallet = (state: RootState) => state.symbol.wallet;
