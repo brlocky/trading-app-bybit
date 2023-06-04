@@ -39,14 +39,6 @@ export const LeverageSelector: React.FC = () => {
 
   const updateApiLeverage = (v: number, s: string) => {
     if (!symbol) return;
-
-    console.log({
-      category: 'linear',
-      symbol: s,
-      buyLeverage: v.toString(),
-      sellLeverage: v.toString(),
-    });
-
     api
       .setLeverage({
         category: 'linear',

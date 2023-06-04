@@ -31,7 +31,6 @@ export const calculateOrderPnL = (entryPrice: string, order: AccountOrderV5): st
   const orderClosePrice = isTPorSL ? Number(order.triggerPrice) : Number(order.price);
   const orderCloseQty = Number(order.qty);
 
-  console.log(order.side, orderClosePrice);
   let pnl = 0;
   if (order.side === 'Sell') {
     pnl = (orderClosePrice - startPrice) * orderCloseQty;

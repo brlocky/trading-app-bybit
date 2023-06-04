@@ -51,11 +51,8 @@ export const PositionSizeSelector: React.FC = () => {
     dispatch(updatePositionSize(value));
   };
 
-  if (!tickerInfo || !wallet || !ticker) {
-    return <></>;
-  }
-
   const longTrade = () => {
+    if (!tickerInfo) return;
     tradingService.openLongTrade({
       symbol: tickerInfo.symbol,
       qty: positionSize.toString(),
@@ -66,6 +63,8 @@ export const PositionSizeSelector: React.FC = () => {
     });
   };
   const shortTrade = () => {
+    if (!tickerInfo) return;
+
     tradingService.openShortTrade({
       symbol: tickerInfo.symbol,
       qty: positionSize.toString(),
@@ -75,6 +74,8 @@ export const PositionSizeSelector: React.FC = () => {
       stopLoss: formatPriceWithTickerInfo(stopLoss.price, tickerInfo),
     });
   };
+
+  if (!tickerInfo || !ticker) return <>...loading...</>;
 
   const {
     lotSizeFilter: { minOrderQty, qtyStep },
