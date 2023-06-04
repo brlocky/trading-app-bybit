@@ -48,11 +48,7 @@ export const PositionModeSelector: React.FC = () => {
 
   return (
     <div className="flex flex-col">
-      <h1>PositionMode</h1>
-
-      <span>
-        <ToggleInput toggles={positionModeData} defaultToggle={currentMode} onChange={updatePositionModeHandler} />
-      </span>
+      <ToggleInput toggles={positionModeData} defaultToggle={currentMode} onChange={updatePositionModeHandler} />
     </div>
   );
 };

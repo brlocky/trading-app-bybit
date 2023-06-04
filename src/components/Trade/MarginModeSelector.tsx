@@ -51,11 +51,7 @@ export const MarginModeSelector: React.FC = () => {
 
   return (
     <div className="flex flex-col">
-      <h1>Margin Mode</h1>
-
-      <span>
-        <ToggleInput toggles={marginModeData} defaultToggle={currentMode} onChange={updateMarginModeHandler} />
-      </span>
+      <ToggleInput toggles={marginModeData} defaultToggle={currentMode} onChange={updateMarginModeHandler} />
     </div>
   );
 };

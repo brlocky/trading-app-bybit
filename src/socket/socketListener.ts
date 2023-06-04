@@ -45,7 +45,7 @@ export const SocketListener: React.FC = () => {
     const newKline = `kline.${i}.${s}`;
 
     // add delay to avoid issues with main chart data
-    setTimeout(() => socket.subscribeV5([newKline], 'linear', false), 500);
+    setTimeout(() => socket.subscribeV5([newKline], 'linear', false), 2000);
 
     setKline(newKline);
   };

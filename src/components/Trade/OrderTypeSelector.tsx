@@ -19,11 +19,7 @@ export const OrderTypeSelector: React.FC = () => {
 
   return (
     <div className="flex flex-col">
-      <h1>Order Type</h1>
-
-      <span>
-        <ToggleInput toggles={data} defaultToggle={orderType} onChange={onChangeHandler} />
-      </span>
+      <ToggleInput toggles={data} defaultToggle={orderType} onChange={onChangeHandler} />
     </div>
   );
 };

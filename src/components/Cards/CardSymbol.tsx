@@ -1,50 +1,18 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
-import { ITradingService } from '../../services';
-import { selectLeverage, selectWallet } from '../../slices';
 import { LeverageSelector, MarginModeSelector, OrderTypeSelector, PositionModeSelector, PositionSizeSelector } from '../Trade';
 
-interface ICardSymbolProps {
-  tradingService: ITradingService;
-}
-
-const CardSymbol: React.FC<ICardSymbolProps> = ({ tradingService }: ICardSymbolProps) => {
-  const wallet = useSelector(selectWallet);
-  const leverage = useSelector(selectLeverage);
-
-  if (!wallet) {
-    return <></>;
-  }
-
-  const coin = wallet.coin[0];
-
+export const CardSymbol: React.FC = () => {
   return (
-    <div className="flex h-full flex-col justify-around">
-      <div className="flex justify-between pb-5">
-        <div className="flex flex-col">
-          <span>Equity</span>
-          <span className="w-full justify-end">
-            <b>{tradingService.formatCurrency((Number(coin.equity) * leverage).toString())}</b> USDT
-          </span>
-        </div>
-        <div className="flex flex-col text-right">
-          <span>Balance</span>
-          <span>
-            <b>{tradingService.formatCurrency(coin.availableToWithdraw)}</b> USDT
-          </span>
-        </div>
-      </div>
-
+    <div className="justify-top flex flex-col gap-y-1">
+      <PositionSizeSelector />
       <LeverageSelector />
       <OrderTypeSelector />
       <PositionModeSelector />
       <MarginModeSelector />
-      <PositionSizeSelector />
+
       {/* <pre>{JSON.stringify(wallet, null, 2)}</pre> */}
       {/* <pre>{JSON.stringify(symbolProps, null, 2)}</pre> */}
       {/* <pre>{JSON.stringify(symbolInfo, null, 2)}</pre> */}
     </div>
   );
 };
-
-export default CardSymbol;

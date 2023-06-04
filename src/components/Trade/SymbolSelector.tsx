@@ -80,7 +80,7 @@ export const SymbolSelector: React.FunctionComponent = () => {
   }, []);
 
   return (
-    <div className="relative inline-block">
+    <div className="relative inline-block justify-center self-center">
       <SymbolAction type="button" onClick={toggleDropdown}>
         {selectedSymbol ? selectedSymbol : 'Dropdown'}
         <ChevronDownIcon className="ml-1 h-5 w-5" />

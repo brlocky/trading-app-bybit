@@ -3,13 +3,13 @@ import tw from 'twin.macro';
 import CardClosedPnLs from '../components/Cards/CardClosedPnL';
 import CardExecutions from '../components/Cards/CardExecutions';
 import CardPositions from '../components/Cards/CardPositions';
-import CardSymbol from '../components/Cards/CardSymbol';
 import { Chart } from '../components/Chart';
 import { IntervalSelector } from '../components/Trade/IntervalSelector';
 import { SymbolSelector } from '../components/Trade/SymbolSelector';
 import withTradingControl, { WithTradingControlProps } from '../hoc/withTradingControl';
 import CardOrders from '../components/Cards/CardOrders';
 import { Tabs } from '../components/Tabs';
+import { CardSymbol, CardWallet } from '../components/Cards';
 
 const ContentWrapper = tw.div`
 flex
@@ -20,8 +20,9 @@ grow
 
 const TopComponent = tw.div`
 flex
-p-2
+w-full
 gap-x-2
+mb-3
 `;
 
 const PositionPageContent = tw.div`
@@ -38,6 +39,7 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({ isLoading, 
         <TopComponent>
           <SymbolSelector />
           <IntervalSelector />
+          <CardWallet className='ml-auto' />
         </TopComponent>
         {isLoading ? (
           <p>Loading</p>
@@ -48,7 +50,7 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({ isLoading, 
                 <Chart dataService={dataService} tradingService={tradingService} />
               </div>
               <div className="col-span-3">
-                <CardSymbol tradingService={tradingService} />
+                <CardSymbol />
               </div>
             </div>
 

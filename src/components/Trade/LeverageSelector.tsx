@@ -54,7 +54,7 @@ export const LeverageSelector: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col bg-gray-200 p-3 rounded-md">
       <h1>Leverage {leverage}x</h1>
       <SlidePicker value={leverage} min={Number(min)} max={Number(max)} step={Number(step)} onValueChanged={onValueChanged} />
     </div>

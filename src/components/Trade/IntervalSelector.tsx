@@ -76,7 +76,7 @@ export const IntervalSelector: React.FunctionComponent = () => {
   }, []);
 
   return (
-    <div className="relative inline-block">
+    <div className="relative inline-block self-center">
       <IntervalAction type="button" onClick={toggleDropdown}>
         {selectedInterval ? intervals.find((i) => i.value === selectedInterval)?.label || '' : 'Dropdown'}
         <ChevronDownIcon className="ml-1 h-5 w-5" />

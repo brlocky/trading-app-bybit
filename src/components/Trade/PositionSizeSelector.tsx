@@ -82,7 +82,7 @@ export const PositionSizeSelector: React.FC = () => {
   } = tickerInfo;
 
   return (
-    <>
+    <div className='bg-gray-200 p-3 rounded-md'>
       <div>
         <div className="flex flex-col justify-between xl:flex-row">
           <span>
@@ -107,6 +107,6 @@ export const PositionSizeSelector: React.FC = () => {
           Short
         </Button>
       </div>
-    </>
+    </div>
   );
 };
