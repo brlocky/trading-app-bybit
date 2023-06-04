@@ -18,7 +18,7 @@ const HeaderCol: React.FC<React.HTMLAttributes<HTMLTableCellElement>> = ({ child
 );
 
 const Row: React.FC<React.HTMLAttributes<HTMLTableRowElement>> = ({ children, ...props }) => (
-  <tr className="border-b bg-white border-gray-700 bg-gray-800" {...props}>
+  <tr className="border-b border-gray-700 bg-gray-800" {...props}>
     {children}
   </tr>
 );
