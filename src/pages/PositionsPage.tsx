@@ -39,22 +39,21 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({ isLoading, 
         <TopComponent>
           <SymbolSelector />
           <IntervalSelector />
-          <CardWallet className='ml-auto' />
+          <CardWallet className="ml-auto" />
         </TopComponent>
         {isLoading ? (
           <p>Loading</p>
         ) : (
-          <>
-            <div className="grid grid-cols-10 gap-x-10 pb-10">
-              <div className="col-span-7">
+          <div className="flex gap-y-3 flex-col">
+            <div className="grid grid-cols-10 gap-x-3 ">
+              <div className="col-span-7 rounded-lg bg-gray-200 p-3">
                 <Chart dataService={dataService} tradingService={tradingService} />
               </div>
               <div className="col-span-3">
                 <CardSymbol />
               </div>
             </div>
-
-            <div >
+            <div className="rounded-lg bg-gray-200 p-3">
               <Tabs
                 tabs={[
                   {
@@ -76,7 +75,7 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({ isLoading, 
                 ]}
               />
             </div>
-          </>
+          </div>
         )}
       </PositionPageContent>
     </ContentWrapper>
