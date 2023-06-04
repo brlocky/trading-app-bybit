@@ -7,6 +7,9 @@ import { selectPositionSize, selectStopLoss, selectTakeProfit, updateEntryPrice,
 import { selectCurrentPosition, selectInterval, selectLastKline, selectTicker, selectTickerInfo } from '../../slices/symbolSlice';
 import { CandlestickDataWithVolume } from '../../types';
 import { calculateTargetPnL } from '../../utils/tradeUtils';
+import Button from '../Button/Button';
+import { SmallText } from '../Text';
+import { ChartTools } from './ChartTools';
 
 const TP = 'TP';
 const SL = 'SL';
@@ -68,137 +71,101 @@ export const Chart: React.FC<Props> = (props) => {
     }
   };
 
-  const priceLineHandler = (params: CustomPriceLineDraggedEventParams) => {
-    const { customPriceLine } = params;
-    const { title, price } = customPriceLine.options();
-    const formatedPrice: string = chartInstanceRef.current.priceScale('right').formatPrice(price);
-
-    if (title.startsWith(TP)) {
-      if (Number(formatedPrice) >= 0) {
-        dispatch(updateTakeProfit([{ ...takeProfit, price: Number(formatedPrice) }]));
-      }
-    }
-
-    if (title.startsWith(SL)) {
-      if (Number(formatedPrice) >= 0) {
-        dispatch(updateStopLoss([{ ...stopLoss, price: Number(formatedPrice) }]));
-      }
-    }
-
-    if (title.startsWith(ENTRY)) {
-      if (Number(formatedPrice) >= 0) {
-        dispatch(updateEntryPrice(formatedPrice));
-      }
-    }
-  };
-
-  const updateCurrentOrderTPnSL = () => {
-    if (!currentPosition) {
+  // Build Chart with Ticker info
+  useEffect(() => {
+    if (!chartContainerRef.current) {
+      console.error('chartContainerRef is not ready');
       return;
     }
 
-    if (Number(currentPosition?.takeProfit) !== takeProfit.price) {
-      const tpPrice: string = chartInstanceRef.current.priceScale('right').formatPrice(takeProfit.price);
-      tradingService.addTakeProfit(currentPosition, tpPrice);
-    }
-
-    if (Number(currentPosition?.stopLoss) !== stopLoss.price) {
-      const slPrice: string = chartInstanceRef.current.priceScale('right').formatPrice(stopLoss.price);
-      tradingService.addStopLoss(currentPosition, slPrice);
-    }
-  };
-
-  useEffect(() => {
-    if (chartContainerRef.current) {
-      chartInstanceRef.current = createChart(chartContainerRef.current, {
-        timeScale: {
-          timeVisible: true,
-          ticksVisible: true,
-        },
-        // localization: {
-        //   priceFormatter: (p: number) => `${p.toFixed(parseInt(tickerInfo.priceScale))}`,
-        // },
-        layout: {
-          background: { type: ColorType.Solid, color: backgroundColor },
-          textColor,
-        },
-        rightPriceScale: {
-          ticksVisible: true,
-          scaleMargins: {
-            top: 0.1,
-            bottom: 0.3,
-          },
-        },
-        crosshair: {
-          mode: CrosshairMode.Normal,
-        },
-        width: chartContainerRef.current.clientWidth,
-        height: 500,
-      });
-
-      newSeries.current = chartInstanceRef.current.addCandlestickSeries({
-        lineColor,
-        topColor: areaTopColor,
-        bottomColor: areaBottomColor,
-        priceFormat: {
-          type: 'price',
-          precision: tickerInfo?.priceScale || 2,
-          minMove: tickerInfo?.priceFilter.tickSize || 1,
-        },
-      });
-
-      // create price lines (current price) - subject to change
-      entryPriceLine.current = newSeries.current.createPriceLine({
-        title: ENTRY + ' @',
-        color: 'blue',
-        lineWidth: 1,
-        lineStyle: null,
-        axisLabelVisible: true,
-        lineVisible: true,
-        draggable: true,
-      });
-
-      // create stop loss price
-      stopLossPriceLine.current = newSeries.current.createPriceLine({
-        title: SL + ' @',
-        color: 'red',
-        lineWidth: 1,
-        lineStyle: null,
-        axisLabelVisible: true,
-        lineVisible: true,
-        draggable: true,
-      });
-
-      // create take profit
-      takeProfPriceLine.current = newSeries.current.createPriceLine({
-        title: TP + ' @',
-        color: 'green',
-        lineWidth: 1,
-        lineStyle: null,
-        axisLabelVisible: true,
-        lineVisible: true,
-        draggable: true,
-      });
-
-      newVolumeSeries.current = chartInstanceRef.current.addHistogramSeries({
-        priceFormat: {
-          type: 'volume',
-        },
-        priceScaleId: '', // set as an overlay by setting a blank priceScaleId
-      });
-      newVolumeSeries.current.priceScale().applyOptions({
-        // set the positioning of the volume series
+    chartInstanceRef.current = createChart(chartContainerRef.current, {
+      timeScale: {
+        timeVisible: true,
+        ticksVisible: true,
+      },
+      // localization: {
+      //   priceFormatter: (p: number) => `${p.toFixed(parseInt(tickerInfo.priceScale))}`,
+      // },
+      layout: {
+        background: { type: ColorType.Solid, color: backgroundColor },
+        textColor,
+      },
+      rightPriceScale: {
+        ticksVisible: true,
         scaleMargins: {
-          top: 0.9, // highest point of the series will be 70% away from the top
-          bottom: 0,
+          top: 0.1,
+          bottom: 0.3,
         },
-      });
+      },
+      crosshair: {
+        mode: CrosshairMode.Normal,
+      },
+      width: chartContainerRef.current.clientWidth,
+      height: 500,
+    });
 
-      chartInstanceRef.current.timeScale().fitContent();
-      chartInstanceRef.current.subscribeCustomPriceLineDragged(priceLineHandler);
+    newSeries.current = chartInstanceRef.current.addCandlestickSeries({
+      lineColor,
+      topColor: areaTopColor,
+      bottomColor: areaBottomColor,
+      priceFormat: {
+        type: 'price',
+        precision: tickerInfo?.priceScale || 2,
+        minMove: tickerInfo?.priceFilter.tickSize || 1,
+      },
+    });
 
-      window.addEventListener('resize', handleResize);
-    }
+    // create price lines (current price) - subject to change
+    entryPriceLine.current = newSeries.current.createPriceLine({
+      title: ENTRY + ' @',
+      color: 'blue',
+      lineWidth: 1,
+      lineStyle: null,
+      axisLabelVisible: true,
+      lineVisible: true,
+      draggable: true,
+    });
+
+    // create stop loss price
+    stopLossPriceLine.current = newSeries.current.createPriceLine({
+      title: SL + ' @',
+      color: 'red',
+      lineWidth: 1,
+      lineStyle: null,
+      axisLabelVisible: true,
+      lineVisible: true,
+      draggable: true,
+    });
+
+    // create take profit
+    takeProfPriceLine.current = newSeries.current.createPriceLine({
+      title: TP + ' @',
+      color: 'green',
+      lineWidth: 1,
+      lineStyle: null,
+      axisLabelVisible: true,
+      lineVisible: true,
+      draggable: true,
+    });
+
+    newVolumeSeries.current = chartInstanceRef.current.addHistogramSeries({
+      priceFormat: {
+        type: 'volume',
+      },
+      priceScaleId: '', // set as an overlay by setting a blank priceScaleId
+    });
+    newVolumeSeries.current.priceScale().applyOptions({
+      // set the positioning of the volume series
+      scaleMargins: {
+        top: 0.9, // highest point of the series will be 70% away from the top
+        bottom: 0,
+      },
+    });
+
+    chartInstanceRef.current.timeScale().fitContent();
+    chartInstanceRef.current.subscribeCustomPriceLineDragged(priceLineHandler);
+
+    window.addEventListener('resize', handleResize);
 
     return () => {
       window.removeEventListener('resize', handleResize);
@@ -206,29 +173,9 @@ export const Chart: React.FC<Props> = (props) => {
         chartInstanceRef.current.remove();
       }
     };
-  }, [tickerInfo, backgroundColor, lineColor, textColor, areaTopColor, areaBottomColor]);
-
-  useEffect(() => {
-    if (tickerInfo) {
-      setChartData([]);
-      dataService
-        .getKline({
-          symbol: tickerInfo.symbol,
-          interval: interval as KlineIntervalV3,
-          category: 'linear',
-        })
-        .then((r) => {
-          setChartData(r);
-
-          if (!currentPosition && r.length) {
-            const price = r[r.length - 1].close;
-            dispatch(updateTakeProfit([{ ...takeProfit, price: Number(price) }]));
-            dispatch(updateStopLoss([{ ...stopLoss, price: Number(price) }]));
-          }
-        });
-    }
   }, [tickerInfo]);
 
+  // Fetch Chart Data
   useEffect(() => {
     if (tickerInfo) {
       setChartData([]);
@@ -242,15 +189,9 @@ export const Chart: React.FC<Props> = (props) => {
           setChartData(r);
         });
     }
-  }, [interval]);
+  }, [tickerInfo, interval]);
 
-  useEffect(() => {
-    if (currentPosition) {
-      dispatch(updateTakeProfit([{ ...takeProfit, price: Number(currentPosition.takeProfit) }]));
-      dispatch(updateStopLoss([{ ...stopLoss, price: Number(currentPosition.stopLoss) }]));
-    }
-  }, [currentPosition]);
-
+  // Apply Chart Data to Chart Series
   useEffect(() => {
     newSeries.current.setData(chartData);
     const volumeData = chartData.map((d) => {
@@ -259,20 +200,33 @@ export const Chart: React.FC<Props> = (props) => {
     newVolumeSeries.current.setData(volumeData);
   }, [chartData]);
 
+  // Update Kline
   useEffect(() => {
     if (kline) {
       newSeries.current.update(JSON.parse(JSON.stringify(kline)));
       newVolumeSeries.current.update({ time: kline.time, value: kline.volume, color: volumeColor });
-      updateTPnSL();
+      updateChartLines();
     }
   }, [kline]);
 
+  // Sync TPnSL lines with current position
   useEffect(() => {
-    updateCurrentOrderTPnSL();
-    updateTPnSL();
+    if (currentPosition) {
+      dispatch(updateTakeProfit([{ ...takeProfit, price: Number(currentPosition.takeProfit) }]));
+      dispatch(updateStopLoss([{ ...stopLoss, price: Number(currentPosition.stopLoss) }]));
+    }
+  }, [currentPosition]);
+
+  useEffect(() => {
+    console.log('takeProfit, stopLoss, positionSize');
+    updateCurrentPositionTP();
+    updateCurrentPositionSL();
+    updateChartLines();
   }, [takeProfit, stopLoss, positionSize]);
 
   useEffect(() => {
+    console.log('currentPosition');
+
     if (currentPosition) {
       takeProfPriceLine.current.applyOptions({
         price: currentPosition.takeProfit,
@@ -294,7 +248,7 @@ export const Chart: React.FC<Props> = (props) => {
     }
   }, [currentPosition]);
 
-  const updateTPnSL = () => {
+  const updateChartLines = () => {
     if (!tickerInfo || !ticker) return;
     let tp = takeProfit.price,
       sl = stopLoss.price,
@@ -330,5 +284,61 @@ export const Chart: React.FC<Props> = (props) => {
     });
   };
 
-  return <div ref={chartContainerRef}></div>;
+  const priceLineHandler = (params: CustomPriceLineDraggedEventParams) => {
+    const { customPriceLine } = params;
+    const { title, price } = customPriceLine.options();
+    const formatedPrice: string = chartInstanceRef.current.priceScale('right').formatPrice(price);
+
+    if (title.startsWith(TP)) {
+      if (!currentPosition) {
+        dispatch(updateTakeProfit([{ ...takeProfit, price: Number(formatedPrice) }]));
+      } else {
+        updateCurrentPositionTP();
+      }
+    }
+
+    if (title.startsWith(SL)) {
+      if (Number(formatedPrice) >= 0) {
+        dispatch(updateStopLoss([{ ...stopLoss, price: Number(formatedPrice) }]));
+      } else {
+        updateCurrentPositionSL();
+      }
+    }
+
+    if (title.startsWith(ENTRY)) {
+      if (Number(formatedPrice) >= 0) {
+        dispatch(updateEntryPrice(formatedPrice));
+      }
+    }
+  };
+
+  const updateCurrentPositionTP = () => {
+    if (!currentPosition) {
+      return;
+    }
+
+    if (takeProfit.price !== Number(currentPosition.takeProfit)) {
+      console.log('send api tp');
+      const tpPrice: string = chartInstanceRef.current.priceScale('right').formatPrice(takeProfit.price);
+      tradingService.addTakeProfit(currentPosition, tpPrice);
+    }
+  };
+
+  const updateCurrentPositionSL = () => {
+    if (!currentPosition) {
+      return;
+    }
+
+    if (stopLoss.price !== Number(currentPosition.stopLoss)) {
+      console.log('send api sl');
+      const slPrice: string = chartInstanceRef.current.priceScale('right').formatPrice(stopLoss.price);
+      tradingService.addStopLoss(currentPosition, slPrice);
+    }
+  };
+
+  return (
+    <div ref={chartContainerRef} className="relative">
+      <ChartTools addTP={() => console.log('take profit')} addSL={() => console.log('stop loss')} />
+    </div>
+  );
 };
