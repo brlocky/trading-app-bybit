@@ -29,7 +29,7 @@ export default function CardPositions() {
       if (!currentTicker) {
         return (
           <Row key={index} onClick={() => dispatch(updateSymbol(p.symbol))}>
-            {p.symbol}
+            <Col>{p.symbol}</Col>
           </Row>
         );
       }
@@ -123,7 +123,7 @@ export default function CardPositions() {
           <HeaderCol>Qty / Value</HeaderCol>
           <HeaderCol>PnL</HeaderCol>
         </HeaderRow>
-        {renderPositions()}
+        <tbody>{renderPositions()}</tbody>
       </Table>
 
       {/* <Table headers={headers} data={tableData.flat()} /> */}

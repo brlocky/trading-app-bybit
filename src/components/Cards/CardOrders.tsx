@@ -2,17 +2,20 @@ import { AccountOrderV5 } from 'bybit-api';
 import { useSelector } from 'react-redux';
 import tw from 'twin.macro';
 import { selectOrders, selectPositions, selectTickerInfo } from '../../slices';
-import { calculateOrderPnL, formatCurrency, getOrderEntryFromPositions, isOrderStopLossOrTakeProfit } from '../../utils/tradeUtils';
+import { calculateOrderPnL, formatCurrency, getPositionFromOrder, isOrderTPorSL } from '../../utils/tradeUtils';
 import Button from '../Button/Button';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
+import { TradingService } from '../../services';
+import { useApi } from '../../providers';
 
 export default function CardOrders() {
+  const tradingService = TradingService(useApi());
   const orders = useSelector(selectOrders);
   const positions = useSelector(selectPositions);
   const tickerInfo = useSelector(selectTickerInfo);
 
   const cancelOrder = (o: AccountOrderV5) => {
-    console.log('cancel Order', o);
+    tradingService.closeOrder(o);
   };
 
   const sortedOrders = [...orders].sort((a, b) => {
@@ -22,14 +25,15 @@ export default function CardOrders() {
   });
 
   const renderOrders = sortedOrders.map((o, index) => {
-    const isTrigger = isOrderStopLossOrTakeProfit(o);
+    const isTrigger = isOrderTPorSL(o);
 
-    const orderEntry = getOrderEntryFromPositions(positions, o);
-    const pnl = calculateOrderPnL(orderEntry, o);
+    const orderEntry = getPositionFromOrder(positions, o);
+    const pnl = orderEntry ? calculateOrderPnL(orderEntry.avgPrice, o) : undefined;
     return (
       <Row key={index}>
         <Col>
-          <i className={o.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {o.symbol}
+          {isTrigger ? '' : <i className={o.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i>}
+          {o.symbol}
         </Col>
         <Col>{isTrigger ? o.stopOrderType : o.side}</Col>
         <Col>{o.qty}</Col>
@@ -37,15 +41,16 @@ export default function CardOrders() {
         <Col>{isTrigger ? o.triggerPrice : o.price}</Col>
         <Col>
           {pnl ? (
-            parseFloat(pnl) >= 0 ? (
-              <span className="text-green-600">{formatCurrency(pnl)}</span>
+            Number(pnl) >= 0 ? (
+              <span className="text-green-600">{formatCurrency(pnl)} €</span>
             ) : (
-              <span className="text-red-600">{formatCurrency(pnl)}</span>
+              <span className="text-red-600">{formatCurrency(pnl)} €</span>
             )
           ) : (
             '-'
           )}
         </Col>
+        <Col>{new Date(Number(o.createdTime)).toLocaleTimeString()}</Col>
         <Col>
           <Button
             onClick={() => {
@@ -67,10 +72,10 @@ export default function CardOrders() {
         <HeaderCol>Qty</HeaderCol>
         <HeaderCol>Price</HeaderCol>
         <HeaderCol>Profit</HeaderCol>
+        <HeaderCol>Date</HeaderCol>
         <HeaderCol>Actions</HeaderCol>
       </HeaderRow>
-
-      {renderOrders}
+      <tbody>{renderOrders}</tbody>
     </Table>
   );
 }
