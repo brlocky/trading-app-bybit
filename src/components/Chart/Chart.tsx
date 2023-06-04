@@ -3,7 +3,15 @@ import { KlineIntervalV3 } from 'bybit-api';
 import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { IDataService, ITradingService } from '../../services';
-import { selectPositionSize, selectStopLoss, selectTakeProfit, updateEntryPrice, updateStopLoss, updateTakeProfit } from '../../slices';
+import {
+  selectEntryPrice,
+  selectPositionSize,
+  selectStopLoss,
+  selectTakeProfit,
+  updateEntryPrice,
+  updateStopLoss,
+  updateTakeProfit,
+} from '../../slices';
 import { selectCurrentPosition, selectInterval, selectLastKline, selectTicker, selectTickerInfo } from '../../slices/symbolSlice';
 import { CandlestickDataWithVolume } from '../../types';
 import { calculateSLPrice, calculateTPPrice, calculateTargetPnL, formatPriceWithTickerInfo } from '../../utils/tradeUtils';
@@ -58,6 +66,7 @@ export const Chart: React.FC<Props> = (props) => {
 
   const takeProfit = useSelector(selectTakeProfit);
   const stopLoss = useSelector(selectStopLoss);
+  const entryPrice = useSelector(selectEntryPrice);
 
   const dispatch = useDispatch();
 
@@ -218,103 +227,10 @@ export const Chart: React.FC<Props> = (props) => {
     }
   }, [currentPosition]);
 
-
-
-  // const updateChartLines = () => {
-  //   if (!tickerInfo || !ticker) return;
-  //   let tp = takeProfit.price,
-  //     sl = stopLoss.price,
-  //     entry = ticker.lastPrice,
-  //     coinAmount = positionSize;
-
-  //   if (currentPosition) {
-  //     entry = currentPosition.avgPrice;
-  //     currentPosition.takeProfit ? (tp = Number(currentPosition.takeProfit)) : 0;
-  //     currentPosition.stopLoss ? (sl = Number(currentPosition.stopLoss)) : 0;
-  //     coinAmount = Number(currentPosition.size);
-  //   }
-
-  //   const pnLCurrent = calculateTargetPnL(Number(kline?.close), Number(entry), coinAmount);
-  //   const pnLTakeProfit = calculateTargetPnL(Number(tp), Number(entry), coinAmount);
-  //   const pnLStopLoss = calculateTargetPnL(Number(sl), Number(entry), coinAmount);
-  //   takeProfPriceLine.current.applyOptions({
-  //     title: TP + ' ' + pnLTakeProfit + 'USDT',
-  //     lineWidth: currentPosition ? 2 : 1,
-  //     price: tp,
-  //   });
-
-  //   stopLossPriceLine.current.applyOptions({
-  //     title: SL + ' ' + pnLStopLoss + 'USDT',
-  //     lineWidth: currentPosition ? 2 : 1,
-  //     price: sl,
-  //   });
-
-  //   entryPriceLine.current.applyOptions({
-  //     title: currentPosition ? pnLCurrent + 'USDT' : ENTRY + '@',
-  //     lineWidth: currentPosition ? 2 : 1,
-  //     price: entry,
-  //   });
-  // };
-
-  const priceLineHandler = (params: CustomPriceLineDraggedEventParams) => {
-    console.log('priceLineHandler', params);
-    // const { customPriceLine } = params;
-    // const { title, price } = customPriceLine.options();
-    // const formatedPrice: string = chartInstanceRef.current.priceScale('right').formatPrice(price);
-
-    // if (title.startsWith(TP)) {
-    //   if (!currentPosition) {
-    //     dispatch(updateTakeProfit([{ ...takeProfit, price: Number(formatedPrice) }]));
-    //   } else {
-    //     updateCurrentPositionTP();
-    //   }
-    // }
-
-    // if (title.startsWith(SL)) {
-    //   if (Number(formatedPrice) >= 0) {
-    //     dispatch(updateStopLoss([{ ...stopLoss, price: Number(formatedPrice) }]));
-    //   } else {
-    //     updateCurrentPositionSL();
-    //   }
-    // }
-
-    // if (title.startsWith(ENTRY)) {
-    //   if (Number(formatedPrice) >= 0) {
-    //     dispatch(updateEntryPrice(formatedPrice));
-    //   }
-    // }
-  };
-
-  // const updateCurrentPositionTP = () => {
-  //   if (!currentPosition) {
-  //     return;
-  //   }
-
-  //   if (takeProfit.price !== Number(currentPosition.takeProfit)) {
-  //     console.log('send api tp');
-  //     const tpPrice: string = chartInstanceRef.current.priceScale('right').formatPrice(takeProfit.price);
-  //     tradingService.addTakeProfit(currentPosition, tpPrice);
-  //   }
-  // };
-
-  // const updateCurrentPositionSL = () => {
-  //   if (!currentPosition) {
-  //     return;
-  //   }
-
-  //   if (stopLoss.price !== Number(currentPosition.stopLoss)) {
-  //     console.log('send api sl');
-  //     const slPrice: string = chartInstanceRef.current.priceScale('right').formatPrice(stopLoss.price);
-  //     tradingService.addStopLoss(currentPosition, slPrice);
-  //   }
-  // };
-
-
+  // Sync TPnSL redux values with currentPosition
   useEffect(() => {
-    console.log('currentPosition');
-
     if (!tickerInfo || !ticker) {
-      return
+      return;
     }
     if (currentPosition) {
       if (Number(currentPosition.takeProfit)) {
@@ -322,7 +238,7 @@ export const Chart: React.FC<Props> = (props) => {
       } else {
         dispatch(updateTakeProfit([]));
       }
-      
+
       if (Number(currentPosition.stopLoss)) {
         dispatch(updateStopLoss([{ ...stopLoss, price: Number(currentPosition.stopLoss) }]));
       } else {
@@ -333,43 +249,18 @@ export const Chart: React.FC<Props> = (props) => {
     } else {
       dispatch(updateTakeProfit([]));
       dispatch(updateStopLoss([]));
-      updateEntryPrice(ticker.lastPrice)
+      dispatch(updateEntryPrice(ticker.lastPrice));
     }
+
+    setTimeout(() => {
+      updateLineLabels();
+    }, 1000);
   }, [currentPosition]);
 
+  //
   useEffect(() => {
-    console.log('takeProfit, stopLoss, positionSize');
-    // updateCurrentPositionTP();
-    // updateCurrentPositionSL();
-    // updateChartLines();
-
-    if (currentPosition) {
-      takeProfPriceLine.current.applyOptions({
-        price: currentPosition.takeProfit,
-      });
-
-      stopLossPriceLine.current.applyOptions({
-        price: currentPosition.stopLoss,
-      });
-
-      entryPriceLine.current.applyOptions({
-        price: currentPosition.avgPrice,
-        draggable: false,
-      });
-    } else {
-      entryPriceLine.current.applyOptions({
-        price: ticker?.lastPrice,
-        draggable: true,
-      });
-      takeProfPriceLine.current.applyOptions({
-        price: takeProfit ? takeProfit.price : undefined,
-      });
-
-      stopLossPriceLine.current.applyOptions({
-        price: stopLoss ? stopLoss.price : undefined,
-      });
-    }
-  }, [takeProfit, stopLoss, positionSize]);
+    updateLineLabels();
+  }, [entryPrice, takeProfit, stopLoss, positionSize]);
 
   const addTp = () => {
     if (!ticker || !tickerInfo) {
@@ -395,6 +286,98 @@ export const Chart: React.FC<Props> = (props) => {
     if (currentPosition) {
       tradingService.addStopLoss(currentPosition, formatPriceWithTickerInfo(slPrice, tickerInfo));
     }
+  };
+
+  const priceLineHandler = (params: CustomPriceLineDraggedEventParams) => {
+    if (!tickerInfo) return;
+    const { customPriceLine } = params;
+    const { title, price } = customPriceLine.options();
+    const formatedPrice: string = chartInstanceRef.current.priceScale('right').formatPrice(price);
+
+    if (title.startsWith(TP)) {
+      if (currentPosition) {
+        tradingService.addTakeProfit(currentPosition, formatPriceWithTickerInfo(formatedPrice, tickerInfo));
+      } else {
+        dispatch(updateTakeProfit([{ ...takeProfit, price: Number(formatedPrice) }]));
+      }
+    }
+
+    if (title.startsWith(SL)) {
+      if (currentPosition) {
+        tradingService.addStopLoss(currentPosition, formatPriceWithTickerInfo(formatedPrice, tickerInfo));
+      } else {
+        dispatch(updateStopLoss([{ ...stopLoss, price: Number(formatedPrice) }]));
+      }
+    }
+
+    if (title.startsWith(ENTRY)) {
+      if (Number(formatedPrice) >= 0) {
+        dispatch(updateEntryPrice(formatedPrice));
+      }
+    }
+  };
+
+  const updateLineLabels = () => {
+    if (!tickerInfo || !ticker) return;
+    let tp = takeProfit ? takeProfit.price : undefined,
+      sl = stopLoss ? stopLoss.price : undefined, 
+      entry = ticker.lastPrice,
+      coinAmount = positionSize;
+
+    // if (currentPosition) {
+    //   takeProfPriceLine.current.applyOptions({
+    //     price: currentPosition.takeProfit,
+    //   });
+
+    //   stopLossPriceLine.current.applyOptions({
+    //     price: currentPosition.stopLoss,
+    //   });
+
+    //   entryPriceLine.current.applyOptions({
+    //     price: currentPosition.avgPrice,
+    //     draggable: false,
+    //   });
+    // } else {
+    //   entryPriceLine.current.applyOptions({
+    //     price: ticker?.lastPrice,
+    //     draggable: true,
+    //   });
+    //   takeProfPriceLine.current.applyOptions({
+    //     price: takeProfit ? takeProfit.price : undefined,
+    //   });
+
+    //   stopLossPriceLine.current.applyOptions({
+    //     price: stopLoss ? stopLoss.price : undefined,
+    //   });
+    // }
+
+    if (currentPosition) {
+      entry = currentPosition.avgPrice;
+      currentPosition.takeProfit ? (tp = Number(currentPosition.takeProfit)) : 0;
+      currentPosition.stopLoss ? (sl = Number(currentPosition.stopLoss)) : 0;
+      coinAmount = Number(currentPosition.size);
+    }
+
+    const pnLCurrent = calculateTargetPnL(Number(kline?.close), Number(entry), coinAmount);
+    const pnLTakeProfit = calculateTargetPnL(Number(tp), Number(entry), coinAmount);
+    const pnLStopLoss = calculateTargetPnL(Number(sl), Number(entry), coinAmount);
+    takeProfPriceLine.current.applyOptions({
+      title: TP + ' ' + pnLTakeProfit + 'USDT',
+      lineWidth: currentPosition ? 2 : 1,
+      price: tp,
+    });
+
+    stopLossPriceLine.current.applyOptions({
+      title: SL + ' ' + pnLStopLoss + 'USDT',
+      lineWidth: currentPosition ? 2 : 1,
+      price: sl,
+    });
+
+    entryPriceLine.current.applyOptions({
+      title: currentPosition ? pnLCurrent + 'USDT' : ENTRY + '@',
+      lineWidth: currentPosition ? 2 : 1,
+      price: entry,
+    });
   };
 
   return (

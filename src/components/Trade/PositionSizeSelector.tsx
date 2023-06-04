@@ -76,7 +76,7 @@ export const PositionSizeSelector: React.FC = () => {
     });
   };
 
-  if (!tickerInfo || !ticker) return <>...loading...</>;
+  if (!tickerInfo || !ticker) return <div className="rounded-md bg-gray-200 p-3">Select Symbol</div>;
 
   const {
     lotSizeFilter: { minOrderQty, qtyStep },

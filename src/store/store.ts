@@ -9,7 +9,7 @@ const persistedSymbolReducer = persistReducer(
   {
     key: 'root',
     storage,
-    whitelist: ['symbol', 'interval'], // Specify the slices to persist
+    whitelist: [], // Specify the slices to persist
   },
   symbolReducer,
 );
@@ -19,7 +19,7 @@ const persistedTradeReducer = persistReducer(
   {
     key: 'tradeSetup',
     storage,
-    whitelist: ['positionSize', 'takeProfits', 'stopLosses'], // Specify the slices to persist
+    whitelist: [], // Specify the slices to persist
   },
   tradeSetupReducer,
 );

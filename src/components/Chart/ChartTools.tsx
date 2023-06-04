@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { selectCurrentPosition } from '../../slices/symbolSlice';
+import { selectCurrentPosition, selectTicker } from '../../slices/symbolSlice';
 import Button from '../Button/Button';
 
 interface Props {
@@ -10,9 +10,10 @@ interface Props {
 
 export const ChartTools: React.FC<Props> = ({ addTP, addSL }) => {
   const currentPosition = useSelector(selectCurrentPosition);
+  const ticker = useSelector(selectTicker);
 
-  const tpDisabled = !!Number(currentPosition?.takeProfit);
-  const slDisabled = !!Number(currentPosition?.stopLoss);
+  const tpDisabled = ticker ? !!Number(currentPosition?.takeProfit) : true;
+  const slDisabled = ticker ? !!Number(currentPosition?.stopLoss) : true;
   return (
     <div className="absolute right-20 top-2 z-20 flex gap-x-2 rounded-lg bg-gray-700 p-2">
       <Button disabled={tpDisabled} onClick={addTP} className="bg-green-200">

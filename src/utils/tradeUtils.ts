@@ -65,7 +65,7 @@ export const formatPriceWithTickerInfo = (value: string | number, tickerInfo: Li
 
 export const calculateTPPrice = (price: string | number, position?: PositionV5):number => {
   const numericLastPrice = isNumber(price) ? price : Number(price)
-  const tpPercentage = 2;
+  const tpPercentage = 1;
   const diff = (numericLastPrice * tpPercentage) / 100;
   const side = position ? position.side : 'Buy';
   return side === 'Buy' ? numericLastPrice + diff : numericLastPrice - diff;
@@ -73,7 +73,7 @@ export const calculateTPPrice = (price: string | number, position?: PositionV5):
 
 export const calculateSLPrice = (price: string | number, position?: PositionV5):number => {
   const numericLastPrice = isNumber(price) ? price : Number(price)
-  const slPercentage = 2;
+  const slPercentage = 1;
   const diff = (numericLastPrice * slPercentage) / 100;
   const side = position ? position.side : 'Buy';
   return side === 'Buy' ? numericLastPrice - diff : numericLastPrice + diff;
