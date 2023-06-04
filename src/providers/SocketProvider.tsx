@@ -1,5 +1,5 @@
 import { WebsocketClient } from 'bybit-api';
-import React, { ReactNode, useContext, useState } from 'react';
+import React, { ReactNode, useContext, useEffect, useState } from 'react';
 
 // Define the SOCKET context
 const SocketContext = React.createContext<WebsocketClient | null>(null);
@@ -13,21 +13,26 @@ interface ISocketProviderProps {
 
 // Create the SOCKET provider component
 export const SocketProvider: React.FC<ISocketProviderProps> = ({ children, socketKey, socketSecret, testnet }: ISocketProviderProps) => {
-  const [socketClient, setSocketClient] = useState<WebsocketClient | null>(null);
+  const [socketClient, setSocketClient] = useState<WebsocketClient>();
 
-  // Initialize the SOCKET client once
-  if (!socketClient) {
-    // Retrieve the SOCKET key and SOCKET secret from SettingsService
+  useEffect(() => {
+    // Connect Socket
     const ws = new WebsocketClient({
-      key: socketKey,
-      secret: socketSecret,
+      key: socketKey ? socketKey : undefined,
+      secret: socketSecret ? socketSecret : undefined,
       market: 'v5',
       testnet,
     });
     setSocketClient(ws);
-  }
 
-  return <SocketContext.Provider value={socketClient}>{children}</SocketContext.Provider>;
+    return () => {
+      if (socketClient) {
+        socketClient.closeAll();
+      }
+    };
+  }, []);
+
+  return socketClient ? <SocketContext.Provider value={socketClient}>{children}</SocketContext.Provider> : null;
 };
 
 // Create a custom hook to access the SOCKET context
