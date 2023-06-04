@@ -8,16 +8,16 @@ export default function NavBar() {
   const version = packageJson.version;
   return (
     <>
-      <div className="flex flex-wrap py-2">
+      <div className="flex flex-wrap">
         <div className="w-full">
-          <nav className="relative flex flex-wrap items-center justify-between rounded bg-blue-400 py-3">
+          <nav className="relative flex flex-wrap items-center justify-between  bg-blue-400">
             <div className="mx-auto flex w-full flex-wrap items-center justify-between px-4">
               <div className="relative flex w-full justify-between lg:static lg:block lg:w-auto lg:justify-start">
                 <Link to="/" className="flex items-center gap-x-1 py-2 leading-snug text-white hover:opacity-75">
                   <i className="fas fa-globe leading-lg"></i> <span className="text-xs font-bold uppercase">Trading</span><span className="text-xs ">v{version}</span>
                 </Link>
                 <button
-                  className="block cursor-pointer rounded border border-solid border-transparent bg-transparent px-3 py-1 text-xl leading-none text-white outline-none focus:outline-none lg:hidden"
+                  className="block cursor-pointer border border-solid border-transparent bg-transparent px-3 py-1 text-xl leading-none text-white outline-none focus:outline-none lg:hidden"
                   type="button"
                   onClick={() => setMenuOpen(!menuOpen)}
                 >

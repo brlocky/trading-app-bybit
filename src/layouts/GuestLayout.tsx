@@ -11,6 +11,8 @@ max-w-screen-2xl
 min-h-screen
 m-0
 p-0
+antialiased
+bg-neutral-100
 `;
 
 const PageContentComponent = tw.div`

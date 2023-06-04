@@ -9,7 +9,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const Button = ({ onClick, children, className, ...restProps }: ButtonProps) => {
   const classes = clsx(
-    'rounded bg-gray-300 px-4 py-2 text-xs font-bold text-gray-800 hover:bg-gray-400',
+    'rounded bg-gray-300 px-4 py-2 text-xs font-bold text-gray-800 hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed',
     className,
   );
 
