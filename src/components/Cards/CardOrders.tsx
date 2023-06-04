@@ -1,12 +1,11 @@
 import { AccountOrderV5 } from 'bybit-api';
 import { useSelector } from 'react-redux';
-import tw from 'twin.macro';
+import { useApi } from '../../providers';
+import { TradingService } from '../../services';
 import { selectOrders, selectPositions, selectTickerInfo } from '../../slices';
 import { calculateOrderPnL, formatCurrency, getPositionFromOrder, isOrderTPorSL } from '../../utils/tradeUtils';
 import Button from '../Button/Button';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
-import { TradingService } from '../../services';
-import { useApi } from '../../providers';
 
 export default function CardOrders() {
   const tradingService = TradingService(useApi());

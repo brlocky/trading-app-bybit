@@ -1,6 +1,4 @@
-import { PositionV5 } from 'bybit-api';
 import { useDispatch, useSelector } from 'react-redux';
-import tw from 'twin.macro';
 import { useApi } from '../../providers';
 import { TradingService } from '../../services';
 import { selectPositions, selectTickerInfo, selectTickers, updateSymbol } from '../../slices';
