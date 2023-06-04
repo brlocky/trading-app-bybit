@@ -305,19 +305,19 @@ export const Chart: React.FC<Props> = (props) => {
     const pnLTakeProfit = calculateTargetPnL(Number(tp), Number(entry), coinAmount);
     const pnLStopLoss = calculateTargetPnL(Number(sl), Number(entry), coinAmount);
     takeProfPriceLine.current.applyOptions({
-      title: TP + ' ' + pnLTakeProfit + '€',
+      title: TP + ' ' + pnLTakeProfit + 'USDT',
       lineWidth: currentPosition ? 2 : 1,
       price: tp,
     });
 
     stopLossPriceLine.current.applyOptions({
-      title: SL + ' ' + pnLStopLoss + '€',
+      title: SL + ' ' + pnLStopLoss + 'USDT',
       lineWidth: currentPosition ? 2 : 1,
       price: sl,
     });
 
     entryPriceLine.current.applyOptions({
-      title: currentPosition ? pnLCurrent + '€' : ENTRY + '@',
+      title: currentPosition ? pnLCurrent + 'USDT' : ENTRY + '@',
       lineWidth: currentPosition ? 2 : 1,
       price: entry,
     });

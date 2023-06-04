@@ -42,9 +42,9 @@ export default function CardOrders() {
         <Col>
           {pnl ? (
             Number(pnl) >= 0 ? (
-              <span className="text-green-600">{formatCurrency(pnl)} €</span>
+              <span className="text-green-600">{formatCurrency(pnl)} USDT</span>
             ) : (
-              <span className="text-red-600">{formatCurrency(pnl)} €</span>
+              <span className="text-red-600">{formatCurrency(pnl)} USDT</span>
             )
           ) : (
             '-'

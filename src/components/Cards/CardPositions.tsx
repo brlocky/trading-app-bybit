@@ -45,13 +45,13 @@ export default function CardPositions() {
             {formatCurrency(p.avgPrice, currentTickerInfo?.priceScale || '0')} / {p.liqPrice}
           </Col>
           <Col>
-            {p.size} / {formatCurrency(p.positionValue)} €
+            {p.size} / {formatCurrency(p.positionValue)} USDT
           </Col>
           <Col>
             {Number(pnl) >= 0 ? (
-              <span className="text-green-600">{formatCurrency(pnl)} €</span>
+              <span className="text-green-600">{formatCurrency(pnl)} USDT</span>
             ) : (
-              <span className="text-red-600">{formatCurrency(pnl)} €</span>
+              <span className="text-red-600">{formatCurrency(pnl)} USDT</span>
             )}
             {/* / {formatCurrency(p.cumRealisedPnl)} */}
           </Col>

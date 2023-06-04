@@ -17,6 +17,7 @@ import {
 import { formatPriceWithTickerInfo } from '../../utils/tradeUtils';
 import Button from '../Button/Button';
 import SlidePicker from '../Forms/SlidePicker';
+import { RedText, SmallText } from '../Text';
 
 export const PositionSizeSelector: React.FC = () => {
   const dispatch = useDispatch();
@@ -82,14 +83,13 @@ export const PositionSizeSelector: React.FC = () => {
   } = tickerInfo;
 
   return (
-    <div className='bg-gray-200 p-3 rounded-md'>
+    <div className="rounded-md bg-gray-200 p-3">
       <div>
-        <div className="flex flex-col justify-between xl:flex-row">
-          <span>
+        <div className="flex justify-between">
+          <SmallText>
             {positionSize} {tickerInfo.baseCoin}
-          </span>
-          <span>{(positionSize * Number(ticker.lastPrice)).toFixed(2)} €</span>
-          <span>Fee: -{((positionSize * Number(ticker.lastPrice) * 0.06) / 100).toFixed(2)} €</span>
+          </SmallText>
+          <SmallText>{(positionSize * Number(ticker.lastPrice)).toFixed(2)} USDT</SmallText>
         </div>
         <SlidePicker
           min={Number(minOrderQty)}
@@ -107,6 +107,9 @@ export const PositionSizeSelector: React.FC = () => {
           Short
         </Button>
       </div>
+      <SmallText className='self-end text-right'>
+        <RedText>-{((positionSize * Number(ticker.lastPrice) * (orderType === 'Market' ? 0.06 : 0.01)) / 100).toFixed(2)} USDT</RedText>
+      </SmallText>
     </div>
   );
 };

@@ -24,7 +24,7 @@ export default function CardExecutions() {
               <Col>{l.orderType}</Col>
               <Col>{formatCurrency(l.execQty)}</Col>
               <Col>
-                <span className="text-red-600">{formatCurrency(closedPnL)} €</span>
+                <span className="text-red-600">{formatCurrency(closedPnL)} USDT</span>
               </Col>
               <Col>{new Date(Number(l.execTime)).toLocaleTimeString()}</Col>
             </Row>

@@ -37,9 +37,9 @@ export default function CardClosedPnLs() {
                 </Col>
                 <Col>
                   {closedPnL >= 0 ? (
-                    <span className="text-green-600">{formatCurrency(closedPnL)} €</span>
+                    <span className="text-green-600">{formatCurrency(closedPnL)} USDT</span>
                   ) : (
-                    <span className="text-red-600">{formatCurrency(closedPnL)} €</span>
+                    <span className="text-red-600">{formatCurrency(closedPnL)} USDT</span>
                   )}
                 </Col>
                 <Col>{new Date(Number(l.updatedTime)).toLocaleTimeString()}</Col>
