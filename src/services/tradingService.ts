@@ -128,7 +128,6 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
   };
 
   const openLongTrade = async (props: INewTrade) => {
-
     apiClient
       .submitOrder({
         positionIdx: getPositionMode('Sell'),

@@ -37,13 +37,16 @@ export default function CardPositions() {
         <Row key={index}>
           <Col onClick={() => dispatch(updateSymbol(p.symbol))}>
             <i className={p.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {p.symbol} (
-            {p.leverage}x) R
+            {p.leverage}x)
           </Col>
           <Col>
-            {formatCurrency(p.avgPrice, currentTickerInfo?.priceScale || '0')} / {p.liqPrice}
+            {formatCurrency(p.avgPrice, currentTickerInfo?.priceScale || '0')}
           </Col>
           <Col>
-            {p.size} / {formatCurrency(p.positionValue)} USDT
+            {formatCurrency(p.positionValue)} USDT
+          </Col>
+          <Col>
+            {Number(p.takeProfit) ? p.takeProfit : '-'} / {Number(p.stopLoss) ? p.stopLoss : '-'}
           </Col>
           <Col>
             {Number(pnl) >= 0 ? (
@@ -55,7 +58,7 @@ export default function CardPositions() {
           </Col>
         </Row>,
         <Row key={`${index}_buttons`}>
-          <Col colSpan={4}>
+          <Col colSpan={5}>
             <div className="flex w-full justify-end gap-x-2">
               <Button
                 onClick={() => {
@@ -117,8 +120,9 @@ export default function CardPositions() {
       <Table>
         <HeaderRow>
           <HeaderCol>Ticker</HeaderCol>
-          <HeaderCol>Entry / Liq</HeaderCol>
-          <HeaderCol>Qty / Value</HeaderCol>
+          <HeaderCol>Entry</HeaderCol>
+          <HeaderCol>Value</HeaderCol>
+          <HeaderCol>TP / SL</HeaderCol>
           <HeaderCol>PnL</HeaderCol>
         </HeaderRow>
         <tbody>{renderPositions()}</tbody>

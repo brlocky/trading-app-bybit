@@ -6,9 +6,7 @@ import { IDataService, ITradingService } from '../../services';
 import { selectPositionSize, selectStopLoss, selectTakeProfit, updateEntryPrice, updateStopLoss, updateTakeProfit } from '../../slices';
 import { selectCurrentPosition, selectInterval, selectLastKline, selectTicker, selectTickerInfo } from '../../slices/symbolSlice';
 import { CandlestickDataWithVolume } from '../../types';
-import { calculateTargetPnL } from '../../utils/tradeUtils';
-import Button from '../Button/Button';
-import { SmallText } from '../Text';
+import { calculateSLPrice, calculateTPPrice, calculateTargetPnL, formatPriceWithTickerInfo } from '../../utils/tradeUtils';
 import { ChartTools } from './ChartTools';
 
 const TP = 'TP';
@@ -205,7 +203,7 @@ export const Chart: React.FC<Props> = (props) => {
     if (kline) {
       newSeries.current.update(JSON.parse(JSON.stringify(kline)));
       newVolumeSeries.current.update({ time: kline.time, value: kline.volume, color: volumeColor });
-      updateChartLines();
+      // updateChartLines();
     }
   }, [kline]);
 
@@ -214,18 +212,136 @@ export const Chart: React.FC<Props> = (props) => {
     if (currentPosition) {
       dispatch(updateTakeProfit([{ ...takeProfit, price: Number(currentPosition.takeProfit) }]));
       dispatch(updateStopLoss([{ ...stopLoss, price: Number(currentPosition.stopLoss) }]));
+    } else {
+      dispatch(updateTakeProfit([]));
+      dispatch(updateStopLoss([]));
+    }
+  }, [currentPosition]);
+
+
+
+  // const updateChartLines = () => {
+  //   if (!tickerInfo || !ticker) return;
+  //   let tp = takeProfit.price,
+  //     sl = stopLoss.price,
+  //     entry = ticker.lastPrice,
+  //     coinAmount = positionSize;
+
+  //   if (currentPosition) {
+  //     entry = currentPosition.avgPrice;
+  //     currentPosition.takeProfit ? (tp = Number(currentPosition.takeProfit)) : 0;
+  //     currentPosition.stopLoss ? (sl = Number(currentPosition.stopLoss)) : 0;
+  //     coinAmount = Number(currentPosition.size);
+  //   }
+
+  //   const pnLCurrent = calculateTargetPnL(Number(kline?.close), Number(entry), coinAmount);
+  //   const pnLTakeProfit = calculateTargetPnL(Number(tp), Number(entry), coinAmount);
+  //   const pnLStopLoss = calculateTargetPnL(Number(sl), Number(entry), coinAmount);
+  //   takeProfPriceLine.current.applyOptions({
+  //     title: TP + ' ' + pnLTakeProfit + 'USDT',
+  //     lineWidth: currentPosition ? 2 : 1,
+  //     price: tp,
+  //   });
+
+  //   stopLossPriceLine.current.applyOptions({
+  //     title: SL + ' ' + pnLStopLoss + 'USDT',
+  //     lineWidth: currentPosition ? 2 : 1,
+  //     price: sl,
+  //   });
+
+  //   entryPriceLine.current.applyOptions({
+  //     title: currentPosition ? pnLCurrent + 'USDT' : ENTRY + '@',
+  //     lineWidth: currentPosition ? 2 : 1,
+  //     price: entry,
+  //   });
+  // };
+
+  const priceLineHandler = (params: CustomPriceLineDraggedEventParams) => {
+    console.log('priceLineHandler', params);
+    // const { customPriceLine } = params;
+    // const { title, price } = customPriceLine.options();
+    // const formatedPrice: string = chartInstanceRef.current.priceScale('right').formatPrice(price);
+
+    // if (title.startsWith(TP)) {
+    //   if (!currentPosition) {
+    //     dispatch(updateTakeProfit([{ ...takeProfit, price: Number(formatedPrice) }]));
+    //   } else {
+    //     updateCurrentPositionTP();
+    //   }
+    // }
+
+    // if (title.startsWith(SL)) {
+    //   if (Number(formatedPrice) >= 0) {
+    //     dispatch(updateStopLoss([{ ...stopLoss, price: Number(formatedPrice) }]));
+    //   } else {
+    //     updateCurrentPositionSL();
+    //   }
+    // }
+
+    // if (title.startsWith(ENTRY)) {
+    //   if (Number(formatedPrice) >= 0) {
+    //     dispatch(updateEntryPrice(formatedPrice));
+    //   }
+    // }
+  };
+
+  // const updateCurrentPositionTP = () => {
+  //   if (!currentPosition) {
+  //     return;
+  //   }
+
+  //   if (takeProfit.price !== Number(currentPosition.takeProfit)) {
+  //     console.log('send api tp');
+  //     const tpPrice: string = chartInstanceRef.current.priceScale('right').formatPrice(takeProfit.price);
+  //     tradingService.addTakeProfit(currentPosition, tpPrice);
+  //   }
+  // };
+
+  // const updateCurrentPositionSL = () => {
+  //   if (!currentPosition) {
+  //     return;
+  //   }
+
+  //   if (stopLoss.price !== Number(currentPosition.stopLoss)) {
+  //     console.log('send api sl');
+  //     const slPrice: string = chartInstanceRef.current.priceScale('right').formatPrice(stopLoss.price);
+  //     tradingService.addStopLoss(currentPosition, slPrice);
+  //   }
+  // };
+
+
+  useEffect(() => {
+    console.log('currentPosition');
+
+    if (!tickerInfo || !ticker) {
+      return
+    }
+    if (currentPosition) {
+      if (Number(currentPosition.takeProfit)) {
+        dispatch(updateTakeProfit([{ ...takeProfit, price: Number(currentPosition.takeProfit) }]));
+      } else {
+        dispatch(updateTakeProfit([]));
+      }
+      
+      if (Number(currentPosition.stopLoss)) {
+        dispatch(updateStopLoss([{ ...stopLoss, price: Number(currentPosition.stopLoss) }]));
+      } else {
+        dispatch(updateStopLoss([]));
+      }
+
+      dispatch(updateEntryPrice(currentPosition.avgPrice));
+    } else {
+      dispatch(updateTakeProfit([]));
+      dispatch(updateStopLoss([]));
+      updateEntryPrice(ticker.lastPrice)
     }
   }, [currentPosition]);
 
   useEffect(() => {
     console.log('takeProfit, stopLoss, positionSize');
-    updateCurrentPositionTP();
-    updateCurrentPositionSL();
-    updateChartLines();
-  }, [takeProfit, stopLoss, positionSize]);
-
-  useEffect(() => {
-    console.log('currentPosition');
+    // updateCurrentPositionTP();
+    // updateCurrentPositionSL();
+    // updateChartLines();
 
     if (currentPosition) {
       takeProfPriceLine.current.applyOptions({
@@ -245,100 +361,45 @@ export const Chart: React.FC<Props> = (props) => {
         price: ticker?.lastPrice,
         draggable: true,
       });
+      takeProfPriceLine.current.applyOptions({
+        price: takeProfit ? takeProfit.price : undefined,
+      });
+
+      stopLossPriceLine.current.applyOptions({
+        price: stopLoss ? stopLoss.price : undefined,
+      });
     }
-  }, [currentPosition]);
+  }, [takeProfit, stopLoss, positionSize]);
 
-  const updateChartLines = () => {
-    if (!tickerInfo || !ticker) return;
-    let tp = takeProfit.price,
-      sl = stopLoss.price,
-      entry = ticker.lastPrice,
-      coinAmount = positionSize;
-
+  const addTp = () => {
+    if (!ticker || !tickerInfo) {
+      return;
+    }
+    const tpPrice = calculateTPPrice(ticker.lastPrice, currentPosition);
+    if (!currentPosition) {
+      dispatch(updateTakeProfit([{ ...takeProfit, price: tpPrice }]));
+    }
     if (currentPosition) {
-      entry = currentPosition.avgPrice;
-      currentPosition.takeProfit ? (tp = Number(currentPosition.takeProfit)) : 0;
-      currentPosition.stopLoss ? (sl = Number(currentPosition.stopLoss)) : 0;
-      coinAmount = Number(currentPosition.size);
-    }
-
-    const pnLCurrent = calculateTargetPnL(Number(kline?.close), Number(entry), coinAmount);
-    const pnLTakeProfit = calculateTargetPnL(Number(tp), Number(entry), coinAmount);
-    const pnLStopLoss = calculateTargetPnL(Number(sl), Number(entry), coinAmount);
-    takeProfPriceLine.current.applyOptions({
-      title: TP + ' ' + pnLTakeProfit + 'USDT',
-      lineWidth: currentPosition ? 2 : 1,
-      price: tp,
-    });
-
-    stopLossPriceLine.current.applyOptions({
-      title: SL + ' ' + pnLStopLoss + 'USDT',
-      lineWidth: currentPosition ? 2 : 1,
-      price: sl,
-    });
-
-    entryPriceLine.current.applyOptions({
-      title: currentPosition ? pnLCurrent + 'USDT' : ENTRY + '@',
-      lineWidth: currentPosition ? 2 : 1,
-      price: entry,
-    });
-  };
-
-  const priceLineHandler = (params: CustomPriceLineDraggedEventParams) => {
-    const { customPriceLine } = params;
-    const { title, price } = customPriceLine.options();
-    const formatedPrice: string = chartInstanceRef.current.priceScale('right').formatPrice(price);
-
-    if (title.startsWith(TP)) {
-      if (!currentPosition) {
-        dispatch(updateTakeProfit([{ ...takeProfit, price: Number(formatedPrice) }]));
-      } else {
-        updateCurrentPositionTP();
-      }
-    }
-
-    if (title.startsWith(SL)) {
-      if (Number(formatedPrice) >= 0) {
-        dispatch(updateStopLoss([{ ...stopLoss, price: Number(formatedPrice) }]));
-      } else {
-        updateCurrentPositionSL();
-      }
-    }
-
-    if (title.startsWith(ENTRY)) {
-      if (Number(formatedPrice) >= 0) {
-        dispatch(updateEntryPrice(formatedPrice));
-      }
+      tradingService.addTakeProfit(currentPosition, formatPriceWithTickerInfo(tpPrice, tickerInfo));
     }
   };
 
-  const updateCurrentPositionTP = () => {
-    if (!currentPosition) {
+  const addSL = () => {
+    if (!ticker || !tickerInfo) {
       return;
     }
-
-    if (takeProfit.price !== Number(currentPosition.takeProfit)) {
-      console.log('send api tp');
-      const tpPrice: string = chartInstanceRef.current.priceScale('right').formatPrice(takeProfit.price);
-      tradingService.addTakeProfit(currentPosition, tpPrice);
-    }
-  };
-
-  const updateCurrentPositionSL = () => {
+    const slPrice = calculateSLPrice(ticker.lastPrice, currentPosition);
     if (!currentPosition) {
-      return;
+      dispatch(updateStopLoss([{ ...takeProfit, price: slPrice }]));
     }
-
-    if (stopLoss.price !== Number(currentPosition.stopLoss)) {
-      console.log('send api sl');
-      const slPrice: string = chartInstanceRef.current.priceScale('right').formatPrice(stopLoss.price);
-      tradingService.addStopLoss(currentPosition, slPrice);
+    if (currentPosition) {
+      tradingService.addStopLoss(currentPosition, formatPriceWithTickerInfo(slPrice, tickerInfo));
     }
   };
 
   return (
     <div ref={chartContainerRef} className="relative">
-      <ChartTools addTP={() => console.log('take profit')} addSL={() => console.log('stop loss')} />
+      <ChartTools addTP={addTp} addSL={addSL} />
     </div>
   );
 };

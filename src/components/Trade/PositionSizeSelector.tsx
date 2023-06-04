@@ -59,8 +59,8 @@ export const PositionSizeSelector: React.FC = () => {
       qty: positionSize.toString(),
       orderType: orderType,
       price: orderType === 'Limit' ? entryPrice : undefined,
-      takeProfit: formatPriceWithTickerInfo(takeProfit.price, tickerInfo),
-      stopLoss: formatPriceWithTickerInfo(stopLoss.price, tickerInfo),
+      takeProfit: takeProfit ? formatPriceWithTickerInfo(takeProfit.price, tickerInfo) : undefined,
+      stopLoss: stopLoss ? formatPriceWithTickerInfo(stopLoss.price, tickerInfo) : undefined,
     });
   };
   const shortTrade = () => {
@@ -71,8 +71,8 @@ export const PositionSizeSelector: React.FC = () => {
       qty: positionSize.toString(),
       orderType: orderType,
       price: orderType === 'Limit' ? entryPrice : undefined,
-      takeProfit: formatPriceWithTickerInfo(takeProfit.price, tickerInfo),
-      stopLoss: formatPriceWithTickerInfo(stopLoss.price, tickerInfo),
+      takeProfit: takeProfit ? formatPriceWithTickerInfo(takeProfit.price, tickerInfo) : undefined,
+      stopLoss: stopLoss ? formatPriceWithTickerInfo(stopLoss.price, tickerInfo) : undefined,
     });
   };
 

@@ -19,18 +19,8 @@ const initialState: ITradeSetupState = {
   marginMode: 0,
   leverage: 1,
   positionMode: 0,
-  takeProfits: [
-    {
-      price: 0,
-      qty: 0,
-    },
-  ],
-  stopLosses: [
-    {
-      price: 0,
-      qty: 0,
-    },
-  ],
+  takeProfits: [],
+  stopLosses: [],
   orderType: 'Market',
   entryPrice: '0',
 };

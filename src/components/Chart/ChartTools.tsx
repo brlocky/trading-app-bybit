@@ -11,10 +11,10 @@ interface Props {
 export const ChartTools: React.FC<Props> = ({ addTP, addSL }) => {
   const currentPosition = useSelector(selectCurrentPosition);
 
-  const tpDisabled = !!currentPosition?.takeProfit;
-  const slDisabled = !!currentPosition?.takeProfit;
+  const tpDisabled = !!Number(currentPosition?.takeProfit);
+  const slDisabled = !!Number(currentPosition?.stopLoss);
   return (
-    <div className="absolute right-20 top-2 z-20 flex h-14 gap-x-2 rounded-lg bg-gray-700 p-2">
+    <div className="absolute right-20 top-2 z-20 flex gap-x-2 rounded-lg bg-gray-700 p-2">
       <Button disabled={tpDisabled} onClick={addTP} className="bg-green-200">
         TP
       </Button>
