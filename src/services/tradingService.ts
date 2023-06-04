@@ -1,10 +1,19 @@
-import { LinearInverseInstrumentInfoV5, LinearPositionIdx, OrderSideV5, OrderTypeV5, PositionV5, RestClientV5 } from 'bybit-api';
+import {
+  AccountOrderV5,
+  LinearInverseInstrumentInfoV5,
+  LinearPositionIdx,
+  OrderSideV5,
+  OrderTypeV5,
+  PositionV5,
+  RestClientV5,
+} from 'bybit-api';
 import { toast } from 'react-toastify';
 
 export interface ITradingService {
   addStopLoss: (position: PositionV5, price: string) => Promise<void>;
   addTakeProfit: (position: PositionV5, price: string) => Promise<void>;
   closePosition: (position: PositionV5, qty?: string, price?: string) => Promise<void>;
+  closeOrder: (o: AccountOrderV5) => Promise<void>;
   getDomNormalizedAggregatorValues: (tickInfo: LinearInverseInstrumentInfoV5) => string[];
   convertToNumber: (value: string) => number;
   formatCurrency: (value: string) => string;
@@ -99,6 +108,24 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
         console.log(e);
       });
   };
+  const closeOrder = async (order: AccountOrderV5) => {
+    apiClient
+      .cancelOrder({
+        category: 'linear',
+        symbol: order.symbol,
+        orderId: order.orderId,
+      })
+      .then((r) => {
+        if (r.retCode !== 0) {
+          toast.error(r.retMsg);
+        } else {
+          toast.success('Order Cancelled ' + order.symbol);
+        }
+      })
+      .catch((e) => {
+        console.log(e);
+      });
+  };
 
   const openLongTrade = async (props: INewTrade) => {
     console.log({
@@ -107,7 +134,7 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
       timeInForce: 'GTC',
       side: 'Buy',
       ...props,
-    })
+    });
     apiClient
       .submitOrder({
         positionIdx: getPositionMode('Sell'),
@@ -147,6 +174,7 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
     addStopLoss,
     addTakeProfit,
     closePosition,
+    closeOrder,
     getDomNormalizedAggregatorValues,
     convertToNumber,
     formatCurrency,
