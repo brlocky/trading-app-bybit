@@ -21,8 +21,6 @@ grow
 const TopComponent = tw.div`
 flex
 w-full
-gap-x-2
-mb-3
 `;
 
 const PositionPageContent = tw.div`

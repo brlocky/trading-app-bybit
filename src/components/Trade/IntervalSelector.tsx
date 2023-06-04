@@ -8,7 +8,7 @@ const IntervalCol = tw.div`
 absolute 
 left-0 
 right-0 
-mt-2 
+mt-14
 w-40 
 divide-y 
 divide-gray-200 
@@ -76,7 +76,7 @@ export const IntervalSelector: React.FunctionComponent = () => {
   }, []);
 
   return (
-    <div className="relative inline-block self-center">
+    <div className="flex p-3 relative">
       <IntervalAction type="button" onClick={toggleDropdown}>
         {selectedInterval ? intervals.find((i) => i.value === selectedInterval)?.label || '' : 'Dropdown'}
         <ChevronDownIcon className="ml-1 h-5 w-5" />

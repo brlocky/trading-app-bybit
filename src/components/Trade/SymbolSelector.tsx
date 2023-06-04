@@ -8,11 +8,25 @@ import tw from 'twin.macro';
 import { SmallText } from '../Text';
 
 const SymbolCol = tw.div`
-absolute left-0 right-0 mt-2 w-40 divide-y divide-gray-200 rounded-md border border-gray-200 bg-white shadow-lg h-80 overflow-scroll z-10
+absolute 
+left-0 
+right-0 
+mt-14
+w-full 
+divide-y 
+divide-gray-200 
+rounded-md 
+border 
+border-gray-200 
+bg-white 
+shadow-lg 
+h-80 
+overflow-scroll
+z-10
 `;
 
 const SymbolLine = tw.a`
-flex flex-col px-4 py-2 text-sm text-gray-700 hover:bg-gray-100
+flex justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 items-center
 `;
 
 const SymbolAction = tw.button`
@@ -81,19 +95,18 @@ export const SymbolSelector: React.FunctionComponent = () => {
   }, []);
 
   return (
-    <div className="flex flex-row justify-center self-center gap-x-2">
-      <div className="flex flex-row gap-x-2">
+    <div className="flex flex-row justify-center gap-x-2 self-center">
+      <div className=" flex-row gap-x-2 hidden lg:flex">
         {tickers
           .filter((ticker) => ticker.symbol.toUpperCase().includes(filterValue.toUpperCase()))
           .slice(0, 3)
           .map((t, index) => (
-            <SymbolLine onClick={() => setSymbol(t.symbol)} href="#" key={index} className='bg-green-50'>
+            <SymbolLine onClick={() => setSymbol(t.symbol)} href="#" key={index} className="bg-green-50">
               <SmallText>{t.symbol}</SmallText>
-              <SmallText>{(Number(t.price24hPcnt) * 100).toFixed(2)}%</SmallText>
             </SymbolLine>
           ))}
       </div>
-      <div className="flex justify-center self-center">
+      <div className="relative flex justify-center">
         <SymbolAction type="button" onClick={toggleDropdown}>
           {selectedSymbol ? selectedSymbol : 'Dropdown'}
           <ChevronDownIcon className="ml-1 h-5 w-5" />
@@ -113,9 +126,9 @@ export const SymbolSelector: React.FunctionComponent = () => {
                 .filter((ticker) => ticker.symbol.toUpperCase().includes(filterValue.toUpperCase()))
                 .map((t, index) => (
                   <SymbolLine onClick={() => setSymbol(t.symbol)} href="#" key={index}>
-                    <span>{t.symbol}</span>
-                    <span>{(Number(t.price24hPcnt) * 100).toFixed(2)}%</span>
-                    <span>{(Number(t.volume24h) / 1000000).toLocaleString(undefined, { maximumFractionDigits: 2 })}M</span>
+                    <SmallText>{t.symbol}</SmallText>
+                    <SmallText>{(Number(t.price24hPcnt) * 100).toFixed(2)}%</SmallText>
+                    <SmallText>{(Number(t.volume24h) / 1000000).toLocaleString(undefined, { maximumFractionDigits: 2 })}M</SmallText>
                   </SymbolLine>
                 ))}
             </SymbolCol>
