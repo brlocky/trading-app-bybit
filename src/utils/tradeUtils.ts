@@ -1,40 +1,15 @@
 import { AccountOrderV5, LinearInverseInstrumentInfoV5, LinearPositionIdx, PositionV5 } from 'bybit-api';
 import { ITicker } from '../types';
 import { isNumber } from 'lodash';
-import { format } from 'path';
-
-export const calculateOrderPnL = (entryPrice: string, order: AccountOrderV5): string | null => {
-  const startPrice = parseFloat(entryPrice);
-  const orderClosePrice = isOrderStopLossOrTakeProfit(order) ? parseFloat(order.triggerPrice || '0') : parseFloat(order.price);
-  const orderCloseQty = parseFloat(order.qty);
-
-  if (orderClosePrice === 0) {
-    return null;
-  }
-
-  if (
-    (order.positionIdx === LinearPositionIdx.BuySide && order.side === 'Buy') ||
-    (order.positionIdx === LinearPositionIdx.SellSide && order.side === 'Sell')
-  ) {
-    return null;
-  }
-
-  let pnl = 0;
-  if (order.positionIdx === LinearPositionIdx.BuySide) {
-    pnl = (orderClosePrice - startPrice) * orderCloseQty;
-  } else {
-    pnl = (startPrice - orderClosePrice) * orderCloseQty;
-  }
-
-  return pnl.toFixed(2);
-};
 
 // Order types
 export const isOpenLong = (order: AccountOrderV5): boolean => order.positionIdx === LinearPositionIdx.BuySide && order.side === 'Buy';
 export const isCloseLong = (order: AccountOrderV5): boolean => order.positionIdx === LinearPositionIdx.BuySide && order.side === 'Sell';
 export const isOpenShort = (order: AccountOrderV5): boolean => order.positionIdx === LinearPositionIdx.SellSide && order.side === 'Sell';
 export const isCloseShort = (order: AccountOrderV5): boolean => order.positionIdx === LinearPositionIdx.SellSide && order.side === 'Buy';
-export const isOrderStopLossOrTakeProfit = (o: AccountOrderV5): boolean => ['TakeProfit', 'StopLoss'].includes(o.stopOrderType || '');
+export const isOrderTPorSL = (o: AccountOrderV5): boolean => isOrderTP(o) || isOrderSL(o);
+export const isOrderTP = (o: AccountOrderV5): boolean => o.stopOrderType === 'TakeProfit';
+export const isOrderSL = (o: AccountOrderV5): boolean => o.stopOrderType === 'StopLoss';
 
 export const calculatePositionPnL = (position: PositionV5, price: ITicker): string => {
   let diff = 0;
@@ -50,6 +25,23 @@ export const calculatePositionPnL = (position: PositionV5, price: ITicker): stri
   return pl.toFixed(2);
 };
 
+export const calculateOrderPnL = (entryPrice: string, order: AccountOrderV5): string => {
+  const startPrice = Number(entryPrice);
+  const isTPorSL = isOrderTPorSL(order);
+  const orderClosePrice = isTPorSL ? Number(order.triggerPrice) : Number(order.price);
+  const orderCloseQty = Number(order.qty);
+
+  console.log(order.side, orderClosePrice);
+  let pnl = 0;
+  if (order.side === 'Sell') {
+    pnl = (orderClosePrice - startPrice) * orderCloseQty;
+  } else {
+    pnl = (startPrice - orderClosePrice) * orderCloseQty;
+  }
+
+  return pnl.toFixed(2);
+};
+
 export const formatCurrency = (value: string | number, precision?: string) => {
   const newValue = isNumber(value) ? value.toString() : value;
   return parseFloat(newValue).toFixed(Number(precision) || 2);
@@ -59,10 +51,8 @@ export const calculateClosePositionSize = (order: PositionV5, percentage: number
   return ((parseFloat(order.size) * percentage) / 100).toFixed(3);
 };
 
-export const getOrderEntryFromPositions = (positions: PositionV5[], order: AccountOrderV5): string => {
-  const p = positions.find((p) => p.symbol === order.symbol && p.positionIdx === order.positionIdx);
-
-  return p ? p.avgPrice : '0';
+export const getPositionFromOrder = (positions: PositionV5[], order: AccountOrderV5): PositionV5 | undefined => {
+  return positions.find((p) => p.symbol === order.symbol && p.positionIdx === order.positionIdx);
 };
 
 export const calculateTargetPnL = (target: number, price: number, positionSize: number): string => {
