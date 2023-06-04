@@ -5,6 +5,7 @@ import { TickerLinearInverseV5 } from 'bybit-api';
 import { selectSymbol, updateSymbol } from '../../slices/symbolSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import tw from 'twin.macro';
+import { SmallText } from '../Text';
 
 const SymbolCol = tw.div`
 absolute left-0 right-0 mt-2 w-40 divide-y divide-gray-200 rounded-md border border-gray-200 bg-white shadow-lg h-80 overflow-scroll z-10
@@ -27,8 +28,8 @@ export const SymbolSelector: React.FunctionComponent = () => {
   useEffect(() => {
     loadTicker();
     const intervalId = setInterval(() => {
-      loadTicker()
-    }, 60000)
+      loadTicker();
+    }, 60000);
 
     return () => {
       clearInterval(intervalId);
@@ -80,34 +81,47 @@ export const SymbolSelector: React.FunctionComponent = () => {
   }, []);
 
   return (
-    <div className="relative inline-block justify-center self-center">
-      <SymbolAction type="button" onClick={toggleDropdown}>
-        {selectedSymbol ? selectedSymbol : 'Dropdown'}
-        <ChevronDownIcon className="ml-1 h-5 w-5" />
-      </SymbolAction>
-      {isDropdownOpen && (
-        <>
-          <input
-            type="text"
-            placeholder="Filter symbols..."
-            value={filterValue}
-            onChange={handleFilterChange}
-            className="border-b-2 border-gray-300 px-4 py-2 focus:outline-none"
-            autoFocus={true}
-          />
-          <SymbolCol ref={dropdownRef}>
-            {tickers
-              .filter((ticker) => ticker.symbol.toUpperCase().includes(filterValue.toUpperCase()))
-              .map((t, index) => (
-                <SymbolLine onClick={() => setSymbol(t.symbol)} href="#" key={index}>
-                  <span>{t.symbol}</span>
-                  <span>{(Number(t.price24hPcnt) * 100).toFixed(2)}%</span>
-                  <span>{(Number(t.volume24h) / 1000000).toLocaleString(undefined, { maximumFractionDigits: 2 })}M</span>
-                </SymbolLine>
-              ))}
-          </SymbolCol>
-        </>
-      )}
+    <div className="flex flex-row justify-center self-center gap-x-2">
+      <div className="flex flex-row gap-x-2">
+        {tickers
+          .filter((ticker) => ticker.symbol.toUpperCase().includes(filterValue.toUpperCase()))
+          .slice(0, 3)
+          .map((t, index) => (
+            <SymbolLine onClick={() => setSymbol(t.symbol)} href="#" key={index} className='bg-green-50'>
+              <SmallText>{t.symbol}</SmallText>
+              <SmallText>{(Number(t.price24hPcnt) * 100).toFixed(2)}%</SmallText>
+            </SymbolLine>
+          ))}
+      </div>
+      <div className="flex justify-center self-center">
+        <SymbolAction type="button" onClick={toggleDropdown}>
+          {selectedSymbol ? selectedSymbol : 'Dropdown'}
+          <ChevronDownIcon className="ml-1 h-5 w-5" />
+        </SymbolAction>
+        {isDropdownOpen && (
+          <>
+            <input
+              type="text"
+              placeholder="Filter symbols..."
+              value={filterValue}
+              onChange={handleFilterChange}
+              className="border-b-2 border-gray-300 px-4 py-2 focus:outline-none"
+              autoFocus={true}
+            />
+            <SymbolCol ref={dropdownRef}>
+              {tickers
+                .filter((ticker) => ticker.symbol.toUpperCase().includes(filterValue.toUpperCase()))
+                .map((t, index) => (
+                  <SymbolLine onClick={() => setSymbol(t.symbol)} href="#" key={index}>
+                    <span>{t.symbol}</span>
+                    <span>{(Number(t.price24hPcnt) * 100).toFixed(2)}%</span>
+                    <span>{(Number(t.volume24h) / 1000000).toLocaleString(undefined, { maximumFractionDigits: 2 })}M</span>
+                  </SymbolLine>
+                ))}
+            </SymbolCol>
+          </>
+        )}
+      </div>
     </div>
   );
 };

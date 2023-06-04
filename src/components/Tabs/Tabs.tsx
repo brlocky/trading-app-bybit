@@ -11,7 +11,7 @@ const Tab: React.FC<TabProps> = ({ title, isSelected, onClick }) => (
     <a
       href="#"
       className={`block rounded-l-lg rounded-r-lg p-2 focus:outline-none focus:ring-1 focus:ring-black ${
-        isSelected ? 'text-white dark:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
+        isSelected ? 'text-white bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
       }`}
       onClick={onClick}
     >
@@ -33,7 +33,7 @@ export const Tabs: React.FC<TabsProps> = ({ tabs }) => {
 
   return (
     <div>
-      <ul className="divide-gray-200 w-full text-center text-sm font-medium text-gray-500 shadow dark:divide-gray-700 dark:text-gray-400 flex mb-2 gap-x-1">
+      <ul className="w-full text-center text-sm font-medium shadow divide-gray-700 text-gray-400 flex mb-2 gap-x-1">
         {tabs.map((tab, index) => (
           <Tab
             key={index}

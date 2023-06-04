@@ -1,12 +1,12 @@
 import React from 'react';
 
 const Table: React.FC<React.PropsWithChildren> = ({ children }) => (
-  <table className={'w-full text-left text-sm text-gray-500 dark:text-gray-400'}>{children}</table>
+  <table className={'w-full text-left text-sm text-gray-400'}>{children}</table>
 );
 
 const HeaderRow: React.FC<React.HTMLAttributes<HTMLTableRowElement>> = ({ children, ...props }) => (
   <thead>
-    <tr className="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-700 dark:text-gray-400" {...props}>
+    <tr className="bg-gray-700 text-xs uppercase text-gray-400" {...props}>
       {children}
     </tr>
   </thead>
@@ -18,7 +18,7 @@ const HeaderCol: React.FC<React.HTMLAttributes<HTMLTableCellElement>> = ({ child
 );
 
 const Row: React.FC<React.HTMLAttributes<HTMLTableRowElement>> = ({ children, ...props }) => (
-  <tr className="border-b bg-white dark:border-gray-700 dark:bg-gray-800" {...props}>
+  <tr className="border-b bg-white border-gray-700 bg-gray-800" {...props}>
     {children}
   </tr>
 );

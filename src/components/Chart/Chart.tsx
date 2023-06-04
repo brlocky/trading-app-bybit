@@ -227,7 +227,22 @@ export const Chart: React.FC<Props> = (props) => {
           }
         });
     }
-  }, [tickerInfo, interval]);
+  }, [tickerInfo]);
+
+  useEffect(() => {
+    if (tickerInfo) {
+      setChartData([]);
+      dataService
+        .getKline({
+          symbol: tickerInfo.symbol,
+          interval: interval as KlineIntervalV3,
+          category: 'linear',
+        })
+        .then((r) => {
+          setChartData(r);
+        });
+    }
+  }, [interval]);
 
   useEffect(() => {
     if (currentPosition) {
@@ -253,17 +268,9 @@ export const Chart: React.FC<Props> = (props) => {
   }, [kline]);
 
   useEffect(() => {
-    if (kline) {
-      updateCurrentOrderTPnSL();
-      updateTPnSL();
-    }
-  }, [takeProfit, stopLoss]);
-
-  useEffect(() => {
-    if (kline) {
-      updateTPnSL();
-    }
-  }, [positionSize]);
+    updateCurrentOrderTPnSL();
+    updateTPnSL();
+  }, [takeProfit, stopLoss, positionSize]);
 
   useEffect(() => {
     if (currentPosition) {
