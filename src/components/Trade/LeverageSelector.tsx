@@ -1,15 +1,14 @@
+import { debounce } from 'lodash';
 import React, { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { useApi } from '../../providers';
-import { selectCurrentPosition, selectLeverage, selectSymbol, selectTickerInfo, updateLeverage } from '../../slices';
+import { selectCurrentPosition, selectLeverage, selectTickerInfo, updateLeverage } from '../../slices';
 import SlidePicker from '../Forms/SlidePicker';
-import { debounce } from 'lodash';
 
 export const LeverageSelector: React.FC = () => {
   const dispatch = useDispatch();
   const api = useApi();
-  const symbol = useSelector(selectSymbol);
   const leverage = useSelector(selectLeverage);
   const tickerInfo = useSelector(selectTickerInfo);
   const currentPosition = useSelector(selectCurrentPosition);
@@ -40,7 +39,7 @@ export const LeverageSelector: React.FC = () => {
 
   const updateApiLeverage = useCallback(
     debounce((v, s) => {
-      if (!symbol) return;
+      if (!tickerInfo) return;
 
       api
         .setLeverage({
@@ -53,7 +52,8 @@ export const LeverageSelector: React.FC = () => {
           if (r.retCode !== 0) {
             toast.error(r.retMsg);
           }
-        });
+        })
+        .catch(console.error);
     }, 300),
     [],
   );
