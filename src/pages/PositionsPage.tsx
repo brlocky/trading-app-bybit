@@ -44,10 +44,10 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({ isLoading }
         ) : (
           <div className="flex gap-y-3 flex-col">
             <div className="grid grid-cols-10 gap-x-3 ">
-              <div className="col-span-7 rounded-lg bg-gray-200 p-3">
+              <div className="col-span-10 md:col-span-7 rounded-lg bg-gray-200 p-3">
                 <Chart />
               </div>
-              <div className="col-span-3">
+              <div className="col-span-10 md:col-span-3">
                 <CardSymbol />
               </div>
             </div>
