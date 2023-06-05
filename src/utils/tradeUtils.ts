@@ -1,6 +1,6 @@
 import { AccountOrderV5, LinearInverseInstrumentInfoV5, LinearPositionIdx, PositionV5 } from 'bybit-api';
 import { ITicker } from '../types';
-import { isNumber, last } from 'lodash';
+import { isNumber } from 'lodash';
 
 // Order types
 export const isOpenLong = (order: AccountOrderV5): boolean => order.positionIdx === LinearPositionIdx.BuySide && order.side === 'Buy';
