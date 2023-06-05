@@ -1,7 +1,7 @@
 import React from 'react';
 
 const Table: React.FC<React.PropsWithChildren> = ({ children }) => (
-  <table className={'w-full text-left text-sm text-gray-400'}>{children}</table>
+  <table className={'w-full text-xs text-gray-400 overflow-x-scroll'}>{children}</table>
 );
 
 const HeaderRow: React.FC<React.HTMLAttributes<HTMLTableRowElement>> = ({ children, ...props }) => (
@@ -12,7 +12,7 @@ const HeaderRow: React.FC<React.HTMLAttributes<HTMLTableRowElement>> = ({ childr
   </thead>
 );
 const HeaderCol: React.FC<React.HTMLAttributes<HTMLTableCellElement>> = ({ children, ...props }) => (
-  <td className="px-6 py-3" {...props}>
+  <td className="px-2 py-2" {...props}>
     {children}
   </td>
 );
@@ -24,7 +24,7 @@ const Row: React.FC<React.HTMLAttributes<HTMLTableRowElement>> = ({ children, ..
 );
 
 const Col: React.FC<React.HTMLProps<HTMLTableCellElement>> = ({ children, ...props }) => (
-  <td className="px-6 py-3" {...props}>
+  <td className="px-2 py-2" {...props}>
     {children}
   </td>
 );
