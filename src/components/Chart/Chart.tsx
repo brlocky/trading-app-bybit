@@ -81,7 +81,6 @@ export const Chart: React.FC<Props> = (props) => {
   // Build Chart
   useEffect(() => {
     if (!chartContainerRef.current) {
-      console.error('chartContainerRef is not ready');
       return;
     }
 
@@ -146,12 +145,10 @@ export const Chart: React.FC<Props> = (props) => {
   // Update Chart with Ticker info
   useEffect(() => {
     if (!chartContainerRef.current) {
-      console.error('chartContainerRef is not ready');
       return;
     }
 
     if (!tickerInfo) {
-      console.error('tickerInfo is not ready');
       return;
     }
 
@@ -345,11 +342,8 @@ export const Chart: React.FC<Props> = (props) => {
 
   const updateChartLines = () => {
     if (!tickerInfo || !ticker) {
-      console.error('updateLineLabels - no tickerInfo or ticker');
       return;
     }
-
-    console.log('update lines', orderType);
 
     let tp = takeProfit ? takeProfit.price : undefined,
       sl = stopLoss ? stopLoss.price : undefined,
