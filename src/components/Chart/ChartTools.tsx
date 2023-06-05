@@ -1,7 +1,8 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { selectCurrentPosition, selectTicker } from '../../slices/symbolSlice';
+import { selectCurrentPosition, selectTickerInfo } from '../../slices/symbolSlice';
 import Button from '../Button/Button';
+import { selectStopLoss, selectTakeProfit } from '../../slices';
 
 interface Props {
   addTP: () => void;
@@ -10,10 +11,32 @@ interface Props {
 
 export const ChartTools: React.FC<Props> = ({ addTP, addSL }) => {
   const currentPosition = useSelector(selectCurrentPosition);
-  const ticker = useSelector(selectTicker);
+  const takeProfit = useSelector(selectTakeProfit);
+  const stopLoss = useSelector(selectStopLoss);
+  const tickerInfo = useSelector(selectTickerInfo);
 
-  const tpDisabled = ticker ? !!Number(currentPosition?.takeProfit) : true;
-  const slDisabled = ticker ? !!Number(currentPosition?.stopLoss) : true;
+  let tpDisabled = false;
+  let slDisabled = false;
+  if (!tickerInfo) {
+    tpDisabled = true;
+    slDisabled = true;
+  }
+
+  if (Number(currentPosition?.takeProfit) > 0) {
+    tpDisabled = true;
+  }
+
+  if (Number(currentPosition?.stopLoss) > 0) {
+    slDisabled = true;
+  }
+
+  if (takeProfit?.price) {
+    tpDisabled = true;
+  }
+
+  if (stopLoss?.price) {
+    slDisabled = true;
+  }
   return (
     <div className="absolute right-20 top-2 z-20 flex gap-x-2 rounded-lg bg-gray-700 p-2">
       <Button disabled={tpDisabled} onClick={addTP} className="bg-green-200">

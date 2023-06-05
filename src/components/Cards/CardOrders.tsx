@@ -1,8 +1,8 @@
 import { AccountOrderV5 } from 'bybit-api';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '../../providers';
 import { TradingService } from '../../services';
-import { selectOrders, selectPositions, selectTickerInfo } from '../../slices';
+import { selectOrders, selectPositions, selectTickerInfo, updateSymbol } from '../../slices';
 import { calculateOrderPnL, formatCurrency, getPositionFromOrder, isOrderTPorSL } from '../../utils/tradeUtils';
 import Button from '../Button/Button';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
@@ -12,6 +12,7 @@ export default function CardOrders() {
   const orders = useSelector(selectOrders);
   const positions = useSelector(selectPositions);
   const tickerInfo = useSelector(selectTickerInfo);
+  const dispatch = useDispatch();
 
   const cancelOrder = (o: AccountOrderV5) => {
     tradingService.closeOrder(o);
@@ -30,7 +31,7 @@ export default function CardOrders() {
     const pnl = orderEntry ? calculateOrderPnL(orderEntry.avgPrice, o) : undefined;
     return (
       <Row key={index}>
-        <Col>
+        <Col onClick={() => dispatch(updateSymbol(o.symbol))}>
           {isTrigger ? '' : <i className={o.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i>}
           {o.symbol}
         </Col>
@@ -38,6 +39,9 @@ export default function CardOrders() {
         <Col>{o.qty}</Col>
 
         <Col>{isTrigger ? o.triggerPrice : o.price}</Col>
+        <Col>
+          {isTrigger ? '-' : o.takeProfit} / {isTrigger ? '-' : o.stopLoss}
+        </Col>
         <Col>
           {pnl ? (
             Number(pnl) >= 0 ? (
@@ -70,6 +74,7 @@ export default function CardOrders() {
         <HeaderCol>Type</HeaderCol>
         <HeaderCol>Qty</HeaderCol>
         <HeaderCol>Price</HeaderCol>
+        <HeaderCol>TP/SL</HeaderCol>
         <HeaderCol>Profit</HeaderCol>
         <HeaderCol>Date</HeaderCol>
         <HeaderCol>Actions</HeaderCol>

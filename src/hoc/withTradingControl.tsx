@@ -3,15 +3,12 @@ import React, { ComponentType, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { useApi } from '../providers';
-import { DataService, IDataService, ITradingService, TradingService } from '../services';
 import { selectSymbol, updateExecutions, updateOrders, updatePositions, updateTickerInfo, updateWallet } from '../slices/symbolSlice';
 import { AppDispatch } from '../store';
 
 const accountType = 'CONTRACT';
 
 export interface WithTradingControlProps {
-  tradingService: ITradingService;
-  dataService: IDataService;
   isLoading: boolean;
 }
 
@@ -22,10 +19,8 @@ function withTradingControl<P extends WithTradingControlProps>(
     const [isLoading, setIsLoading] = useState(true);
     const symbol = useSelector(selectSymbol);
 
-    const dispatch = useDispatch<AppDispatch>();
-
     const apiClient = useApi(); // Use the useApi hook to access the API context
-
+    const dispatch = useDispatch<AppDispatch>();
     useEffect(() => {
       const activeOrdersPromise = apiClient.getActiveOrders({
         category: 'linear',
@@ -77,10 +72,7 @@ function withTradingControl<P extends WithTradingControlProps>(
       }
     }, [symbol]);
 
-    const tradingService = TradingService(apiClient);
-    const dataService = DataService(apiClient);
-
-    return <WrappedComponent {...(props as P)} tradingService={tradingService} dataService={dataService} isLoading={isLoading} />;
+    return <WrappedComponent {...(props as P)} isLoading={isLoading} />;
   };
 
   return WithTradingControl;

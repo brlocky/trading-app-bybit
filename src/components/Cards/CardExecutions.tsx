@@ -1,11 +1,12 @@
-import { useSelector } from 'react-redux';
-import { selectExecutions } from '../../slices';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectExecutions, updateSymbol } from '../../slices';
 import { formatCurrency } from '../../utils/tradeUtils';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
 
 export default function CardExecutions() {
   const executions = useSelector(selectExecutions);
-
+  const dispatch = useDispatch()
+  
   return (
     <Table>
       <HeaderRow>
@@ -20,7 +21,7 @@ export default function CardExecutions() {
           const closedPnL = Number(l.execFee);
           return (
             <Row key={index}>
-              <Col>{l.symbol}</Col>
+              <Col onClick={() => dispatch(updateSymbol(l.symbol))}>{l.symbol}</Col>
               <Col>{l.orderType}</Col>
               <Col>{formatCurrency(l.execQty)}</Col>
               <Col>

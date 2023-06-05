@@ -140,7 +140,7 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
         if (r.retCode !== 0) {
           toast.error(r.retMsg);
         } else {
-          toast.success('Long open ' + props.symbol);
+          toast.success(`Long ${props.orderType} open - ${props.symbol}`);
         }
       });
   };
@@ -158,7 +158,7 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
         if (r.retCode !== 0) {
           toast.error(r.retMsg);
         } else {
-          toast.success('Short open ' + props.symbol);
+          toast.success(`Short ${props.orderType} open - ${props.symbol}`);
         }
       });
   };

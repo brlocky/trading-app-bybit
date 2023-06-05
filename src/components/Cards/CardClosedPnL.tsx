@@ -3,10 +3,13 @@ import { useEffect, useState } from 'react';
 import { useApi } from '../../providers';
 import { formatCurrency } from '../../utils/tradeUtils';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
+import { useDispatch } from 'react-redux';
+import { updateSymbol } from '../../slices';
 
 export default function CardClosedPnLs() {
   const [list, setList] = useState<ClosedPnLV5[] | undefined>();
   const apiClient = useApi();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     apiClient
@@ -31,7 +34,7 @@ export default function CardClosedPnLs() {
             const closedPnL = Number(l.closedPnl);
             return (
               <Row key={index}>
-                <Col>
+                <Col onClick={() => dispatch(updateSymbol(l.symbol))}>
                   <i className={l.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {l.symbol} (
                   {l.leverage}x)
                 </Col>
