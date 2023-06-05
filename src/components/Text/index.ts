@@ -1,7 +1,6 @@
 import tw from 'twin.macro';
 
 export const SmallText = tw.div`
-text-xs
 font-light
 `;
 
