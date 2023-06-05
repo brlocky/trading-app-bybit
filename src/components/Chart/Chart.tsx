@@ -226,6 +226,10 @@ export const Chart: React.FC<Props> = (props) => {
     setupChartLines();
   }, [takeProfit, stopLoss, currentPosition]);
 
+  useEffect(() => {
+    currentPositionRef.current = currentPosition;
+  }, [currentPosition]);
+
   const addTp = () => {
     if (!tickerInfo || !ticker) {
       return;
@@ -383,8 +387,6 @@ export const Chart: React.FC<Props> = (props) => {
       price: entry,
       draggable: isEntryDraggable,
     });
-
-    currentPositionRef.current = currentPosition;
   };
 
   return (
