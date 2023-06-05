@@ -227,10 +227,10 @@ export const Chart: React.FC<Props> = (props) => {
   }, [takeProfit, stopLoss, currentPosition]);
 
   const addTp = () => {
-    if (!tickerInfo) {
+    if (!tickerInfo || !ticker) {
       return;
     }
-    const tpPrice = calculateTPPrice(entryPrice, currentPosition);
+    const tpPrice = calculateTPPrice(currentPosition ? entryPrice : ticker.lastPrice, currentPosition);
     if (currentPosition) {
       tradingService.addTakeProfit(currentPosition, formatPriceWithTickerInfo(tpPrice, tickerInfo));
     } else {
@@ -239,10 +239,10 @@ export const Chart: React.FC<Props> = (props) => {
   };
 
   const addSL = () => {
-    if (!tickerInfo) {
+    if (!tickerInfo || !ticker) {
       return;
     }
-    const slPrice = calculateSLPrice(entryPrice, currentPosition);
+    const slPrice = calculateSLPrice(currentPosition ? entryPrice : ticker.lastPrice, currentPosition);
     if (currentPosition) {
       tradingService.addStopLoss(currentPosition, formatPriceWithTickerInfo(slPrice, tickerInfo));
     } else {
