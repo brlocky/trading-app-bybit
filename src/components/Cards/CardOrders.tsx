@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '../../providers';
 import { TradingService } from '../../services';
 import { selectOrders, selectPositions, selectTickerInfo, updateSymbol } from '../../slices';
-import { calculateOrderPnL, formatCurrency, getPositionFromOrder, isOrderTPorSL } from '../../utils/tradeUtils';
+import { calculateOrderPnL, formatCurrencyValue, getPositionFromOrder, isOrderTPorSL } from '../../utils/tradeUtils';
 import Button from '../Button/Button';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
 
@@ -45,9 +45,9 @@ export default function CardOrders() {
         <Col>
           {pnl ? (
             Number(pnl) >= 0 ? (
-              <span className="text-green-600">{formatCurrency(pnl)} USDT</span>
+              <span className="text-green-600">{formatCurrencyValue(pnl)}</span>
             ) : (
-              <span className="text-red-600">{formatCurrency(pnl)} USDT</span>
+              <span className="text-red-600">{formatCurrencyValue(pnl)}</span>
             )
           ) : (
             '-'

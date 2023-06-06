@@ -95,7 +95,7 @@ export const SymbolSelector: React.FunctionComponent = () => {
   }, []);
 
   return (
-    <div className="flex flex-row justify-center gap-x-2 self-center">
+    <div className="flex flex-row justify-center gap-x-2 self-center z-20">
       <div className=" flex-row gap-x-2 hidden lg:flex">
         {tickers
           .filter((ticker) => ticker.symbol.toUpperCase().includes(filterValue.toUpperCase()))

@@ -104,7 +104,7 @@ export const Chart: React.FC<Props> = (props) => {
         mode: CrosshairMode.Normal,
       },
       width: chartContainerRef.current.clientWidth,
-      height: 500,
+      height: 400,
     });
 
     newVolumeSeries.current = chartInstanceRef.current.addHistogramSeries({

@@ -1,7 +1,7 @@
 import { ClosedPnLV5 } from 'bybit-api';
 import { useEffect, useState } from 'react';
 import { useApi } from '../../providers';
-import { formatCurrency } from '../../utils/tradeUtils';
+import { formatCurrency, formatCurrencyValue } from '../../utils/tradeUtils';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
 import { useDispatch } from 'react-redux';
 import { updateSymbol } from '../../slices';
@@ -40,9 +40,9 @@ export default function CardClosedPnLs() {
                 </Col>
                 <Col>
                   {closedPnL >= 0 ? (
-                    <span className="text-green-600">{formatCurrency(closedPnL)} USDT</span>
+                    <span className="text-green-600">{formatCurrencyValue(closedPnL)}</span>
                   ) : (
-                    <span className="text-red-600">{formatCurrency(closedPnL)} USDT</span>
+                    <span className="text-red-600">{formatCurrencyValue(closedPnL)}</span>
                   )}
                 </Col>
                 <Col>{new Date(Number(l.updatedTime)).toLocaleTimeString()}</Col>

@@ -58,23 +58,32 @@ export const calculateTargetPnL = (target: number, price: number, positionSize: 
   return ((target - price) * positionSize).toFixed(2);
 };
 
-export const formatPriceWithTickerInfo = (value: string | number, tickerInfo: LinearInverseInstrumentInfoV5):string => {
+export const formatPriceWithTickerInfo = (value: string | number, tickerInfo: LinearInverseInstrumentInfoV5): string => {
   const numericPrice = isNumber(value) ? value : Number(value);
   return numericPrice.toFixed(Number(tickerInfo.priceScale));
 };
 
-export const calculateTPPrice = (price: string | number, position?: PositionV5):number => {
-  const numericLastPrice = isNumber(price) ? price : Number(price)
+export const calculateTPPrice = (price: string | number, position?: PositionV5): number => {
+  const numericLastPrice = isNumber(price) ? price : Number(price);
   const tpPercentage = 1;
   const diff = (numericLastPrice * tpPercentage) / 100;
   const side = position ? position.side : 'Buy';
   return side === 'Buy' ? numericLastPrice + diff : numericLastPrice - diff;
 };
 
-export const calculateSLPrice = (price: string | number, position?: PositionV5):number => {
-  const numericLastPrice = isNumber(price) ? price : Number(price)
+export const calculateSLPrice = (price: string | number, position?: PositionV5): number => {
+  const numericLastPrice = isNumber(price) ? price : Number(price);
   const slPercentage = 1;
   const diff = (numericLastPrice * slPercentage) / 100;
   const side = position ? position.side : 'Buy';
   return side === 'Buy' ? numericLastPrice - diff : numericLastPrice + diff;
+};
+
+export const formatCurrencyValue = (amount: number | string, currency = 'USD') => {
+  const typedAmount = isNumber(amount) ? amount : Number(amount);
+
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency,
+  }).format(typedAmount);
 };

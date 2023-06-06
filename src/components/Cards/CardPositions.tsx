@@ -2,7 +2,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '../../providers';
 import { TradingService } from '../../services';
 import { selectPositions, selectTickerInfo, selectTickers, updateSymbol } from '../../slices';
-import { calculateClosePositionSize, calculatePositionPnL, formatCurrency } from '../../utils/tradeUtils';
+import { calculateClosePositionSize, calculatePositionPnL, formatCurrency, formatCurrencyValue } from '../../utils/tradeUtils';
 import Button from '../Button/Button';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
 
@@ -39,26 +39,23 @@ export default function CardPositions() {
             <i className={p.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {p.symbol} (
             {p.leverage}x)
           </Col>
-          <Col>
-            {formatCurrency(p.avgPrice, currentTickerInfo?.priceScale || '0')}
-          </Col>
-          <Col>
-            {formatCurrency(p.positionValue)} USDT
-          </Col>
+          <Col>{formatCurrency(p.avgPrice, currentTickerInfo?.priceScale || '0')}</Col>
+          <Col>{p.size}</Col>
+          <Col>{formatCurrencyValue(p.positionValue)}</Col>
           <Col>
             {Number(p.takeProfit) ? p.takeProfit : '-'} / {Number(p.stopLoss) ? p.stopLoss : '-'}
           </Col>
           <Col>
             {Number(pnl) >= 0 ? (
-              <span className="text-green-600">{formatCurrency(pnl)} USDT</span>
+              <span className="text-green-600">{formatCurrencyValue(pnl)}</span>
             ) : (
-              <span className="text-red-600">{formatCurrency(pnl)} USDT</span>
+              <span className="text-red-600">{formatCurrencyValue(pnl)}</span>
             )}
             {/* / {formatCurrency(p.cumRealisedPnl)} */}
           </Col>
         </Row>,
         <Row key={`${index}_buttons`}>
-          <Col colSpan={5}>
+          <Col colSpan={6}>
             <div className="flex w-full justify-end gap-x-2">
               <Button
                 onClick={() => {
@@ -121,6 +118,7 @@ export default function CardPositions() {
         <HeaderRow>
           <HeaderCol>Ticker</HeaderCol>
           <HeaderCol>Entry</HeaderCol>
+          <HeaderCol>Size</HeaderCol>
           <HeaderCol>Value</HeaderCol>
           <HeaderCol>TP / SL</HeaderCol>
           <HeaderCol>PnL</HeaderCol>

@@ -76,7 +76,7 @@ export const IntervalSelector: React.FunctionComponent = () => {
   }, []);
 
   return (
-    <div className="flex p-3 relative">
+    <div className="flex p-3 relative z-20">
       <IntervalAction type="button" onClick={toggleDropdown}>
         {selectedInterval ? intervals.find((i) => i.value === selectedInterval)?.label || '' : 'Dropdown'}
         <ChevronDownIcon className="ml-1 h-5 w-5" />
