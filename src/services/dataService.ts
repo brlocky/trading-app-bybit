@@ -17,41 +17,54 @@ export const DataService = (apiClient: RestClientV5): IDataService => {
     let loop = 0;
 
     switch (interval) {
+      case '3':
+      case '5':
+        intervalMinutes = 200 * parseInt(interval);
+        loop = 24;
+        break;
+
+      case '15':
+      case '30':
+        intervalMinutes = 200 * parseInt(interval);
+        loop = 5 * 24;
+        break;
+
       case '60':
       case '120':
       case '240':
       case '360':
       case '720':
         intervalMinutes = 200 * 60 * (parseInt(interval) / 60);
-        loop = 360;
+        loop = 24 * 31;
         break;
 
       case 'D':
         intervalMinutes = 200 * 60 * 24;
-        loop = 720;
+        loop = 24 * 100;
         break;
 
       case 'W':
         intervalMinutes = 200 * 60 * 24 * 7;
-        loop = 1440;
+        loop = 24 * 360;
         break;
 
       case 'M':
         intervalMinutes = 200 * 60 * 24 * 31;
-        loop = 1440;
+        loop = 24 * 1440;
         break;
 
       default:
         intervalMinutes = 200 * parseInt(interval);
-        loop = 3;
+        loop = 8;
     }
 
     const startDate = new Date();
-    startDate.setDate(startDate.getDate() - loop);
+    startDate.setHours(startDate.getHours() - loop);
 
     let startTime = startDate.getTime();
     const promises = [];
 
+    console.log(loop, intervalMinutes, startDate.toISOString());
     while (startTime <= Date.now()) {
       const endTime = new Date(startTime);
       endTime.setMinutes(endTime.getMinutes() + intervalMinutes);
