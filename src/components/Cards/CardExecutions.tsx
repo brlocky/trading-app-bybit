@@ -12,22 +12,25 @@ export default function CardExecutions() {
       <HeaderRow>
         <HeaderCol>Symbol</HeaderCol>
         <HeaderCol>Type</HeaderCol>
+        <HeaderCol>Price</HeaderCol>
         <HeaderCol>Qty</HeaderCol>
         <HeaderCol>PnL</HeaderCol>
         <HeaderCol>Date</HeaderCol>
       </HeaderRow>
       <tbody>
-        {executions?.map((l, index) => {
-          const closedPnL = Number(l.execFee);
+        {executions?.map((e, index) => {
+          const closedPnL = Number(e.execFee);
+          console.log(e);
           return (
             <Row key={index}>
-              <Col onClick={() => dispatch(updateSymbol(l.symbol))}>{l.symbol}</Col>
-              <Col>{l.orderType}</Col>
-              <Col>{formatCurrency(l.execQty)}</Col>
+              <Col onClick={() => dispatch(updateSymbol(e.symbol))}>{e.symbol}</Col>
+              <Col>{e.orderType as string !== 'UNKNOWN' ? e.orderType : e.execType}</Col>
+              <Col>{e.execPrice}</Col>
+              <Col>{formatCurrency(e.execQty)}</Col>
               <Col>
                 <span className="text-red-600">{formatCurrency(closedPnL)} USDT</span>
               </Col>
-              <Col>{new Date(Number(l.execTime)).toLocaleTimeString()}</Col>
+              <Col>{new Date(Number(e.execTime)).toLocaleTimeString()}</Col>
             </Row>
           );
         })}
