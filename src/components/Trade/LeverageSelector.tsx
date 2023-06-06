@@ -39,8 +39,6 @@ export const LeverageSelector: React.FC = () => {
 
   const updateApiLeverage = useCallback(
     debounce((v, s) => {
-      if (!tickerInfo) return;
-
       api
         .setLeverage({
           category: 'linear',
