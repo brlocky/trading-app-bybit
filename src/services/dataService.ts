@@ -64,7 +64,6 @@ export const DataService = (apiClient: RestClientV5): IDataService => {
     let startTime = startDate.getTime();
     const promises = [];
 
-    console.log(loop, intervalMinutes, startDate.toISOString());
     while (startTime <= Date.now()) {
       const endTime = new Date(startTime);
       endTime.setMinutes(endTime.getMinutes() + intervalMinutes);
