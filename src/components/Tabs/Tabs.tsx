@@ -8,15 +8,14 @@ interface TabProps {
 
 const Tab: React.FC<TabProps> = ({ title, isSelected, onClick }) => (
   <li className={`w-full ${isSelected ? 'bg-gray-100' : 'bg-white'}`}>
-    <a
-      href="#"
+    <p
       className={`block rounded-l-lg rounded-r-lg p-2 focus:outline-none focus:ring-1 focus:ring-black ${
-        isSelected ? 'text-white bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
+        isSelected ? 'bg-gray-700 text-white' : 'text-gray-700 hover:bg-gray-50'
       }`}
       onClick={onClick}
     >
       {title}
-    </a>
+    </p>
   </li>
 );
 
@@ -32,20 +31,13 @@ export const Tabs: React.FC<TabsProps> = ({ tabs }) => {
   };
 
   return (
-    <div>
-      <ul className="w-full text-center text-sm font-medium shadow divide-gray-700 text-gray-400 flex mb-2 gap-x-1">
+    <div className='flex flex-col'>
+      <ul className="mb-2 flex w-full gap-x-1 divide-gray-700 text-center text-sm font-medium text-gray-400 shadow">
         {tabs.map((tab, index) => (
-          <Tab
-            key={index}
-            title={tab.title}
-            isSelected={selectedTab === index}
-            onClick={() => handleTabClick(index)}
-          />
+          <Tab key={index} title={tab.title} isSelected={selectedTab === index} onClick={() => handleTabClick(index)} />
         ))}
       </ul>
-      <div className='flex w-full'>
-        {tabs[selectedTab]?.content}
-      </div>
+      <div className="flex w-full h-200 overflow-scroll">{tabs[selectedTab]?.content}</div>
     </div>
   );
 };
