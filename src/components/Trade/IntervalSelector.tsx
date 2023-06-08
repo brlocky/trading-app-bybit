@@ -23,31 +23,33 @@ z-10
 `;
 
 const IntervalLine = tw.a`
-block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100
+block px-2 py-2 text-sm text-gray-700 hover:bg-gray-100
 `;
 
 const IntervalAction = tw.button`
-flex items-center rounded-md bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 focus:bg-gray-300 focus:outline-none`;
+flex items-center rounded-md bg-gray-200 px-2 py-2 text-gray-700 hover:bg-gray-300 focus:bg-gray-300 focus:outline-none`;
 
 const IntervalText = tw.div`
 truncate
-w-8
-`
+w-6
+text-left
+sm:w-8
+`;
 
 const intervals = [
-  { label: '1 min', value: '1' },
-  { label: '3 min', value: '3' },
-  { label: '5 min', value: '5' },
-  { label: '15 min', value: '15' },
+  { label: '1m', value: '1' },
+  { label: '3m', value: '3' },
+  { label: '5m', value: '5' },
+  { label: '15m', value: '15' },
   // { label: '30 min', value: '30' },
   { label: '1h', value: '60' },
   // { label: '2h', value: '120' },
   { label: '4h', value: '240' },
   // { label: '6h', value: '360' },
   // { label: '12h', value: '720' },
-  { label: '1 day', value: 'D' },
-  { label: '1 week', value: 'W' },
-  { label: '1 month', value: 'M' },
+  { label: '1D', value: 'D' },
+  { label: '1W', value: 'W' },
+  { label: '1M', value: 'M' },
 ];
 
 export const IntervalSelector: React.FunctionComponent = () => {
@@ -82,7 +84,7 @@ export const IntervalSelector: React.FunctionComponent = () => {
   }, []);
 
   return (
-    <div className="z-20 flex flex-row justify-center gap-x-2 self-center relative">
+    <div className="relative z-20 flex flex-row justify-center gap-x-2 self-center">
       <IntervalAction type="button" onClick={toggleDropdown}>
         <IntervalText> {selectedInterval ? intervals.find((i) => i.value === selectedInterval)?.label || '' : '-'}</IntervalText>
 

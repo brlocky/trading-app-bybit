@@ -45,9 +45,9 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({ isLoading }
         {isLoading ? (
           <p>Loading</p>
         ) : (
-          <div className="flex gap-y-3 flex-col">
-            <div className="grid grid-cols-10 gap-x-3 ">
-              <div className="col-span-10 md:col-span-7 rounded-lg bg-gray-200 p-3">
+          <div className="flex flex-col gap-y-3">
+            <div className="grid grid-cols-10 gap-x-3 gap-y-3">
+              <div className="col-span-10 rounded-lg bg-gray-200 p-3 md:col-span-7">
                 <Chart />
               </div>
               <div className="col-span-10 md:col-span-3">

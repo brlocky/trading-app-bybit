@@ -3,7 +3,7 @@ import { LeverageSelector, MarginModeSelector, OrderTypeSelector, PositionModeSe
 
 export const CardSymbol: React.FC = () => {
   return (
-    <div className="justify-top flex flex-col gap-y-1">
+    <div className="justify-top flex flex-col gap-y-3">
       <PositionSizeSelector />
       <LeverageSelector />
       <OrderTypeSelector />

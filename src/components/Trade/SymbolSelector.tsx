@@ -26,15 +26,16 @@ z-10
 `;
 
 const SymbolLine = tw.a`
-flex justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 items-center
+flex justify-between px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 items-center
 `;
 
 const SymbolAction = tw.button`
-flex items-center rounded-md bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 focus:bg-gray-300 focus:outline-none`;
+flex items-center rounded-md bg-gray-200 px-2 py-2 text-gray-700 hover:bg-gray-300 focus:bg-gray-300 focus:outline-none`;
 
 const SymbolText = tw.div`
-w-10
-md:w-full
+text-left
+w-14
+sm:w-20
 truncate
 `;
 export const SymbolSelector: React.FunctionComponent = () => {

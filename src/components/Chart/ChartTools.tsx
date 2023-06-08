@@ -38,7 +38,7 @@ export const ChartTools: React.FC<Props> = ({ addTP, addSL }) => {
     slDisabled = true;
   }
   return (
-    <div className="absolute right-20 top-2 z-10 flex gap-x-2 rounded-lg bg-gray-700 p-2">
+    <div className="absolute right-2 top-2 z-10 flex gap-x-2 rounded-lg bg-gray-700 p-2">
       <Button disabled={tpDisabled} onClick={addTP} className="bg-green-200">
         TP
       </Button>
