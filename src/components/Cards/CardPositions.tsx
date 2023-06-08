@@ -58,7 +58,7 @@ export default function CardPositions() {
           <HeaderCol>TP / SL</HeaderCol>
           <HeaderCol>PnL</HeaderCol>
         </HeaderRow>
-        <tbody> { positions.length ? renderPositions() : <Row><Col colSpan={6}> ---</Col></Row>}</tbody>
+        <tbody>{ positions.length ? renderPositions() : <Row><Col colSpan={6}> ---</Col></Row>}</tbody>
       </Table>
 
       {/* <Table headers={headers} data={tableData.flat()} /> */}
