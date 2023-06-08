@@ -1,14 +1,23 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { selectPositions, selectTickerInfo, selectTickers, updateSymbol } from '../../slices';
+import { selectExecutions, selectPositions, selectTickerInfo, selectTickers, updateSymbol } from '../../slices';
 import { calculatePositionPnL, formatCurrency, formatCurrencyValue } from '../../utils/tradeUtils';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
+import { PositionV5 } from 'bybit-api';
 
 export default function CardPositions() {
   const tickers = useSelector(selectTickers);
   const tickerInfo = useSelector(selectTickerInfo);
   const positions = useSelector(selectPositions);
+  const executions = useSelector(selectExecutions);
 
   const dispatch = useDispatch();
+
+  const calculateFee = (p: PositionV5) => {
+    return executions
+      .filter((e) => e.symbol === p.symbol && Number(e.execTime) >= Number(p.createdTime))
+      .reduce((total, execution) => total + Number(execution.execFee), 0)
+      .toFixed(2);
+  };
 
   const renderPositions = () => {
     const sortedPositions = [...positions].sort((a, b) => {
@@ -21,7 +30,9 @@ export default function CardPositions() {
       const currentTicker = tickers[p.symbol]?.ticker;
       const currentTickerInfo = tickers[p.symbol]?.tickerInfo;
 
-      const pnl = currentTicker ? calculatePositionPnL(p, currentTicker) : 0;
+      // const fee = calculateFee(p);
+      // const pnl = currentTicker ? Number(calculatePositionPnL(p, currentTicker)) + Number(fee) : 0;
+      const pnl = currentTicker ? Number(calculatePositionPnL(p, currentTicker)) : 0;
       return (
         <Row key={index}>
           <Col onClick={() => dispatch(updateSymbol(p.symbol))}>
@@ -29,8 +40,9 @@ export default function CardPositions() {
             {p.leverage}x)
           </Col>
           <Col>{formatCurrency(p.avgPrice, currentTickerInfo?.priceScale || '0')}</Col>
-          <Col>{p.size}</Col>
-          <Col>{formatCurrencyValue(p.positionValue)}</Col>
+          <Col>
+            {p.size} {formatCurrencyValue(p.positionValue)}
+          </Col>
           <Col>
             {Number(p.takeProfit) ? p.takeProfit : '-'} / {Number(p.stopLoss) ? p.stopLoss : '-'}
           </Col>
@@ -42,6 +54,8 @@ export default function CardPositions() {
             )}
             {/* / {formatCurrency(p.cumRealisedPnl)} */}
           </Col>
+          <Col>{calculateFee(p)}</Col>
+          <Col>{new Date(Number(p.createdTime)).toDateString()}</Col>
         </Row>
       );
     });
@@ -54,11 +68,20 @@ export default function CardPositions() {
           <HeaderCol>Ticker</HeaderCol>
           <HeaderCol>Entry</HeaderCol>
           <HeaderCol>Size</HeaderCol>
-          <HeaderCol>Value</HeaderCol>
           <HeaderCol>TP / SL</HeaderCol>
           <HeaderCol>PnL</HeaderCol>
+          <HeaderCol>Fee</HeaderCol>
+          <HeaderCol>Creation</HeaderCol>
         </HeaderRow>
-        <tbody>{ positions.length ? renderPositions() : <Row><Col colSpan={6}> ---</Col></Row>}</tbody>
+        <tbody>
+          {positions.length ? (
+            renderPositions()
+          ) : (
+            <Row>
+              <Col colSpan={7}> ---</Col>
+            </Row>
+          )}
+        </tbody>
       </Table>
 
       {/* <Table headers={headers} data={tableData.flat()} /> */}
