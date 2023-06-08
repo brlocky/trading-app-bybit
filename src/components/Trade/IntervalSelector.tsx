@@ -9,7 +9,7 @@ absolute
 left-0 
 right-0 
 mt-14
-w-40 
+w-full 
 divide-y 
 divide-gray-200 
 rounded-md 
@@ -28,6 +28,12 @@ block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100
 
 const IntervalAction = tw.button`
 flex items-center rounded-md bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 focus:bg-gray-300 focus:outline-none`;
+
+const IntervalText = tw.div`
+truncate
+w-8
+`
+
 const intervals = [
   { label: '1 min', value: '1' },
   { label: '3 min', value: '3' },
@@ -76,9 +82,10 @@ export const IntervalSelector: React.FunctionComponent = () => {
   }, []);
 
   return (
-    <div className="flex p-3 relative z-20">
+    <div className="z-20 flex flex-row justify-center gap-x-2 self-center relative">
       <IntervalAction type="button" onClick={toggleDropdown}>
-        {selectedInterval ? intervals.find((i) => i.value === selectedInterval)?.label || '' : 'Dropdown'}
+        <IntervalText> {selectedInterval ? intervals.find((i) => i.value === selectedInterval)?.label || '' : '-'}</IntervalText>
+
         <ChevronDownIcon className="ml-1 h-5 w-5" />
       </IntervalAction>
       {isDropdownOpen && (

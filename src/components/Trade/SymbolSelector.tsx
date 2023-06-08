@@ -1,10 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
 import { ChevronDownIcon } from '@heroicons/react/24/solid';
-import { useApi } from '../../providers';
 import { TickerLinearInverseV5 } from 'bybit-api';
-import { selectSymbol, updateSymbol } from '../../slices/symbolSlice';
+import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import tw from 'twin.macro';
+import { useApi } from '../../providers';
+import { selectSymbol, updateSymbol } from '../../slices/symbolSlice';
 import { SmallText } from '../Text';
 
 const SymbolCol = tw.div`
@@ -32,6 +32,11 @@ flex justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 items-cen
 const SymbolAction = tw.button`
 flex items-center rounded-md bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300 focus:bg-gray-300 focus:outline-none`;
 
+const SymbolText = tw.div`
+w-10
+md:w-full
+truncate
+`;
 export const SymbolSelector: React.FunctionComponent = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [tickers, setTickers] = useState<TickerLinearInverseV5[]>([]);
@@ -52,10 +57,10 @@ export const SymbolSelector: React.FunctionComponent = () => {
 
   const loadTicker = () => {
     apiClient.getTickers({ category: 'linear' }).then((t) => {
-      const sorted = t.result.list.sort(
-        (a, b) => Number((b as TickerLinearInverseV5).price24hPcnt) - Number((a as TickerLinearInverseV5).price24hPcnt),
-      );
-      setTickers(sorted as TickerLinearInverseV5[]);
+      const tickers = t.result.list as TickerLinearInverseV5[];
+      const sorted = tickers.filter((item) => item.symbol.endsWith('USDT')).sort((a, b) => Number(b.price24hPcnt) - Number(a.price24hPcnt));
+
+      setTickers(sorted);
     });
   };
 
@@ -95,20 +100,17 @@ export const SymbolSelector: React.FunctionComponent = () => {
   }, []);
 
   return (
-    <div className="flex flex-row justify-center gap-x-2 self-center z-20">
-      <div className=" flex-row gap-x-2 hidden lg:flex">
-        {tickers
-          .filter((ticker) => ticker.symbol.toUpperCase().includes(filterValue.toUpperCase()))
-          .slice(0, 3)
-          .map((t, index) => (
-            <SymbolLine onClick={() => setSymbol(t.symbol)} href="#" key={index} className="bg-green-50">
-              <SmallText>{t.symbol}</SmallText>
-            </SymbolLine>
-          ))}
+    <div className="z-20 flex flex-row justify-center gap-x-2 self-center">
+      <div className=" hidden flex-row gap-x-2 lg:flex">
+        {tickers.slice(0, 3).map((t, index) => (
+          <SymbolLine onClick={() => setSymbol(t.symbol)} href="#" key={index} className="bg-green-50">
+            <SmallText>{t.symbol}</SmallText>
+          </SymbolLine>
+        ))}
       </div>
       <div className="relative flex justify-center">
         <SymbolAction type="button" onClick={toggleDropdown}>
-          {selectedSymbol ? selectedSymbol : 'Dropdown'}
+          <SymbolText>{selectedSymbol ? selectedSymbol : 'Dropdown'}</SymbolText>
           <ChevronDownIcon className="ml-1 h-5 w-5" />
         </SymbolAction>
         {isDropdownOpen && (

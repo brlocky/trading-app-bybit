@@ -21,6 +21,8 @@ grow
 const TopComponent = tw.div`
 flex
 w-full
+gap-x-2
+items-center
 `;
 
 const PositionPageContent = tw.div`
@@ -28,6 +30,7 @@ flex
 flex-col
 w-full
 p-2
+overflow-hidden
 `;
 
 const PositionsPageComponent: React.FC<WithTradingControlProps> = ({ isLoading }) => {
