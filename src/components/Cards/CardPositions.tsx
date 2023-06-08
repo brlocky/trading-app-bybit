@@ -1,16 +1,12 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { useApi } from '../../providers';
-import { TradingService } from '../../services';
 import { selectPositions, selectTickerInfo, selectTickers, updateSymbol } from '../../slices';
-import { calculateClosePositionSize, calculatePositionPnL, formatCurrency, formatCurrencyValue } from '../../utils/tradeUtils';
-import Button from '../Button/Button';
+import { calculatePositionPnL, formatCurrency, formatCurrencyValue } from '../../utils/tradeUtils';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
 
 export default function CardPositions() {
   const tickers = useSelector(selectTickers);
   const tickerInfo = useSelector(selectTickerInfo);
   const positions = useSelector(selectPositions);
-  const { closePosition, addStopLoss } = TradingService(useApi());
 
   const dispatch = useDispatch();
 
@@ -24,16 +20,9 @@ export default function CardPositions() {
     return sortedPositions.map((p, index) => {
       const currentTicker = tickers[p.symbol]?.ticker;
       const currentTickerInfo = tickers[p.symbol]?.tickerInfo;
-      if (!currentTicker) {
-        return (
-          <Row key={index} onClick={() => dispatch(updateSymbol(p.symbol))}>
-            <Col>{p.symbol}</Col>
-          </Row>
-        );
-      }
 
-      const pnl = calculatePositionPnL(p, currentTicker);
-      return [
+      const pnl = currentTicker ? calculatePositionPnL(p, currentTicker) : 0;
+      return (
         <Row key={index}>
           <Col onClick={() => dispatch(updateSymbol(p.symbol))}>
             <i className={p.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {p.symbol} (
@@ -53,62 +42,8 @@ export default function CardPositions() {
             )}
             {/* / {formatCurrency(p.cumRealisedPnl)} */}
           </Col>
-        </Row>,
-        <Row key={`${index}_buttons`}>
-          <Col colSpan={6}>
-            <div className="flex w-full justify-end gap-x-2">
-              <Button
-                onClick={() => {
-                  closePosition(p, calculateClosePositionSize(p, 25));
-                }}
-                key={25}
-              >
-                25%
-              </Button>
-              <Button
-                onClick={() => {
-                  closePosition(p, calculateClosePositionSize(p, 50));
-                }}
-                key={50}
-              >
-                50%
-              </Button>
-              <Button
-                onClick={() => {
-                  closePosition(p, calculateClosePositionSize(p, 75));
-                }}
-                key={75}
-              >
-                75%
-              </Button>
-              <Button
-                onClick={() => {
-                  closePosition(p, calculateClosePositionSize(p, 100));
-                }}
-                key={100}
-              >
-                100%
-              </Button>
-              <Button
-                onClick={() => {
-                  addStopLoss(p, p.avgPrice);
-                }}
-                key={'BE'}
-              >
-                BE
-              </Button>
-              <Button
-                onClick={() => {
-                  closePosition(p);
-                }}
-                key={'Close'}
-              >
-                Close
-              </Button>
-            </div>
-          </Col>
-        </Row>,
-      ];
+        </Row>
+      );
     });
   };
 
@@ -123,7 +58,7 @@ export default function CardPositions() {
           <HeaderCol>TP / SL</HeaderCol>
           <HeaderCol>PnL</HeaderCol>
         </HeaderRow>
-        <tbody>{renderPositions()}</tbody>
+        <tbody> { positions.length ? renderPositions() : <Row><Col colSpan={6}> ---</Col></Row>}</tbody>
       </Table>
 
       {/* <Table headers={headers} data={tableData.flat()} /> */}

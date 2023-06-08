@@ -24,48 +24,49 @@ export default function CardOrders() {
     return 0;
   });
 
-  const renderOrders = sortedOrders.map((o, index) => {
-    const isTrigger = isOrderTPorSL(o);
+  const renderOrders = () =>
+    sortedOrders.map((o, index) => {
+      const isTrigger = isOrderTPorSL(o);
 
-    const orderEntry = getPositionFromOrder(positions, o);
-    const pnl = orderEntry ? calculateOrderPnL(orderEntry.avgPrice, o) : undefined;
-    return (
-      <Row key={index}>
-        <Col onClick={() => dispatch(updateSymbol(o.symbol))}>
-          {isTrigger ? '' : <i className={o.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i>}
-          {o.symbol}
-        </Col>
-        <Col>{isTrigger ? o.stopOrderType : o.side}</Col>
-        <Col>{o.qty}</Col>
+      const orderEntry = getPositionFromOrder(positions, o);
+      const pnl = orderEntry ? calculateOrderPnL(orderEntry.avgPrice, o) : undefined;
+      return (
+        <Row key={index}>
+          <Col onClick={() => dispatch(updateSymbol(o.symbol))}>
+            {isTrigger ? '' : <i className={o.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i>}
+            {o.symbol}
+          </Col>
+          <Col>{isTrigger ? o.stopOrderType : o.side}</Col>
+          <Col>{o.qty}</Col>
 
-        <Col>{isTrigger ? o.triggerPrice : o.price}</Col>
-        <Col>
-          {isTrigger ? '-' : o.takeProfit} / {isTrigger ? '-' : o.stopLoss}
-        </Col>
-        <Col>
-          {pnl ? (
-            Number(pnl) >= 0 ? (
-              <span className="text-green-600">{formatCurrencyValue(pnl)}</span>
+          <Col>{isTrigger ? o.triggerPrice : o.price}</Col>
+          <Col>
+            {isTrigger ? '-' : o.takeProfit} / {isTrigger ? '-' : o.stopLoss}
+          </Col>
+          <Col>
+            {pnl ? (
+              Number(pnl) >= 0 ? (
+                <span className="text-green-600">{formatCurrencyValue(pnl)}</span>
+              ) : (
+                <span className="text-red-600">{formatCurrencyValue(pnl)}</span>
+              )
             ) : (
-              <span className="text-red-600">{formatCurrencyValue(pnl)}</span>
-            )
-          ) : (
-            '-'
-          )}
-        </Col>
-        <Col>{new Date(Number(o.createdTime)).toLocaleTimeString()}</Col>
-        <Col>
-          <Button
-            onClick={() => {
-              cancelOrder(o);
-            }}
-          >
-            <i className={'fas fa-close'}></i>
-          </Button>
-        </Col>
-      </Row>
-    );
-  });
+              '-'
+            )}
+          </Col>
+          <Col>{new Date(Number(o.createdTime)).toLocaleTimeString()}</Col>
+          <Col>
+            <Button
+              onClick={() => {
+                cancelOrder(o);
+              }}
+            >
+              <i className={'fas fa-close'}></i>
+            </Button>
+          </Col>
+        </Row>
+      );
+    });
 
   return (
     <Table>
@@ -79,7 +80,15 @@ export default function CardOrders() {
         <HeaderCol>Date</HeaderCol>
         <HeaderCol>Actions</HeaderCol>
       </HeaderRow>
-      <tbody>{renderOrders}</tbody>
+      <tbody>
+        {orders.length ? (
+          renderOrders()
+        ) : (
+          <Row>
+            <Col colSpan={8}> ---</Col>
+          </Row>
+        )}
+      </tbody>
     </Table>
   );
 }

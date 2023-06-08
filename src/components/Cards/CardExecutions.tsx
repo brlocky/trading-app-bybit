@@ -18,22 +18,27 @@ export default function CardExecutions() {
         <HeaderCol>Date</HeaderCol>
       </HeaderRow>
       <tbody>
-        {executions?.map((e, index) => {
-          const closedPnL = Number(e.execFee);
-          console.log(e);
-          return (
-            <Row key={index}>
-              <Col onClick={() => dispatch(updateSymbol(e.symbol))}>{e.symbol}</Col>
-              <Col>{(e.orderType as string) !== 'UNKNOWN' ? e.orderType : e.execType}</Col>
-              <Col>{e.execPrice}</Col>
-              <Col>{e.execQty}</Col>
-              <Col>
-                <span className="text-red-600">{formatCurrencyValue(closedPnL)}</span>
-              </Col>
-              <Col>{new Date(Number(e.execTime)).toLocaleTimeString()}</Col>
-            </Row>
-          );
-        })}
+        {executions.length ? (
+          executions.map((e, index) => {
+            const closedPnL = Number(e.execFee);
+            return (
+              <Row key={index}>
+                <Col onClick={() => dispatch(updateSymbol(e.symbol))}>{e.symbol}</Col>
+                <Col>{(e.orderType as string) !== 'UNKNOWN' ? e.orderType : e.execType}</Col>
+                <Col>{e.execPrice}</Col>
+                <Col>{e.execQty}</Col>
+                <Col>
+                  <span className="text-red-600">{formatCurrencyValue(closedPnL)}</span>
+                </Col>
+                <Col>{new Date(Number(e.execTime)).toLocaleTimeString()}</Col>
+              </Row>
+            );
+          })
+        ) : (
+          <Row>
+            <Col colSpan={6}> ---</Col>
+          </Row>
+        )}
       </tbody>
     </Table>
   );

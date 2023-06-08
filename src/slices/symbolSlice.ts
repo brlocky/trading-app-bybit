@@ -90,7 +90,7 @@ const symbolSlice = createSlice({
     },
     updateExecutions(state, action: PayloadAction<ExecutionV5[]>) {
       const newExecutions = action.payload.filter((e) => !state.executions.find((s) => s.execId === e.execId));
-      state.executions = [...newExecutions, ...state.executions].slice(0, 20);
+      state.executions = [...newExecutions, ...state.executions].slice(0, 50);
     },
     updatePositions(state, action: PayloadAction<PositionV5[]>) {
       const currentPositions = [...state.positions];

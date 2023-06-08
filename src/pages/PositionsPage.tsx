@@ -9,7 +9,9 @@ import { SymbolSelector } from '../components/Trade/SymbolSelector';
 import withTradingControl, { WithTradingControlProps } from '../hoc/withTradingControl';
 import CardOrders from '../components/Cards/CardOrders';
 import { Tabs } from '../components/Tabs';
-import { CardSymbol, CardWallet } from '../components/Cards';
+import { CardPositionControl, CardSymbol, CardWallet } from '../components/Cards';
+import { useSelector } from 'react-redux';
+import { selectCurrentPosition } from '../slices';
 
 const ContentWrapper = tw.div`
 flex
@@ -34,6 +36,7 @@ overflow-hidden
 `;
 
 const PositionsPageComponent: React.FC<WithTradingControlProps> = ({ isLoading }) => {
+  const currentPosition = useSelector(selectCurrentPosition);
   return (
     <ContentWrapper>
       <PositionPageContent>
@@ -47,8 +50,15 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({ isLoading }
         ) : (
           <div className="flex flex-col gap-y-3">
             <div className="grid grid-cols-10 gap-x-3 gap-y-3">
-              <div className="col-span-10 rounded-lg bg-gray-200 p-3 md:col-span-7">
-                <Chart />
+              <div className="col-span-10  flex flex-col gap-y-3 md:col-span-7">
+                <div className=" rounded-lg bg-gray-200  p-3">
+                  <Chart />
+                </div>
+                {currentPosition ? (
+                  <div className=" rounded-lg bg-gray-200  p-3">
+                    <CardPositionControl />
+                  </div>
+                ) : null}
               </div>
               <div className="col-span-10 md:col-span-3">
                 <CardSymbol />

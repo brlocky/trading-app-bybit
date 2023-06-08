@@ -1,10 +1,13 @@
 import React from 'react';
 import { LeverageSelector, MarginModeSelector, OrderTypeSelector, PositionModeSelector, PositionSizeSelector } from '../Trade';
+import { useSelector } from 'react-redux';
+import { selectCurrentPosition } from '../../slices';
 
 export const CardSymbol: React.FC = () => {
+  const currentPosition = useSelector(selectCurrentPosition);
   return (
     <div className="justify-top flex flex-col gap-y-3">
-      <PositionSizeSelector />
+      {!currentPosition ? <PositionSizeSelector /> : null}
       <LeverageSelector />
       <OrderTypeSelector />
       <PositionModeSelector />
