@@ -55,7 +55,7 @@ export default function CardPositions() {
             {/* / {formatCurrency(p.cumRealisedPnl)} */}
           </Col>
           <Col>{calculateFee(p)}</Col>
-          <Col>{new Date(Number(p.createdTime)).toDateString()}</Col>
+          <Col>{new Date(Number(p.createdTime)).toISOString()}</Col>
         </Row>
       );
     });

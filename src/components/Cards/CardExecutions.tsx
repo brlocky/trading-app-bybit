@@ -30,7 +30,7 @@ export default function CardExecutions() {
                 <Col>
                   <span className="text-red-600">{formatCurrencyValue(closedPnL)}</span>
                 </Col>
-                <Col>{new Date(Number(e.execTime)).toLocaleTimeString()}</Col>
+                <Col>{new Date(Number(e.execTime)).toISOString()}</Col>
               </Row>
             );
           })
