@@ -19,6 +19,7 @@ interface ISymbolState {
   positions: PositionV5[];
   executions: ExecutionV5[];
   kline: CandlestickDataWithVolume | undefined;
+  klines: CandlestickDataWithVolume[];
 }
 
 const initialState: ISymbolState = {
@@ -30,6 +31,7 @@ const initialState: ISymbolState = {
   positions: [],
   executions: [],
   kline: undefined,
+  klines: [],
 };
 
 const symbolSlice = createSlice({
@@ -56,6 +58,9 @@ const symbolSlice = createSlice({
     },
     updateLastKline(state, action: PayloadAction<CandlestickDataWithVolume>) {
       state.kline = { ...action.payload };
+    },
+    updateKlines(state, action: PayloadAction<CandlestickDataWithVolume[]>) {
+      state.klines = [ ...action.payload ];
     },
     updateWallet(state, action: PayloadAction<WalletBalanceV5>) {
       state.wallet = action.payload;
@@ -127,6 +132,7 @@ export const {
   updateTicker,
   updateTickerInfo,
   updateLastKline,
+  updateKlines,
   updateWallet,
   updateOrders,
   updateExecutions,
@@ -140,6 +146,7 @@ export const selectSymbol = (state: RootState) => state.symbol.symbol;
 export const selectInterval = (state: RootState) => state.symbol.interval;
 export const selectOrders = (state: RootState) => state.symbol.orders;
 export const selectLastKline = (state: RootState) => state.symbol.kline;
+export const selectKlines = (state: RootState) => state.symbol.klines;
 export const selectTickers = (state: RootState) => state.symbol.tickers;
 export const selectTicker = (state: RootState) => (state.symbol.symbol ? state.symbol.tickers[state.symbol.symbol]?.ticker : undefined);
 export const selectTickerInfo = (state: RootState) =>

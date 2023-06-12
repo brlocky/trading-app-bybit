@@ -1,19 +1,49 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
-import { selectCurrentPosition, selectTickerInfo } from '../../slices/symbolSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectCurrentPosition, selectTicker, selectTickerInfo } from '../../slices/symbolSlice';
 import Button from '../Button/Button';
-import { selectStopLoss, selectTakeProfit } from '../../slices';
+import { selectEntryPrice, selectStopLoss, selectTakeProfit, updateStopLoss, updateTakeProfit } from '../../slices';
+import { calculateSLPrice, calculateTPPrice, formatPriceWithTickerInfo } from '../../utils/tradeUtils';
+import { TradingService } from '../../services';
+import { useApi } from '../../providers';
 
-interface Props {
-  addTP: () => void;
-  addSL: () => void;
-}
-
-export const ChartTools: React.FC<Props> = ({ addTP, addSL }) => {
+export const ChartTools: React.FC = () => {
   const currentPosition = useSelector(selectCurrentPosition);
   const takeProfit = useSelector(selectTakeProfit);
   const stopLoss = useSelector(selectStopLoss);
+  const entryPrice = useSelector(selectEntryPrice);
+
   const tickerInfo = useSelector(selectTickerInfo);
+  const ticker = useSelector(selectTicker);
+
+  const dispatch = useDispatch();
+  const tradingService = TradingService(useApi());
+
+  const addTP = () => {
+    if (!ticker || !tickerInfo) {
+      return;
+    }
+    const tpPrice = calculateTPPrice(currentPosition ? ticker.lastPrice : entryPrice, currentPosition);
+    dispatch(updateTakeProfit([{ ...takeProfit, price: tpPrice }]));
+    // if (currentPosition) {
+    //   tradingService.addTakeProfit(currentPosition, formatPriceWithTickerInfo(tpPrice, tickerInfo));
+    // } else {
+    //   dispatch(updateTakeProfit([{ ...takeProfit, price: tpPrice }]));
+    // }
+  };
+
+  const addSL = () => {
+    if (!ticker || !tickerInfo) {
+      return;
+    }
+    const slPrice = calculateSLPrice(currentPosition ? ticker.lastPrice : entryPrice, currentPosition);
+    dispatch(updateStopLoss([{ ...stopLoss, price: slPrice }]));
+    // if (currentPosition) {
+    //   tradingService.addStopLoss(currentPosition, formatPriceWithTickerInfo(slPrice, tickerInfo));
+    // } else {
+    //   dispatch(updateStopLoss([{ ...stopLoss, price: slPrice }]));
+    // }
+  };
 
   let tpDisabled = false;
   let slDisabled = false;

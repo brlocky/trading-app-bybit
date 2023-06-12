@@ -41,7 +41,10 @@ export default function CardPositions() {
           </Col>
           <Col>{formatCurrency(p.avgPrice, currentTickerInfo?.priceScale || '0')}</Col>
           <Col>
-            {p.size} {formatCurrencyValue(p.positionValue)}
+            {p.size}
+          </Col>
+          <Col>
+            {formatCurrencyValue(p.positionValue)}
           </Col>
           <Col>
             {Number(p.takeProfit) ? p.takeProfit : '-'} / {Number(p.stopLoss) ? p.stopLoss : '-'}
@@ -54,7 +57,7 @@ export default function CardPositions() {
             )}
             {/* / {formatCurrency(p.cumRealisedPnl)} */}
           </Col>
-          <Col>{calculateFee(p)}</Col>
+          {/* <Col>{calculateFee(p)}</Col> */}
           <Col>{new Date(Number(p.createdTime)).toISOString()}</Col>
         </Row>
       );
@@ -68,9 +71,10 @@ export default function CardPositions() {
           <HeaderCol>Ticker</HeaderCol>
           <HeaderCol>Entry</HeaderCol>
           <HeaderCol>Size</HeaderCol>
+          <HeaderCol>Value</HeaderCol>
           <HeaderCol>TP / SL</HeaderCol>
           <HeaderCol>PnL</HeaderCol>
-          <HeaderCol>Fee</HeaderCol>
+          {/* <HeaderCol>Fee</HeaderCol> */}
           <HeaderCol>Creation</HeaderCol>
         </HeaderRow>
         <tbody>
