@@ -11,7 +11,7 @@ import { Tabs } from '../components/Tabs';
 import { IntervalSelector } from '../components/Trade/IntervalSelector';
 import { SymbolSelector } from '../components/Trade/SymbolSelector';
 import withTradingControl, { WithTradingControlProps } from '../hoc/withTradingControl';
-import { selectCurrentPosition, selectIsLoading } from '../slices';
+import { selectCurrentPosition } from '../slices';
 
 const ContentWrapper = tw.div`
 flex
@@ -48,10 +48,9 @@ overflow-hidden
 
 const PositionsPageComponent: React.FC<WithTradingControlProps> = ({ isLoading }) => {
   const currentPosition = useSelector(selectCurrentPosition);
-  const isLoadingSymbol = useSelector(selectIsLoading);
   return (
     <ContentWrapper>
-      {isLoadingSymbol ? <LoadingContent /> : null}
+      {isLoading ? <LoadingContent /> : null}
       <PositionPageContent>
         <TopComponent>
           <SymbolSelector />
