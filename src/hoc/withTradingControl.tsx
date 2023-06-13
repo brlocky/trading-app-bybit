@@ -4,8 +4,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { mapKlineToCandleStickData } from '../mappers';
 import { useApi } from '../providers';
-import { selectOrderType, updateEntryPrice } from '../slices';
+import { resetChartLines, selectOrderType, updateEntryPrice } from '../slices';
 import {
+  resetKlines,
   selectInterval,
   selectSymbol,
   selectTicker,
@@ -101,7 +102,8 @@ function withTradingControl<P extends WithTradingControlProps>(
     useEffect(() => {
       if (!symbol) return;
 
-      dispatch(updateKlines([]));
+      dispatch(resetKlines());
+      dispatch(resetChartLines());
 
       let intervalMinutes = 0;
       let loop = 0;

@@ -1,17 +1,16 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { RootState } from '../store';
-import { ITarget } from '../types';
 import { OrderTypeV5 } from 'bybit-api';
+import { RootState } from '../store';
+import { IChartLine } from '../types';
 
 interface ITradeSetupState {
   positionSize: number;
-  takeProfits: ITarget[];
-  stopLosses: ITarget[];
+  chartLines: IChartLine[];
+  entryPrice: string;
   marginMode: 0 | 1; // Cross, Isolated
   leverage: number; // 1.. 100
   positionMode: 0 | 3; // OneWay Hedge
   orderType: OrderTypeV5;
-  entryPrice: string;
 }
 
 const initialState: ITradeSetupState = {
@@ -19,10 +18,9 @@ const initialState: ITradeSetupState = {
   marginMode: 0,
   leverage: 1,
   positionMode: 0,
-  takeProfits: [],
-  stopLosses: [],
   orderType: 'Market',
   entryPrice: '0',
+  chartLines: [],
 };
 
 const tradeSetupSlice = createSlice({
@@ -32,11 +30,20 @@ const tradeSetupSlice = createSlice({
     updatePositionSize(state, action: PayloadAction<number>) {
       state.positionSize = action.payload;
     },
-    updateTakeProfit(state, action: PayloadAction<ITarget[]>) {
-      state.takeProfits = [...action.payload];
+    addChartLine(state, action: PayloadAction<IChartLine>) {
+      state.chartLines = [...state.chartLines, { ...action.payload }];
     },
-    updateStopLoss(state, action: PayloadAction<ITarget[]>) {
-      state.stopLosses = [...action.payload];
+    updateChartLine(state, action: PayloadAction<{ index: number; line: IChartLine }>) {
+      state.chartLines[action.payload.index] = { ...action.payload.line };
+    },
+    removeChartLine(state, action: PayloadAction<{ index: number }>) {
+      state.chartLines.splice(action.payload.index, 1);
+    },
+    // reset only when filled, to avoid rerender issues
+    resetChartLines(state) {
+      if (state.chartLines.length) {
+        state.chartLines = [];
+      }
     },
     updateLeverage(state, action: PayloadAction<number>) {
       state.leverage = action.payload;
@@ -56,17 +63,26 @@ const tradeSetupSlice = createSlice({
   },
 });
 
-export const { updatePositionSize, updateTakeProfit, updateStopLoss, updateLeverage, updatePositionMode, updateMarginMode, updateOrderType, updateEntryPrice } =
-  tradeSetupSlice.actions;
+export const {
+  updatePositionSize,
+  resetChartLines,
+  addChartLine,
+  removeChartLine,
+  updateChartLine,
+  updateLeverage,
+  updatePositionMode,
+  updateMarginMode,
+  updateOrderType,
+  updateEntryPrice,
+} = tradeSetupSlice.actions;
 
 export const tradeSetupReducer = tradeSetupSlice.reducer;
 
 // Other code such as selectors can use the imported `RootState` type
 export const selectPositionSize = (state: RootState) => state.tradeSetup.positionSize;
-export const selectTakeProfits = (state: RootState) => state.tradeSetup.takeProfits;
-export const selectTakeProfit = (state: RootState) => state.tradeSetup.takeProfits[0];
-export const selectStopLosses = (state: RootState) => state.tradeSetup.stopLosses;
-export const selectStopLoss = (state: RootState) => state.tradeSetup.stopLosses[0];
+export const selectTakeProfits = (state: RootState) => state.tradeSetup.chartLines.filter((l) => l.type === 'TP');
+export const selectStopLosses = (state: RootState) => state.tradeSetup.chartLines.filter((l) => l.type === 'SL');
+export const selectLines = (state: RootState) => state.tradeSetup.chartLines;
 export const selectPositionMode = (state: RootState) => state.tradeSetup.positionMode;
 export const selectMarginMode = (state: RootState) => state.tradeSetup.marginMode;
 export const selectLeverage = (state: RootState) => state.tradeSetup.leverage;

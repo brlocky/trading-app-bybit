@@ -51,6 +51,7 @@ export const Chart: React.FC<Props> = (props) => {
 
   const initChart = () => {
     if (!chartContainerRef.current) {
+      console.error('Chart Container not defined');
       return;
     }
 
@@ -115,10 +116,14 @@ export const Chart: React.FC<Props> = (props) => {
     newVolumeSeries.current.setData(volumeData);
 
     chartInstanceRef.current.timeScale().fitContent();
+
+    console.log('initChart chart - ok');
   };
 
   const destroyChart = () => {
+    console.log('Destroy chart');
     if (!chartInstanceRef.current) {
+      console.log('Destroy chart - fail');
       return;
     }
 
@@ -126,6 +131,7 @@ export const Chart: React.FC<Props> = (props) => {
     newVolumeSeries.current = null;
     chartInstanceRef.current.remove();
     chartInstanceRef.current = null;
+    console.log('Destroy chart - ok');
   };
 
   // Handle Resize
@@ -139,24 +145,26 @@ export const Chart: React.FC<Props> = (props) => {
   // Build Chart
   useEffect(() => {
     setIsLoading(true);
-    if (!klines.length) {
-      return;
-    }
-
+    if (!klines.length) return;
     initChart();
+
     setIsLoading(false);
 
     return () => {
+      setIsLoading(true);
       destroyChart();
     };
   }, [klines]);
 
   // Update Kline
   useEffect(() => {
-    if (isLoading || !kline || !lastCandle) return;
+    if (isLoading || !kline || !lastCandle) {
+      console.log('skipkline', isLoading, !!kline, !!lastCandle);
+      return;
+    }
     const parsedKline = JSON.parse(JSON.stringify(kline)) as CandlestickDataWithVolume;
     if (parsedKline.time < lastCandle.time) {
-      console.log('skip candle update')
+      console.log('skip candle update');
       return;
     }
     newSeries.current.update(parsedKline);

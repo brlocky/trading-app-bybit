@@ -7,8 +7,6 @@ import {
   selectLeverage,
   selectOrderType,
   selectPositionSize,
-  selectStopLoss,
-  selectTakeProfit,
   selectTicker,
   selectTickerInfo,
   selectWallet,
@@ -26,8 +24,8 @@ export const PositionSizeSelector: React.FC = () => {
   const leverage = useSelector(selectLeverage);
   const positionSize = useSelector(selectPositionSize);
   const wallet = useSelector(selectWallet);
-  const takeProfit = useSelector(selectTakeProfit);
-  const stopLoss = useSelector(selectStopLoss);
+  // const takeProfit = useSelector(selectTakeProfit);
+  // const stopLoss = useSelector(selectStopLoss);
   const orderType = useSelector(selectOrderType);
   const entryPrice = useSelector(selectEntryPrice);
 
@@ -59,8 +57,8 @@ export const PositionSizeSelector: React.FC = () => {
       qty: positionSize.toString(),
       orderType: orderType,
       price: orderType === 'Limit' ? entryPrice : undefined,
-      takeProfit: takeProfit ? formatPriceWithTickerInfo(takeProfit.price, tickerInfo) : undefined,
-      stopLoss: stopLoss ? formatPriceWithTickerInfo(stopLoss.price, tickerInfo) : undefined,
+      // takeProfit: takeProfit ? formatPriceWithTickerInfo(takeProfit.price, tickerInfo) : undefined,
+      // stopLoss: stopLoss ? formatPriceWithTickerInfo(stopLoss.price, tickerInfo) : undefined,
     });
   };
   const shortTrade = () => {
@@ -71,8 +69,8 @@ export const PositionSizeSelector: React.FC = () => {
       qty: positionSize.toString(),
       orderType: orderType,
       price: orderType === 'Limit' ? entryPrice : undefined,
-      takeProfit: takeProfit ? formatPriceWithTickerInfo(takeProfit.price, tickerInfo) : undefined,
-      stopLoss: stopLoss ? formatPriceWithTickerInfo(stopLoss.price, tickerInfo) : undefined,
+      // takeProfit: takeProfit ? formatPriceWithTickerInfo(takeProfit.price, tickerInfo) : undefined,
+      // stopLoss: stopLoss ? formatPriceWithTickerInfo(stopLoss.price, tickerInfo) : undefined,
     });
   };
 

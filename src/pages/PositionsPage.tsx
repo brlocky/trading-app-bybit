@@ -11,13 +11,24 @@ import CardOrders from '../components/Cards/CardOrders';
 import { Tabs } from '../components/Tabs';
 import { CardPositionControl, CardSymbol, CardWallet } from '../components/Cards';
 import { useSelector } from 'react-redux';
-import { selectCurrentPosition } from '../slices';
+import { selectCurrentPosition, selectIsLoading, selectSymbol } from '../slices';
 
 const ContentWrapper = tw.div`
 flex
 flex-col
 w-full
 grow
+`;
+
+const LoadingContent = tw.div`
+absolute
+left-0
+top-0
+right-0
+bottom-0
+bg-black
+opacity-80
+z-50
 `;
 
 const TopComponent = tw.div`
@@ -37,8 +48,10 @@ overflow-hidden
 
 const PositionsPageComponent: React.FC<WithTradingControlProps> = ({ isLoading }) => {
   const currentPosition = useSelector(selectCurrentPosition);
+  const isLoadingSymbol = useSelector(selectIsLoading);
   return (
     <ContentWrapper>
+      {isLoadingSymbol ? <LoadingContent /> : null}
       <PositionPageContent>
         <TopComponent>
           <SymbolSelector />

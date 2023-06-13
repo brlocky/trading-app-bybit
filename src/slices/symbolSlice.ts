@@ -60,7 +60,12 @@ const symbolSlice = createSlice({
       state.kline = { ...action.payload };
     },
     updateKlines(state, action: PayloadAction<CandlestickDataWithVolume[]>) {
-      state.klines = [ ...action.payload ];
+      state.klines = [...action.payload];
+    },
+    resetKlines(state) {
+      if (state.klines.length) {
+        state.klines = [];
+      }
     },
     updateWallet(state, action: PayloadAction<WalletBalanceV5>) {
       state.wallet = action.payload;
@@ -132,6 +137,7 @@ export const {
   updateTicker,
   updateTickerInfo,
   updateLastKline,
+  resetKlines,
   updateKlines,
   updateWallet,
   updateOrders,
@@ -142,6 +148,7 @@ export const {
 export const symbolReducer = symbolSlice.reducer;
 
 // Other code such as selectors can use the imported `RootState` type
+export const selectIsLoading = (state: RootState) => state.symbol.symbol && !state.symbol.klines.length;
 export const selectSymbol = (state: RootState) => state.symbol.symbol;
 export const selectInterval = (state: RootState) => state.symbol.interval;
 export const selectOrders = (state: RootState) => state.symbol.orders;
@@ -155,4 +162,3 @@ export const selectPositions = (state: RootState) => state.symbol.positions;
 export const selectCurrentPosition = (state: RootState) => state.symbol.positions.find((p) => p.symbol === state.symbol.symbol);
 export const selectWallet = (state: RootState) => state.symbol.wallet;
 export const selectExecutions = (state: RootState) => state.symbol.executions;
-

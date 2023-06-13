@@ -1,48 +1,41 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectCurrentPosition, selectTicker, selectTickerInfo } from '../../slices/symbolSlice';
+import { addChartLine, removeChartLine, selectEntryPrice, selectLines } from '../../slices';
+import { selectCurrentPosition, selectTickerInfo } from '../../slices/symbolSlice';
+import { IChartLine } from '../../types';
+import { calculateSLPrice, calculateTPPrice } from '../../utils/tradeUtils';
 import Button from '../Button/Button';
-import { selectEntryPrice, selectStopLoss, selectTakeProfit, updateStopLoss, updateTakeProfit } from '../../slices';
-import { calculateSLPrice, calculateTPPrice, formatPriceWithTickerInfo } from '../../utils/tradeUtils';
-import { TradingService } from '../../services';
-import { useApi } from '../../providers';
+import { Modal } from '../Modal';
+import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
 
 export const ChartTools: React.FC = () => {
   const currentPosition = useSelector(selectCurrentPosition);
-  const takeProfit = useSelector(selectTakeProfit);
-  const stopLoss = useSelector(selectStopLoss);
   const entryPrice = useSelector(selectEntryPrice);
+  const lines = useSelector(selectLines);
 
   const tickerInfo = useSelector(selectTickerInfo);
-  const ticker = useSelector(selectTicker);
 
+  const [isOpen, setIsOpen] = useState(false);
   const dispatch = useDispatch();
-  const tradingService = TradingService(useApi());
 
   const addTP = () => {
-    if (!ticker || !tickerInfo) {
-      return;
-    }
-    const tpPrice = calculateTPPrice(currentPosition ? ticker.lastPrice : entryPrice, currentPosition);
-    dispatch(updateTakeProfit([{ ...takeProfit, price: tpPrice }]));
-    // if (currentPosition) {
-    //   tradingService.addTakeProfit(currentPosition, formatPriceWithTickerInfo(tpPrice, tickerInfo));
-    // } else {
-    //   dispatch(updateTakeProfit([{ ...takeProfit, price: tpPrice }]));
-    // }
+    const tpPrice = calculateTPPrice(entryPrice, currentPosition);
+    dispatch(addChartLine({ type: 'TP', price: tpPrice }));
   };
 
   const addSL = () => {
-    if (!ticker || !tickerInfo) {
-      return;
-    }
-    const slPrice = calculateSLPrice(currentPosition ? ticker.lastPrice : entryPrice, currentPosition);
-    dispatch(updateStopLoss([{ ...stopLoss, price: slPrice }]));
-    // if (currentPosition) {
-    //   tradingService.addStopLoss(currentPosition, formatPriceWithTickerInfo(slPrice, tickerInfo));
-    // } else {
-    //   dispatch(updateStopLoss([{ ...stopLoss, price: slPrice }]));
-    // }
+    const slPrice = calculateSLPrice(entryPrice, currentPosition);
+    dispatch(addChartLine({ type: 'SL', price: slPrice }));
+  };
+
+  const handleRemoveLine = (l: IChartLine, index: number) => {
+    console.log('handleRemoveLine', l, index);
+    dispatch(removeChartLine({ index }));
+  };
+
+  const handleEditButton = () => {
+    console.log('handleEditButton');
+    setIsOpen(true);
   };
 
   let tpDisabled = false;
@@ -52,29 +45,62 @@ export const ChartTools: React.FC = () => {
     slDisabled = true;
   }
 
-  if (Number(currentPosition?.takeProfit) > 0) {
-    tpDisabled = true;
-  }
+  // if (Number(currentPosition?.takeProfit) > 0) {
+  //   tpDisabled = true;
+  // }
 
-  if (Number(currentPosition?.stopLoss) > 0) {
-    slDisabled = true;
-  }
+  // if (Number(currentPosition?.stopLoss) > 0) {
+  //   slDisabled = true;
+  // }
 
-  if (takeProfit?.price) {
-    tpDisabled = true;
-  }
+  // if (takeProfit?.price) {
+  //   tpDisabled = true;
+  // }
 
-  if (stopLoss?.price) {
-    slDisabled = true;
-  }
+  // if (stopLoss?.price) {
+  //   slDisabled = true;
+  // }
   return (
-    <div className="absolute right-2 top-2 z-10 flex gap-x-2 rounded-lg bg-gray-700 p-2">
+    <div className="absolute left-2 top-2 z-10 flex gap-x-2 rounded-lg bg-gray-700 p-2">
       <Button disabled={tpDisabled} onClick={addTP} className="bg-green-200">
         TP
       </Button>
       <Button disabled={slDisabled} onClick={addSL} className="bg-red-400">
         SL
       </Button>
+      <Button disabled={!lines.length} onClick={handleEditButton} className="bg-blue-400">
+        <i className={'fas fa-edit cursor-pointer'}></i>
+      </Button>
+      <Modal open={isOpen} header={'Edit'} onClose={() => setIsOpen(false)}>
+        <Table>
+          <HeaderRow>
+            <HeaderCol>Type</HeaderCol>
+            <HeaderCol>Price</HeaderCol>
+            <HeaderCol>Qty</HeaderCol>
+            <HeaderCol>Action</HeaderCol>
+          </HeaderRow>
+          <tbody>
+            {lines.length ? (
+              lines.map((l, index) => {
+                return (
+                  <Row key={index}>
+                    <Col>{l.type}</Col>
+                    <Col>{l.price}</Col>
+                    <Col>{l.qty}</Col>
+                    <Col onClick={() => handleRemoveLine(l, index)}>
+                      <i className={'fas fa-close cursor-pointer text-xl'}></i>
+                    </Col>
+                  </Row>
+                );
+              })
+            ) : (
+              <Row>
+                <Col colSpan={4}>---</Col>
+              </Row>
+            )}
+          </tbody>
+        </Table>
+      </Modal>
     </div>
   );
 };

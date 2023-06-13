@@ -28,5 +28,13 @@ export type CandlestickDataWithVolume = CandlestickData & { volume: number };
 
 export interface ITarget {
   price: number;
-  qty: number;
+  qty?: number;
+}
+
+export type IChartLineType = 'TP' | 'SL' | 'ENTRY'
+
+export interface IChartLine {
+  type: IChartLineType;
+  price: number;
+  qty?: number;
 }

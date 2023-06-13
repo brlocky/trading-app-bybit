@@ -55,7 +55,7 @@ export const getPositionFromOrder = (positions: PositionV5[], order: AccountOrde
 };
 
 export const calculateTargetPnL = (target: number, price: number, positionSize: number): string => {
-  return ((target - price) * positionSize).toFixed(2);
+  return (Math.abs((target - price) * positionSize)).toString();
 };
 
 export const formatPriceWithTickerInfo = (value: string | number, tickerInfo: LinearInverseInstrumentInfoV5): string => {
