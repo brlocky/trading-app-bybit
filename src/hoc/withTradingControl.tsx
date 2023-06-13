@@ -79,16 +79,17 @@ function withTradingControl<P extends WithTradingControlProps>(
 
     // TODO replace by 1 initial call to load all tickerInfos
     useEffect(() => {
-      if (symbol) {
-        apiClient
-          .getInstrumentsInfo({
-            category: 'linear',
-            symbol: symbol,
-          })
-          .then((res) => {
-            dispatch(updateTickerInfo(res.result.list[0] as LinearInverseInstrumentInfoV5));
-          });
-      }
+      if (!symbol) return;
+      apiClient
+        .getInstrumentsInfo({
+          category: 'linear',
+          symbol: symbol,
+        })
+        .then((res) => {
+          dispatch(updateTickerInfo(res.result.list[0] as LinearInverseInstrumentInfoV5));
+        });
+
+      dispatch(resetChartLines());
     }, [symbol]);
 
     // Update Entry Price to market Price
@@ -102,8 +103,8 @@ function withTradingControl<P extends WithTradingControlProps>(
     useEffect(() => {
       if (!symbol) return;
 
+      setIsLoading(true);
       dispatch(resetKlines());
-      dispatch(resetChartLines());
 
       let intervalMinutes = 0;
       let loop = 0;
@@ -177,6 +178,7 @@ function withTradingControl<P extends WithTradingControlProps>(
         const candleStickData = data.map(mapKlineToCandleStickData).sort((a, b) => (a.time as number) - (b.time as number));
         dispatch(updateKlines(candleStickData));
         dispatch(updateEntryPrice(candleStickData.length ? candleStickData[candleStickData.length - 1].close.toString() : '0'));
+        setIsLoading(false);
       });
     }, [symbol, interval]);
 

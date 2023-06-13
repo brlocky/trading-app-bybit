@@ -1,17 +1,17 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
 import tw from 'twin.macro';
+import { CardPositionControl, CardSymbol, CardWallet } from '../components/Cards';
 import CardClosedPnLs from '../components/Cards/CardClosedPnL';
 import CardExecutions from '../components/Cards/CardExecutions';
+import CardOrders from '../components/Cards/CardOrders';
 import CardPositions from '../components/Cards/CardPositions';
 import { Chart } from '../components/Chart';
+import { Tabs } from '../components/Tabs';
 import { IntervalSelector } from '../components/Trade/IntervalSelector';
 import { SymbolSelector } from '../components/Trade/SymbolSelector';
 import withTradingControl, { WithTradingControlProps } from '../hoc/withTradingControl';
-import CardOrders from '../components/Cards/CardOrders';
-import { Tabs } from '../components/Tabs';
-import { CardPositionControl, CardSymbol, CardWallet } from '../components/Cards';
-import { useSelector } from 'react-redux';
-import { selectCurrentPosition, selectIsLoading, selectSymbol } from '../slices';
+import { selectCurrentPosition, selectIsLoading } from '../slices';
 
 const ContentWrapper = tw.div`
 flex
