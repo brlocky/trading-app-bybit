@@ -7,12 +7,9 @@ import {
   selectLines,
   selectOrderType,
   selectPositionSize,
-  selectStopLosses,
-  selectTakeProfits,
   selectTicker,
-  selectTickerInfo,
-  updateEntryPrice,
   updateChartLine,
+  updateEntryPrice
 } from '../../slices';
 import { calculateTargetPnL, formatCurrencyValue } from '../../utils/tradeUtils';
 
@@ -28,7 +25,6 @@ const SEPARATOR = ' > ';
 
 export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartInstance, seriesInstance }) => {
   const ticker = useSelector(selectTicker);
-  const tickerInfo = useSelector(selectTickerInfo);
   const currentPosition = useSelector(selectCurrentPosition);
   const positionSize = useSelector(selectPositionSize);
 
@@ -134,16 +130,8 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
       isEntryDraggable = orderType === 'Limit' ? true : false,
       coinAmount = positionSize;
 
-    // let tp = takeProfit ? takeProfit.price : undefined,
-    //   sl = stopLoss ? stopLoss.price : undefined,
-    //   entry = entryPrice,
-    //   coinAmount = positionSize,
-    //   isEntryDraggable = orderType === 'Limit' ? true : false;
-
     if (currentPosition) {
       entry = currentPosition.avgPrice;
-      // currentPosition.takeProfit ? (tp = Number(currentPosition.takeProfit)) : 0;
-      // currentPosition.stopLoss ? (sl = Number(currentPosition.stopLoss)) : 0;
       coinAmount = Number(currentPosition.size);
       isEntryDraggable = false;
     }
@@ -151,38 +139,6 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
     const pnLCurrent = currentPosition
       ? formatCurrencyValue(calculateTargetPnL(Number(ticker?.lastPrice), Number(entry), coinAmount))
       : ENTRY;
-    // const pnLTakeProfit = tp ? calculateTargetPnL(Number(tp), Number(entry), coinAmount) : undefined;
-    // const pnLStopLoss = sl ? calculateTargetPnL(Number(sl), Number(entry), coinAmount) : undefined;
-
-    lines.forEach((l, index) => {
-      const lineRef = chartLineRefs.current[index];
-      lineRef.applyOptions({
-        title: formatChartLineTitle(l, ++index, formatCurrencyValue(calculateTargetPnL(Number(l.price), Number(entry), coinAmount))),
-        lineWidth: 1,
-        price: l.price,
-      });
-    });
-
-    // takeProfitPriceLine.current?.applyOptions({
-    //   title: TP + ' ' + pnLTakeProfit + 'USDT',
-    //   lineWidth: currentPosition ? 2 : 1,
-    //   price: tp,
-    //   visible: false,
-    // });
-
-    // takeProfitPriceLine.current?.applyOptions({
-    //   title: TP + ' ' + pnLTakeProfit + 'USDT',
-    //   lineWidth: currentPosition ? 2 : 1,
-    //   price: tp,
-    //   visible: false,
-    // });
-
-    // stopLossPriceLine.current?.applyOptions({
-    //   title: SL + ' ' + pnLStopLoss + 'USDT',
-    //   lineWidth: currentPosition ? 2 : 1,
-    //   price: sl,
-    //   visible: false,
-    // });
 
     entryPriceLineRefs.current.map((l) => {
       l.applyOptions({
@@ -193,20 +149,29 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
       });
     });
 
+    lines.forEach((l, index) => {
+      const lineRef = chartLineRefs.current[index];
+      lineRef.applyOptions({
+        title: formatChartLineTitle(l, ++index, formatCurrencyValue(calculateTargetPnL(Number(l.price), Number(entry), coinAmount))),
+        lineWidth: 1,
+        price: l.price,
+      });
+    });
+
     console.log('update lines - ok');
   };
 
   const priceLineHandler = (params: CustomPriceLineDraggedEventParams) => {
-    // const { customPriceLine } = params;
-    // const { title, price } = customPriceLine.options();
-    // const formatedPrice: string = chartInstance.priceScale('right').formatPrice(price);
-    // const extractedIndex = Number(title.match(/(?:TP|SL) (\d+)(?: > )/)?.[1]) - 1;
-    // if (title.startsWith(TP) || title.startsWith(SL)) {
-    //   dispatch(updateChartLine({ index: extractedIndex, line: { ...linesRef.current[extractedIndex], price: Number(formatedPrice) } }));
-    // }
-    // if (title.startsWith(ENTRY)) {
-    //   dispatch(updateEntryPrice(formatedPrice));
-    // }
+    const { customPriceLine } = params;
+    const { title, price } = customPriceLine.options();
+    const formatedPrice: string = chartInstance.priceScale('right').formatPrice(price);
+    const extractedIndex = Number(title.match(/(?:TP|SL) (\d+)(?: > )/)?.[1]) - 1;
+    if (title.startsWith(TP) || title.startsWith(SL)) {
+      dispatch(updateChartLine({ index: extractedIndex, line: { ...linesRef.current[extractedIndex], price: Number(formatedPrice) } }));
+    }
+    if (title.startsWith(ENTRY)) {
+      dispatch(updateEntryPrice(formatedPrice));
+    }
   };
 
   return null; // Since this component doesn't render anything, we return null
