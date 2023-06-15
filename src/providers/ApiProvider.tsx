@@ -18,7 +18,8 @@ export const ApiProvider: React.FC<IApiProviderProps> = ({ children, apiKey, api
   // Initialize the API client once
   if (!apiClient) {
     // Retrieve the API key and API secret from SettingsService
-    const client = new RestClientV5({ key: apiKey, secret: apiSecret, testnet: testnet });
+    // eslint-disable-next-line camelcase
+    const client = new RestClientV5({ key: apiKey, secret: apiSecret, testnet: testnet, enable_time_sync: true });
     setApiClient(client);
   }
 
