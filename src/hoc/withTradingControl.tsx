@@ -4,9 +4,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { mapKlineToCandleStickData } from '../mappers';
 import { useApi } from '../providers';
-import { resetChartLines, selectOrderType, updateEntryPrice } from '../slices';
+import { addChartLine, resetChartLines, selectOrderType, updateEntryPrice } from '../slices';
 import {
   resetKlines,
+  selectCurrentOrders,
   selectInterval,
   selectSymbol,
   selectTicker,
@@ -34,6 +35,7 @@ function withTradingControl<P extends WithTradingControlProps>(
     const interval = useSelector(selectInterval);
     const orderType = useSelector(selectOrderType);
     const ticker = useSelector(selectTicker);
+    const currentOrders = useSelector(selectCurrentOrders);
 
     const apiClient = useApi(); // Use the useApi hook to access the API context
     const dispatch = useDispatch<AppDispatch>();
@@ -90,6 +92,43 @@ function withTradingControl<P extends WithTradingControlProps>(
         });
 
       dispatch(resetChartLines());
+
+      currentOrders.forEach((o, index) => {
+        if (o.stopOrderType === 'StopLoss' || o.stopOrderType === 'TakeProfit') {
+          dispatch(
+            addChartLine({
+              type: o.stopOrderType === 'StopLoss' ? 'SL' : 'TP',
+              price: Number(o.triggerPrice),
+              qty: Number(o.qty),
+            }),
+          );
+        }
+
+        if (o.orderType === 'Limit' && o.orderStatus === 'New') {
+          dispatch(
+            addChartLine({
+              type: 'ENTRY',
+              price: Number(o.price),
+              qty: Number(o.qty),
+            }),
+          );
+        }
+
+      });
+      // console.log('Load chart lines');
+      // console.log(
+      //   currentOrders.map((o) => {
+      //     return {
+      //       orderStatus: o.orderStatus,
+      //       qty: o.qty,
+      //       orderType: o.orderType,
+      //       leavesValue: o.leavesValue,
+      //       leavesQty: o.leavesQty,
+      //       stopOrderType: o.stopOrderType,
+      //       triggerPrice: o.triggerPrice,
+      //     };
+      //   }),
+      // );
     }, [symbol]);
 
     // Update Entry Price to market Price

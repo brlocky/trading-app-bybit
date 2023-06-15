@@ -1,4 +1,4 @@
-import { WebsocketClient } from 'bybit-api';
+import { DefaultLogger, WebsocketClient } from 'bybit-api';
 import React, { ReactNode, useContext, useEffect, useState } from 'react';
 
 // Define the SOCKET context
@@ -15,14 +15,24 @@ interface ISocketProviderProps {
 export const SocketProvider: React.FC<ISocketProviderProps> = ({ children, socketKey, socketSecret, testnet }: ISocketProviderProps) => {
   const [socketClient, setSocketClient] = useState<WebsocketClient>();
 
+  // Disable all logging on the silly level
+  const customLogger = {
+    ...DefaultLogger,
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    silly: () => {},
+  };
+
   useEffect(() => {
     // Connect Socket
-    const ws = new WebsocketClient({
-      key: socketKey ? socketKey : undefined,
-      secret: socketSecret ? socketSecret : undefined,
-      market: 'v5',
-      testnet,
-    });
+    const ws = new WebsocketClient(
+      {
+        key: socketKey ? socketKey : undefined,
+        secret: socketSecret ? socketSecret : undefined,
+        market: 'v5',
+        testnet,
+      },
+      customLogger,
+    );
     setSocketClient(ws);
 
     return () => {

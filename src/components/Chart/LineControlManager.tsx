@@ -9,7 +9,7 @@ import {
   selectPositionSize,
   selectTicker,
   updateChartLine,
-  updateEntryPrice
+  updateEntryPrice,
 } from '../../slices';
 import { calculateTargetPnL, formatCurrencyValue } from '../../utils/tradeUtils';
 
@@ -20,7 +20,7 @@ interface LineControlManagerProps {
 
 const TP = 'TP';
 const SL = 'SL';
-const ENTRY = 'Entry';
+const ENTRY = 'ENTRY';
 const SEPARATOR = ' > ';
 
 export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartInstance, seriesInstance }) => {
@@ -55,8 +55,8 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
   }, []);
 
   useEffect(() => {
-    if (isLoading) return;
     linesRef.current = [...lines];
+    if (isLoading) return;
     setupChartLines();
   }, [lines]);
 
@@ -75,8 +75,6 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
   };
 
   const removeChartLines = () => {
-    console.log('Remove chart lines');
-
     // Remove Lines
     [...entryPriceLineRefs.current, ...chartLineRefs.current].forEach((lineRef) => {
       seriesInstance.removePriceLine(lineRef);
@@ -84,11 +82,8 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
 
     entryPriceLineRefs.current = [];
     chartLineRefs.current = [];
-    console.log('Remove chart lines - ok');
   };
   const setupChartLines = () => {
-    console.log('Setup lines');
-
     // Remove Lines
     removeChartLines();
 
@@ -106,6 +101,7 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
 
     // create Lines
     lines.forEach((line, index) => {
+      console.log('create line', line)
       chartLineRefs.current.push(
         seriesInstance.createPriceLine({
           title: formatChartLineTitle(line, ++index),
@@ -119,12 +115,10 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
       );
     });
 
-    console.log('Setup lines - ok');
     updateChartLines();
   };
 
   const updateChartLines = () => {
-    console.log('update lines');
 
     let entry = entryPrice,
       isEntryDraggable = orderType === 'Limit' ? true : false,
@@ -152,26 +146,26 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
     lines.forEach((l, index) => {
       const lineRef = chartLineRefs.current[index];
       lineRef.applyOptions({
-        title: formatChartLineTitle(l, ++index, formatCurrencyValue(calculateTargetPnL(Number(l.price), Number(entry), coinAmount))),
+        title: formatChartLineTitle(l, ++index, formatCurrencyValue(calculateTargetPnL(Number(l.price), Number(entry), l.qty || coinAmount))),
         lineWidth: 1,
         price: l.price,
       });
     });
 
-    console.log('update lines - ok');
   };
 
   const priceLineHandler = (params: CustomPriceLineDraggedEventParams) => {
     const { customPriceLine } = params;
     const { title, price } = customPriceLine.options();
     const formatedPrice: string = chartInstance.priceScale('right').formatPrice(price);
-    const extractedIndex = Number(title.match(/(?:TP|SL) (\d+)(?: > )/)?.[1]) - 1;
-    if (title.startsWith(TP) || title.startsWith(SL)) {
+    const extractedIndex = Number(title.match(/(?:TP|SL|ENTRY) (\d+)(?: > )/)?.[1]) - 1;
+
+    if (title.startsWith(TP) || title.startsWith(SL) || title.startsWith(ENTRY)) {
       dispatch(updateChartLine({ index: extractedIndex, line: { ...linesRef.current[extractedIndex], price: Number(formatedPrice) } }));
     }
-    if (title.startsWith(ENTRY)) {
-      dispatch(updateEntryPrice(formatedPrice));
-    }
+    // if (title.startsWith(ENTRY)) {
+    //   dispatch(updateEntryPrice(formatedPrice));
+    // }
   };
 
   return null; // Since this component doesn't render anything, we return null

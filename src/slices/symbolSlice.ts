@@ -152,6 +152,7 @@ export const selectIsLoading = (state: RootState) => state.symbol.symbol && !sta
 export const selectSymbol = (state: RootState) => state.symbol.symbol;
 export const selectInterval = (state: RootState) => state.symbol.interval;
 export const selectOrders = (state: RootState) => state.symbol.orders;
+export const selectCurrentOrders = (state: RootState) => state.symbol.orders.filter((o) => o.symbol === state.symbol.symbol);
 export const selectLastKline = (state: RootState) => state.symbol.kline;
 export const selectKlines = (state: RootState) => state.symbol.klines;
 export const selectTickers = (state: RootState) => state.symbol.tickers;
