@@ -4,10 +4,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { mapKlineToCandleStickData } from '../mappers';
 import { useApi } from '../providers';
-import { addChartLine, resetChartLines, selectOrderType, updateEntryPrice } from '../slices';
+import { addChartLine, resetChartLines, selectLines } from '../slices';
 import {
   resetKlines,
   selectCurrentOrders,
+  selectCurrentPosition,
   selectInterval,
   selectSymbol,
   selectTicker,
@@ -33,9 +34,10 @@ function withTradingControl<P extends WithTradingControlProps>(
     const [isLoading, setIsLoading] = useState(true);
     const symbol = useSelector(selectSymbol);
     const interval = useSelector(selectInterval);
-    const orderType = useSelector(selectOrderType);
     const ticker = useSelector(selectTicker);
     const currentOrders = useSelector(selectCurrentOrders);
+    const currentPosition = useSelector(selectCurrentPosition);
+    const chartLines = useSelector(selectLines);
 
     const apiClient = useApi(); // Use the useApi hook to access the API context
     const dispatch = useDispatch<AppDispatch>();
@@ -82,6 +84,23 @@ function withTradingControl<P extends WithTradingControlProps>(
     // TODO replace by 1 initial call to load all tickerInfos
     useEffect(() => {
       if (!symbol) return;
+
+      // Force One Way Mode
+      apiClient.switchPositionMode({
+        category: 'linear',
+        symbol: symbol,
+        mode: 0,
+      });
+
+      // Force Cross Mode
+      apiClient.switchIsolatedMargin({
+        category: 'linear',
+        symbol: symbol,
+        tradeMode: 0,
+        buyLeverage: currentPosition?.leverage || '1',
+        sellLeverage: currentPosition?.leverage || '1',
+      });
+
       apiClient
         .getInstrumentsInfo({
           category: 'linear',
@@ -93,50 +112,30 @@ function withTradingControl<P extends WithTradingControlProps>(
 
       dispatch(resetChartLines());
 
-      currentOrders.forEach((o, index) => {
+      currentOrders.forEach((o) => {
         if (o.stopOrderType === 'StopLoss' || o.stopOrderType === 'TakeProfit') {
           dispatch(
             addChartLine({
               type: o.stopOrderType === 'StopLoss' ? 'SL' : 'TP',
               price: Number(o.triggerPrice),
               qty: Number(o.qty),
+              draggable: true,
             }),
           );
         }
-
-        if (o.orderType === 'Limit' && o.orderStatus === 'New') {
-          dispatch(
-            addChartLine({
-              type: 'ENTRY',
-              price: Number(o.price),
-              qty: Number(o.qty),
-            }),
-          );
-        }
-
       });
-      // console.log('Load chart lines');
-      // console.log(
-      //   currentOrders.map((o) => {
-      //     return {
-      //       orderStatus: o.orderStatus,
-      //       qty: o.qty,
-      //       orderType: o.orderType,
-      //       leavesValue: o.leavesValue,
-      //       leavesQty: o.leavesQty,
-      //       stopOrderType: o.stopOrderType,
-      //       triggerPrice: o.triggerPrice,
-      //     };
-      //   }),
-      // );
-    }, [symbol]);
 
-    // Update Entry Price to market Price
-    useEffect(() => {
-      if (ticker && orderType === 'Market') {
-        dispatch(updateEntryPrice(ticker.lastPrice));
+      if (currentPosition) {
+        dispatch(
+          addChartLine({
+            type: 'ENTRY',
+            price: Number(currentPosition.avgPrice),
+            qty: Number(currentPosition.size),
+            draggable: false,
+          }),
+        );
       }
-    }, [ticker]);
+    }, [symbol]);
 
     // Load Chart Data
     useEffect(() => {
@@ -216,10 +215,13 @@ function withTradingControl<P extends WithTradingControlProps>(
         const data = r.map((r) => r.result.list).flat();
         const candleStickData = data.map(mapKlineToCandleStickData).sort((a, b) => (a.time as number) - (b.time as number));
         dispatch(updateKlines(candleStickData));
-        dispatch(updateEntryPrice(candleStickData.length ? candleStickData[candleStickData.length - 1].close.toString() : '0'));
         setIsLoading(false);
       });
     }, [symbol, interval]);
+
+    useEffect(() => {
+      console.log('lines changed', chartLines);
+    }, [chartLines]);
 
     return <WrappedComponent {...(props as P)} isLoading={isLoading} />;
   };

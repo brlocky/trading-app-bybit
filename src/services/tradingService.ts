@@ -2,7 +2,6 @@ import {
   AccountOrderV5,
   LinearInverseInstrumentInfoV5,
   LinearPositionIdx,
-  OrderSideV5,
   OrderTypeV5,
   PositionV5,
   RestClientV5,
@@ -43,11 +42,6 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
 
   const formatCurrency = (value: string): string => {
     return convertToNumber(value).toFixed(2);
-  };
-
-  const getPositionMode = (type: OrderSideV5): LinearPositionIdx => {
-    // return type === 'Buy' ? LinearPositionIdx.BuySide : LinearPositionIdx.SellSide;
-    return LinearPositionIdx.OneWayMode;
   };
 
   const addStopLoss = async (p: PositionV5, price: string) => {
@@ -130,7 +124,7 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
   const openLongTrade = async (props: INewTrade) => {
     apiClient
       .submitOrder({
-        positionIdx: getPositionMode('Sell'),
+        positionIdx: LinearPositionIdx.OneWayMode,
         category: 'linear',
         timeInForce: 'GTC',
         side: 'Buy',
@@ -148,7 +142,7 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
   const openShortTrade = async (props: INewTrade) => {
     apiClient
       .submitOrder({
-        positionIdx: getPositionMode('Sell'),
+        positionIdx: LinearPositionIdx.OneWayMode,
         category: 'linear',
         timeInForce: 'GTC',
         side: 'Sell',

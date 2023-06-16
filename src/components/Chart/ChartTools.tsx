@@ -20,21 +20,19 @@ export const ChartTools: React.FC = () => {
 
   const addTP = () => {
     const tpPrice = calculateTPPrice(entryPrice, currentPosition);
-    dispatch(addChartLine({ type: 'TP', price: tpPrice }));
+    dispatch(addChartLine({ type: 'TP', price: tpPrice, draggable: true }));
   };
 
   const addSL = () => {
     const slPrice = calculateSLPrice(entryPrice, currentPosition);
-    dispatch(addChartLine({ type: 'SL', price: slPrice }));
+    dispatch(addChartLine({ type: 'SL', price: slPrice, draggable: true }));
   };
 
   const handleRemoveLine = (l: IChartLine, index: number) => {
-    console.log('handleRemoveLine', l, index);
     dispatch(removeChartLine({ index }));
   };
 
   const handleEditButton = () => {
-    console.log('handleEditButton');
     setIsOpen(true);
   };
 
@@ -81,7 +79,7 @@ export const ChartTools: React.FC = () => {
           </HeaderRow>
           <tbody>
             {lines.length ? (
-              lines.map((l, index) => {
+              lines.filter(l => l.type !== 'ENTRY').map((l, index) => {
                 return (
                   <Row key={index}>
                     <Col>{l.type}</Col>

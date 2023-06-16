@@ -1,17 +1,9 @@
 import { CustomPriceLineDraggedEventParams } from '@felipecsl/lightweight-charts';
 import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  selectCurrentPosition,
-  selectEntryPrice,
-  selectLines,
-  selectOrderType,
-  selectPositionSize,
-  selectTicker,
-  updateChartLine,
-  updateEntryPrice,
-} from '../../slices';
+import { selectCurrentPosition, selectEntryPrice, selectLines, selectPositionSize, selectTicker, updateChartLine } from '../../slices';
 import { calculateTargetPnL, formatCurrencyValue } from '../../utils/tradeUtils';
+import { IChartLine } from '../../types';
 
 interface LineControlManagerProps {
   chartInstance: any;
@@ -30,13 +22,9 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
 
   const lines = useSelector(selectLines);
   const entryPrice = useSelector(selectEntryPrice);
-  const orderType = useSelector(selectOrderType);
 
-  const entryPriceLineRefs = useRef<any[]>([]);
   const chartLineRefs = useRef<any[]>([]);
   const linesRef = useRef<any>(undefined);
-
-  const currentPositionRef = useRef<any>(null);
 
   const dispatch = useDispatch();
 
@@ -63,95 +51,83 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
   useEffect(() => {
     if (isLoading) return;
     updateChartLines();
-  }, [ticker, positionSize, orderType, currentPosition]);
-
-  useEffect(() => {
-    if (isLoading) return;
-    currentPositionRef.current = currentPosition;
-  }, [currentPosition]);
-
-  const formatChartLineTitle = (l: any, index: number, v?: string) => {
-    return v ? `${l.type} ${index}${SEPARATOR}${v}` : `${l.type} ${index}${SEPARATOR}`;
-  };
+  }, [ticker, positionSize, currentPosition]);
 
   const removeChartLines = () => {
     // Remove Lines
-    [...entryPriceLineRefs.current, ...chartLineRefs.current].forEach((lineRef) => {
+    [...chartLineRefs.current].forEach((lineRef) => {
       seriesInstance.removePriceLine(lineRef);
     });
-
-    entryPriceLineRefs.current = [];
     chartLineRefs.current = [];
   };
+
+  const getLineTitle = (l: IChartLine, index: number) => {
+    return `${l.type} ${index}${SEPARATOR}`;
+  };
+
+  const getLineConf = (l: IChartLine, index: number) => {
+    const sharedConf = {
+      title: getLineTitle(l, index),
+      price: l.price,
+      draggable: l.draggable,
+      lineWidth: 1,
+      lineStyle: null,
+      axisLabelVisible: true,
+    };
+    switch (l.type) {
+      case 'ENTRY':
+        return {
+          color: 'blue',
+          ...sharedConf,
+        };
+      case 'SL':
+        return {
+          color: 'red',
+          ...sharedConf,
+        };
+      case 'TP':
+        return {
+          color: 'green',
+          ...sharedConf,
+        };
+    }
+  };
+
   const setupChartLines = () => {
     // Remove Lines
     removeChartLines();
 
-    entryPriceLineRefs.current.push(
-      seriesInstance.createPriceLine({
-        title: ENTRY + ' @',
-        color: 'blue',
-        lineWidth: 1,
-        lineStyle: null,
-        axisLabelVisible: true,
-        draggable: false,
-        price: entryPrice,
-      }),
-    );
-
-    // create Lines
+    // createCharLines
     lines.forEach((line, index) => {
-      console.log('create line', line)
-      chartLineRefs.current.push(
-        seriesInstance.createPriceLine({
-          title: formatChartLineTitle(line, ++index),
-          color: line.type === 'TP' ? 'green' : 'red',
-          lineWidth: 1,
-          lineStyle: null,
-          axisLabelVisible: true,
-          draggable: true,
-          price: line.price,
-        }),
-      );
+      chartLineRefs.current.push(seriesInstance.createPriceLine(getLineConf(line, index)));
     });
 
     updateChartLines();
   };
 
   const updateChartLines = () => {
-
-    let entry = entryPrice,
-      isEntryDraggable = orderType === 'Limit' ? true : false,
-      coinAmount = positionSize;
-
-    if (currentPosition) {
-      entry = currentPosition.avgPrice;
-      coinAmount = Number(currentPosition.size);
-      isEntryDraggable = false;
-    }
-
-    const pnLCurrent = currentPosition
-      ? formatCurrencyValue(calculateTargetPnL(Number(ticker?.lastPrice), Number(entry), coinAmount))
-      : ENTRY;
-
-    entryPriceLineRefs.current.map((l) => {
-      l.applyOptions({
-        title: pnLCurrent,
-        lineWidth: currentPosition ? 2 : 1,
-        price: entry,
-        draggable: isEntryDraggable,
-      });
-    });
+    const coinAmount = currentPosition ? Number(currentPosition.size) : positionSize;
+    const currentPnL = currentPosition
+      ? formatCurrencyValue(calculateTargetPnL(Number(ticker?.lastPrice), Number(entryPrice), coinAmount))
+      : '';
 
     lines.forEach((l, index) => {
       const lineRef = chartLineRefs.current[index];
-      lineRef.applyOptions({
-        title: formatChartLineTitle(l, ++index, formatCurrencyValue(calculateTargetPnL(Number(l.price), Number(entry), l.qty || coinAmount))),
-        lineWidth: 1,
-        price: l.price,
-      });
-    });
 
+      if (l.type === 'ENTRY') {
+        lineRef.applyOptions({
+          title: getLineTitle(l, ++index) + currentPnL,
+          lineWidth: currentPosition ? 2 : 1,
+          price: l.price,
+          draggable: l.draggable,
+        });
+      } else {
+        lineRef.applyOptions({
+          title: getLineTitle(l, ++index) + formatCurrencyValue(calculateTargetPnL(l.price, Number(entryPrice), l.qty || coinAmount)),
+          price: l.price,
+        });
+      }
+    });
   };
 
   const priceLineHandler = (params: CustomPriceLineDraggedEventParams) => {
@@ -163,9 +139,6 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
     if (title.startsWith(TP) || title.startsWith(SL) || title.startsWith(ENTRY)) {
       dispatch(updateChartLine({ index: extractedIndex, line: { ...linesRef.current[extractedIndex], price: Number(formatedPrice) } }));
     }
-    // if (title.startsWith(ENTRY)) {
-    //   dispatch(updateEntryPrice(formatedPrice));
-    // }
   };
 
   return null; // Since this component doesn't render anything, we return null

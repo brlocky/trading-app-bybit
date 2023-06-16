@@ -37,4 +37,5 @@ export interface IChartLine {
   type: IChartLineType;
   price: number;
   qty?: number;
+  draggable: boolean;
 }

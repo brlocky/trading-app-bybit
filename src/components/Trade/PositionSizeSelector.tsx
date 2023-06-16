@@ -3,16 +3,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '../../providers';
 import { TradingService } from '../../services';
 import {
-  selectEntryPrice,
   selectLeverage,
-  selectOrderType,
+  selectLines,
   selectPositionSize,
   selectTicker,
   selectTickerInfo,
   selectWallet,
   updatePositionSize,
 } from '../../slices';
-import { formatPriceWithTickerInfo } from '../../utils/tradeUtils';
 import Button from '../Button/Button';
 import SlidePicker from '../Forms/SlidePicker';
 import { RedText, SmallText } from '../Text';
@@ -24,10 +22,9 @@ export const PositionSizeSelector: React.FC = () => {
   const leverage = useSelector(selectLeverage);
   const positionSize = useSelector(selectPositionSize);
   const wallet = useSelector(selectWallet);
+  const lines = useSelector(selectLines);
   // const takeProfit = useSelector(selectTakeProfit);
   // const stopLoss = useSelector(selectStopLoss);
-  const orderType = useSelector(selectOrderType);
-  const entryPrice = useSelector(selectEntryPrice);
 
   const tradingService = TradingService(useApi());
 
@@ -52,25 +49,30 @@ export const PositionSizeSelector: React.FC = () => {
 
   const longTrade = () => {
     if (!tickerInfo) return;
+
+    const tps = lines.filter((l) => l.type === 'TP').map((l) => l.price.toString());
+    const sls = lines.filter((l) => l.type === 'SL').map((l) => l.price.toString());
+
     tradingService.openLongTrade({
       symbol: tickerInfo.symbol,
       qty: positionSize.toString(),
-      orderType: orderType,
-      price: orderType === 'Limit' ? entryPrice : undefined,
-      // takeProfit: takeProfit ? formatPriceWithTickerInfo(takeProfit.price, tickerInfo) : undefined,
-      // stopLoss: stopLoss ? formatPriceWithTickerInfo(stopLoss.price, tickerInfo) : undefined,
+      orderType: 'Market',
+      takeProfit: tps.length ? tps[0] : undefined,
+      stopLoss: sls.length ? sls[0] : undefined,
     });
   };
   const shortTrade = () => {
     if (!tickerInfo) return;
 
+    const tps = lines.filter((l) => l.type === 'TP').map((l) => l.price.toString());
+    const sls = lines.filter((l) => l.type === 'SL').map((l) => l.price.toString());
+
     tradingService.openShortTrade({
       symbol: tickerInfo.symbol,
       qty: positionSize.toString(),
-      orderType: orderType,
-      price: orderType === 'Limit' ? entryPrice : undefined,
-      // takeProfit: takeProfit ? formatPriceWithTickerInfo(takeProfit.price, tickerInfo) : undefined,
-      // stopLoss: stopLoss ? formatPriceWithTickerInfo(stopLoss.price, tickerInfo) : undefined,
+      orderType: 'Market',
+      takeProfit: tps.length ? tps[0] : undefined,
+      stopLoss: sls.length ? sls[0] : undefined,
     });
   };
 
@@ -105,8 +107,8 @@ export const PositionSizeSelector: React.FC = () => {
           Short
         </Button>
       </div>
-      <SmallText className='self-end text-right'>
-        <RedText>-{((positionSize * Number(ticker.lastPrice) * (orderType === 'Market' ? 0.06 : 0.01)) / 100).toFixed(2)} USDT</RedText>
+      <SmallText className="self-end text-right">
+        <RedText>-{((positionSize * Number(ticker.lastPrice) * 0.06) / 100).toFixed(2)} USDT</RedText>
       </SmallText>
     </div>
   );
