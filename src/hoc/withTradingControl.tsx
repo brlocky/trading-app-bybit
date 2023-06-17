@@ -19,6 +19,8 @@ import {
 } from '../slices/symbolSlice';
 import { AppDispatch } from '../store';
 import { TradingService } from '../services';
+import { useNavigate } from 'react-router';
+import { Toast } from 'react-toastify/dist/components';
 
 const accountType = 'CONTRACT';
 
@@ -39,45 +41,50 @@ function withTradingControl<P extends WithTradingControlProps>(
 
     const apiClient = useApi(); // Use the useApi hook to access the API context
     const dispatch = useDispatch<AppDispatch>();
+    const navigate = useNavigate();
 
     const tradingService = TradingService(apiClient);
     // Initial Load
     useEffect(() => {
-      const activeOrdersPromise = apiClient.getActiveOrders({
-        category: 'linear',
-        settleCoin: 'USDT',
-      });
-
-      const positionInfoPromise = apiClient.getPositionInfo({
-        category: 'linear',
-        settleCoin: 'USDT',
-      });
-
-      const excutionListPromise = apiClient.getExecutionList({
-        category: 'linear',
-      });
-
-      const walletInfoPromise = apiClient.getWalletBalance({
-        accountType: accountType,
-        coin: 'USDT',
-      });
-
-      Promise.all([activeOrdersPromise, positionInfoPromise, walletInfoPromise, excutionListPromise]).then(
-        ([orderInfo, positionInfo, walletInfo, excutionList]) => {
-          orderInfo.retCode === 0 ? dispatch(updateOrders(orderInfo.result.list)) : toast.error('Error loading orders');
-          excutionList.retCode === 0
-            ? dispatch(updateExecutions(excutionList.result.list.sort((a, b) => Number(b.execTime) - Number(a.execTime))))
-            : toast.error('Error loading executions');
-          positionInfo.retCode === 0 ? dispatch(updatePositions(positionInfo.result.list)) : toast.error('Error loading positions');
-
-          const usdtWallet = walletInfo.result.list[0];
+      apiClient
+        .getWalletBalance({
+          accountType: accountType,
+          coin: 'USDT',
+        })
+        .then((r) => {
+          const usdtWallet = r.result.list[0];
           if (usdtWallet) {
             dispatch(updateWallet(usdtWallet));
-          }
 
-          setIsLoading(false);
-        },
-      );
+            const activeOrdersPromise = apiClient.getActiveOrders({
+              category: 'linear',
+              settleCoin: 'USDT',
+            });
+
+            const positionInfoPromise = apiClient.getPositionInfo({
+              category: 'linear',
+              settleCoin: 'USDT',
+            });
+
+            const excutionListPromise = apiClient.getExecutionList({
+              category: 'linear',
+            });
+
+            Promise.all([activeOrdersPromise, positionInfoPromise, excutionListPromise]).then(([orderInfo, positionInfo, excutionList]) => {
+              orderInfo.retCode === 0 ? dispatch(updateOrders(orderInfo.result.list)) : toast.error('Error loading orders');
+              excutionList.retCode === 0
+                ? dispatch(updateExecutions(excutionList.result.list.sort((a, b) => Number(b.execTime) - Number(a.execTime))))
+                : toast.error('Error loading executions');
+              positionInfo.retCode === 0 ? dispatch(updatePositions(positionInfo.result.list)) : toast.error('Error loading positions');
+
+              setIsLoading(false);
+            });
+          }
+        })
+        .catch((e) => {
+          navigate('/settings');
+          toast.error('Wrong API Credentials')
+        });
     }, []);
 
     // Load Chart Data
