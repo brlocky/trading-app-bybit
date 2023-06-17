@@ -32,7 +32,6 @@ export default function CardClosedPnLs() {
         <tbody>
           {list?.length ? (
             list?.map((l, index) => {
-              const closedPnL = Number(l.closedPnl);
               return (
                 <Row key={index}>
                   <Col onClick={() => dispatch(updateSymbol(l.symbol))}>
@@ -40,10 +39,10 @@ export default function CardClosedPnLs() {
                     {l.leverage}x)
                   </Col>
                   <Col>
-                    {closedPnL >= 0 ? (
-                      <span className="text-green-600">{formatCurrencyValue(closedPnL)}</span>
+                    {Number(l.closedPnl) >= 0 ? (
+                      <span className="text-green-600">{formatCurrencyValue(l.closedPnl)}</span>
                     ) : (
-                      <span className="text-red-600">{formatCurrencyValue(closedPnL)}</span>
+                      <span className="text-red-600">{formatCurrencyValue(l.closedPnl)}</span>
                     )}
                   </Col>
                   <Col>{new Date(Number(l.updatedTime)).toLocaleTimeString()}</Col>

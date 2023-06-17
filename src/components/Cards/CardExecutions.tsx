@@ -15,12 +15,11 @@ export default function CardExecutions() {
         <HeaderCol>Price</HeaderCol>
         <HeaderCol>Qty</HeaderCol>
         <HeaderCol>PnL</HeaderCol>
-        <HeaderCol>Date</HeaderCol>
+        {/* <HeaderCol>Date</HeaderCol> */}
       </HeaderRow>
       <tbody>
         {executions.length ? (
           executions.map((e, index) => {
-            const closedPnL = Number(e.execFee);
             return (
               <Row key={index}>
                 <Col onClick={() => dispatch(updateSymbol(e.symbol))}>{e.symbol}</Col>
@@ -28,9 +27,9 @@ export default function CardExecutions() {
                 <Col>{e.execPrice}</Col>
                 <Col>{e.execQty}</Col>
                 <Col>
-                  <span className="text-red-600">{formatCurrencyValue(closedPnL)}</span>
+                  <span className="text-red-600">{formatCurrencyValue(e.execFee)}</span>
                 </Col>
-                <Col>{new Date(Number(e.execTime)).toISOString()}</Col>
+                {/* <Col>{new Date(Number(e.execTime)).toISOString()}</Col> */}
               </Row>
             );
           })

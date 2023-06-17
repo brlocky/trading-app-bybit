@@ -24,7 +24,7 @@ interface ISymbolState {
 
 const initialState: ISymbolState = {
   symbol: undefined,
-  interval: '1',
+  interval: '15',
   tickers: {},
   orders: [],
   wallet: undefined,
@@ -61,11 +61,6 @@ const symbolSlice = createSlice({
     },
     updateKlines(state, action: PayloadAction<CandlestickDataWithVolume[]>) {
       state.klines = [...action.payload];
-    },
-    resetKlines(state) {
-      if (state.klines.length) {
-        state.klines = [];
-      }
     },
     updateWallet(state, action: PayloadAction<WalletBalanceV5>) {
       state.wallet = action.payload;
@@ -137,7 +132,6 @@ export const {
   updateTicker,
   updateTickerInfo,
   updateLastKline,
-  resetKlines,
   updateKlines,
   updateWallet,
   updateOrders,

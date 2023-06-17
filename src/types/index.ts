@@ -35,7 +35,8 @@ export type IChartLineType = 'TP' | 'SL' | 'ENTRY'
 
 export interface IChartLine {
   type: IChartLineType;
-  price: number;
+  price: string;
   qty?: number;
   draggable: boolean;
+  orderId?: string;
 }

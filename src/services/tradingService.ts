@@ -1,11 +1,4 @@
-import {
-  AccountOrderV5,
-  LinearInverseInstrumentInfoV5,
-  LinearPositionIdx,
-  OrderTypeV5,
-  PositionV5,
-  RestClientV5,
-} from 'bybit-api';
+import { AccountOrderV5, LinearInverseInstrumentInfoV5, LinearPositionIdx, OrderTypeV5, PositionV5, RestClientV5 } from 'bybit-api';
 import { toast } from 'react-toastify';
 
 export interface ITradingService {
@@ -23,7 +16,6 @@ export interface ITradingService {
 interface INewTrade {
   symbol: string;
   qty: string;
-  orderType: OrderTypeV5;
   price?: string;
   takeProfit?: string;
   stopLoss?: string;
@@ -55,28 +47,31 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
       .then((r) => {
         if (r.retCode !== 0) {
           toast.error(r.retMsg);
+        } else {
+          toast.success('SL added');
         }
-      })
-      .catch((e) => {
-        console.log(e);
       });
   };
 
   const addTakeProfit = async (p: PositionV5, price: string) => {
     apiClient
-      .setTradingStop({
-        positionIdx: p.positionIdx,
+      .submitOrder({
+        positionIdx: LinearPositionIdx.OneWayMode,
         category: 'linear',
+        timeInForce: 'GTC',
+        side: p.side === 'Buy' ? 'Sell' : 'Buy',
         symbol: p.symbol,
-        takeProfit: price,
+        qty: p.size,
+        orderType: 'Limit',
+        price: price,
+        reduceOnly: true,
       })
       .then((r) => {
         if (r.retCode !== 0) {
           toast.error(r.retMsg);
+        } else {
+          toast.success('TP added');
         }
-      })
-      .catch((e) => {
-        console.log(e);
       });
   };
 
@@ -122,19 +117,48 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
   };
 
   const openLongTrade = async (props: INewTrade) => {
-    apiClient
+    // symbol: string;
+    // qty: string;
+    // orderType: OrderTypeV5;
+    // price?: string;
+    // takeProfit?: string;
+    // stopLoss?: string;
+
+    return apiClient
       .submitOrder({
         positionIdx: LinearPositionIdx.OneWayMode,
         category: 'linear',
         timeInForce: 'GTC',
         side: 'Buy',
-        ...props,
+        symbol: props.symbol,
+        qty: props.qty,
+        orderType: 'Market',
+        price: props.price,
+        stopLoss: props.stopLoss,
       })
       .then((r) => {
         if (r.retCode !== 0) {
           toast.error(r.retMsg);
-        } else {
-          toast.success(`Long ${props.orderType} open - ${props.symbol}`);
+        } else if (props.takeProfit) {
+          apiClient
+            .submitOrder({
+              positionIdx: LinearPositionIdx.OneWayMode,
+              category: 'linear',
+              timeInForce: 'GTC',
+              side: 'Sell',
+              symbol: props.symbol,
+              qty: props.qty,
+              orderType: 'Limit',
+              price: props.takeProfit,
+              reduceOnly: true,
+            })
+            .then((r) => {
+              if (r.retCode !== 0) {
+                toast.error(r.retMsg);
+              } else {
+                toast.success(`Long open - ${props.symbol}`);
+              }
+            });
         }
       });
   };
@@ -146,13 +170,35 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
         category: 'linear',
         timeInForce: 'GTC',
         side: 'Sell',
-        ...props,
+        symbol: props.symbol,
+        qty: props.qty,
+        orderType: 'Market',
+        price: props.price,
+        stopLoss: props.stopLoss,
       })
       .then((r) => {
         if (r.retCode !== 0) {
           toast.error(r.retMsg);
-        } else {
-          toast.success(`Short ${props.orderType} open - ${props.symbol}`);
+        } else if (props.takeProfit) {
+          apiClient
+            .submitOrder({
+              positionIdx: LinearPositionIdx.OneWayMode,
+              category: 'linear',
+              timeInForce: 'GTC',
+              side: 'Buy',
+              symbol: props.symbol,
+              qty: props.qty,
+              orderType: 'Limit',
+              price: props.takeProfit,
+              reduceOnly: true,
+            })
+            .then((r) => {
+              if (r.retCode !== 0) {
+                toast.error(r.retMsg);
+              } else {
+                toast.success(`Short open - ${props.symbol}`);
+              }
+            });
         }
       });
   };

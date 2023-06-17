@@ -106,10 +106,9 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
   };
 
   const updateChartLines = () => {
+    if (!ticker?.lastPrice) return;
     const coinAmount = currentPosition ? Number(currentPosition.size) : positionSize;
-    const currentPnL = currentPosition
-      ? formatCurrencyValue(calculateTargetPnL(Number(ticker?.lastPrice), Number(entryPrice), coinAmount))
-      : '';
+    const currentPnL = currentPosition ? formatCurrencyValue(calculateTargetPnL(ticker.lastPrice, entryPrice, coinAmount)) : '';
 
     lines.forEach((l, index) => {
       const lineRef = chartLineRefs.current[index];
@@ -123,7 +122,7 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
         });
       } else {
         lineRef.applyOptions({
-          title: getLineTitle(l, ++index) + formatCurrencyValue(calculateTargetPnL(l.price, Number(entryPrice), l.qty || coinAmount)),
+          title: getLineTitle(l, ++index) + formatCurrencyValue(calculateTargetPnL(l.price, entryPrice, l.qty || coinAmount)),
           price: l.price,
         });
       }
@@ -137,7 +136,7 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
     const extractedIndex = Number(title.match(/(?:TP|SL|ENTRY) (\d+)(?: > )/)?.[1]) - 1;
 
     if (title.startsWith(TP) || title.startsWith(SL) || title.startsWith(ENTRY)) {
-      dispatch(updateChartLine({ index: extractedIndex, line: { ...linesRef.current[extractedIndex], price: Number(formatedPrice) } }));
+      dispatch(updateChartLine({ index: extractedIndex, line: { ...linesRef.current[extractedIndex], price: formatedPrice } }));
     }
   };
 

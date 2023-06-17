@@ -4,14 +4,13 @@ import tw from 'twin.macro';
 import { CardPositionControl, CardSymbol, CardWallet } from '../components/Cards';
 import CardClosedPnLs from '../components/Cards/CardClosedPnL';
 import CardExecutions from '../components/Cards/CardExecutions';
-import CardOrders from '../components/Cards/CardOrders';
 import CardPositions from '../components/Cards/CardPositions';
 import { Chart } from '../components/Chart';
 import { Tabs } from '../components/Tabs';
 import { IntervalSelector } from '../components/Trade/IntervalSelector';
 import { SymbolSelector } from '../components/Trade/SymbolSelector';
 import withTradingControl, { WithTradingControlProps } from '../hoc/withTradingControl';
-import { selectCurrentPosition } from '../slices';
+import { selectCurrentPosition, selectOrders, selectPositions } from '../slices';
 
 const ContentWrapper = tw.div`
 flex
@@ -48,6 +47,8 @@ overflow-hidden
 
 const PositionsPageComponent: React.FC<WithTradingControlProps> = ({ isLoading }) => {
   const currentPosition = useSelector(selectCurrentPosition);
+  const orders = useSelector(selectOrders);
+  const positions = useSelector(selectPositions);
   return (
     <ContentWrapper>
       {isLoading ? <LoadingContent /> : null}
@@ -80,13 +81,13 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({ isLoading }
               <Tabs
                 tabs={[
                   {
-                    title: 'Positions',
+                    title: `Positions (${positions.length})`,
                     content: <CardPositions />,
                   },
-                  {
-                    title: 'Orders',
-                    content: <CardOrders />,
-                  },
+                  // {
+                  //   title: `Orders (${orders.length})`,
+                  //   content: <CardOrders />,
+                  // },
                   {
                     title: 'Executions',
                     content: <CardExecutions />,

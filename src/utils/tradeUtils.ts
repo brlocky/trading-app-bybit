@@ -54,8 +54,11 @@ export const getPositionFromOrder = (positions: PositionV5[], order: AccountOrde
   return positions.find((p) => p.symbol === order.symbol && p.positionIdx === order.positionIdx);
 };
 
-export const calculateTargetPnL = (target: number, price: number, positionSize: number): string => {
-  return (Math.abs((target - price) * positionSize)).toString();
+export const calculateTargetPnL = (target: number | string, price: number | string, positionSize: number): string => {
+  const typedTarget = isNumber(target) ? target : Number(target);
+  const typedPrice = isNumber(price) ? price : Number(price);
+
+  return Math.abs((typedTarget - typedPrice) * positionSize).toString();
 };
 
 export const formatPriceWithTickerInfo = (value: string | number, tickerInfo: LinearInverseInstrumentInfoV5): string => {
@@ -63,21 +66,6 @@ export const formatPriceWithTickerInfo = (value: string | number, tickerInfo: Li
   return numericPrice.toFixed(Number(tickerInfo.priceScale));
 };
 
-export const calculateTPPrice = (price: string | number, position?: PositionV5): number => {
-  const numericLastPrice = isNumber(price) ? price : Number(price);
-  const tpPercentage = 1;
-  const diff = (numericLastPrice * tpPercentage) / 100;
-  const side = position ? position.side : 'Buy';
-  return side === 'Buy' ? numericLastPrice + diff : numericLastPrice - diff;
-};
-
-export const calculateSLPrice = (price: string | number, position?: PositionV5): number => {
-  const numericLastPrice = isNumber(price) ? price : Number(price);
-  const slPercentage = 1;
-  const diff = (numericLastPrice * slPercentage) / 100;
-  const side = position ? position.side : 'Buy';
-  return side === 'Buy' ? numericLastPrice - diff : numericLastPrice + diff;
-};
 
 export const formatCurrencyValue = (amount: number | string, currency = 'USD') => {
   const typedAmount = isNumber(amount) ? amount : Number(amount);

@@ -6,12 +6,10 @@ import { mapKlineToCandleStickData } from '../mappers';
 import { useApi } from '../providers';
 import { addChartLine, resetChartLines, selectLines } from '../slices';
 import {
-  resetKlines,
   selectCurrentOrders,
   selectCurrentPosition,
   selectInterval,
   selectSymbol,
-  selectTicker,
   updateExecutions,
   updateKlines,
   updateOrders,
@@ -20,6 +18,7 @@ import {
   updateWallet,
 } from '../slices/symbolSlice';
 import { AppDispatch } from '../store';
+import { TradingService } from '../services';
 
 const accountType = 'CONTRACT';
 
@@ -34,7 +33,6 @@ function withTradingControl<P extends WithTradingControlProps>(
     const [isLoading, setIsLoading] = useState(true);
     const symbol = useSelector(selectSymbol);
     const interval = useSelector(selectInterval);
-    const ticker = useSelector(selectTicker);
     const currentOrders = useSelector(selectCurrentOrders);
     const currentPosition = useSelector(selectCurrentPosition);
     const chartLines = useSelector(selectLines);
@@ -42,6 +40,7 @@ function withTradingControl<P extends WithTradingControlProps>(
     const apiClient = useApi(); // Use the useApi hook to access the API context
     const dispatch = useDispatch<AppDispatch>();
 
+    const tradingService = TradingService(apiClient);
     // Initial Load
     useEffect(() => {
       const activeOrdersPromise = apiClient.getActiveOrders({
@@ -81,68 +80,11 @@ function withTradingControl<P extends WithTradingControlProps>(
       );
     }, []);
 
-    // TODO replace by 1 initial call to load all tickerInfos
-    useEffect(() => {
-      if (!symbol) return;
-
-      // Force One Way Mode
-      apiClient.switchPositionMode({
-        category: 'linear',
-        symbol: symbol,
-        mode: 0,
-      });
-
-      // Force Cross Mode
-      apiClient.switchIsolatedMargin({
-        category: 'linear',
-        symbol: symbol,
-        tradeMode: 0,
-        buyLeverage: currentPosition?.leverage || '1',
-        sellLeverage: currentPosition?.leverage || '1',
-      });
-
-      apiClient
-        .getInstrumentsInfo({
-          category: 'linear',
-          symbol: symbol,
-        })
-        .then((res) => {
-          dispatch(updateTickerInfo(res.result.list[0] as LinearInverseInstrumentInfoV5));
-        });
-
-      dispatch(resetChartLines());
-
-      currentOrders.forEach((o) => {
-        if (o.stopOrderType === 'StopLoss' || o.stopOrderType === 'TakeProfit') {
-          dispatch(
-            addChartLine({
-              type: o.stopOrderType === 'StopLoss' ? 'SL' : 'TP',
-              price: Number(o.triggerPrice),
-              qty: Number(o.qty),
-              draggable: true,
-            }),
-          );
-        }
-      });
-
-      if (currentPosition) {
-        dispatch(
-          addChartLine({
-            type: 'ENTRY',
-            price: Number(currentPosition.avgPrice),
-            qty: Number(currentPosition.size),
-            draggable: false,
-          }),
-        );
-      }
-    }, [symbol]);
-
     // Load Chart Data
     useEffect(() => {
       if (!symbol) return;
 
       setIsLoading(true);
-      dispatch(resetKlines());
 
       let intervalMinutes = 0;
       let loop = 0;
@@ -219,9 +161,143 @@ function withTradingControl<P extends WithTradingControlProps>(
       });
     }, [symbol, interval]);
 
+    // TODO replace by 1 initial call to load all tickerInfos
     useEffect(() => {
-      console.log('lines changed', chartLines);
+      if (!symbol) return;
+
+      // Force One Way Mode
+      apiClient.switchPositionMode({
+        category: 'linear',
+        symbol: symbol,
+        mode: 0,
+      });
+
+      // Force Cross Mode
+      apiClient.switchIsolatedMargin({
+        category: 'linear',
+        symbol: symbol,
+        tradeMode: 0,
+        buyLeverage: currentPosition?.leverage || '1',
+        sellLeverage: currentPosition?.leverage || '1',
+      });
+
+      apiClient
+        .getInstrumentsInfo({
+          category: 'linear',
+          symbol: symbol,
+        })
+        .then((res) => {
+          dispatch(updateTickerInfo(res.result.list[0] as LinearInverseInstrumentInfoV5));
+        });
+    }, [symbol]);
+
+    // Sync Position with line changes
+    useEffect(() => {
+      if (!symbol || !currentPosition) return;
+
+      // Update Orders
+      const changedLines = chartLines.filter((l) => {
+        const index = currentOrders.findIndex(
+          (o) => o.orderId === l.orderId && ((o.triggerPrice !== l.price && o.price !== l.price) || o.qty !== l.qty?.toString()),
+        );
+        return index !== -1 ? currentOrders[index] : false;
+      });
+
+      let promises = changedLines.map((l) => {
+        if (l.type === 'TP') {
+          return apiClient.amendOrder({
+            category: 'linear',
+            symbol: symbol,
+            orderId: l.orderId,
+            qty: l.qty?.toString(),
+            price: l.price.toString(),
+          });
+        }
+        if (l.type === 'SL') {
+          return apiClient.amendOrder({
+            category: 'linear',
+            symbol: symbol,
+            orderId: l.orderId,
+            qty: l.qty?.toString(),
+            triggerPrice: l.price.toString(),
+          });
+        }
+      });
+      Promise.all(promises);
+
+      // Remove Orders
+      const removedOrder = currentOrders.filter((o) => {
+        const index = chartLines.findIndex((l) => l.orderId === o.orderId);
+        return index === -1 ? o : false;
+      });
+
+      promises = removedOrder.map((l) => {
+        return apiClient.cancelOrder({
+          category: 'linear',
+          symbol: symbol,
+          orderId: l.orderId,
+        });
+      });
+      Promise.all(promises);
+
+      // Create Orders
+      chartLines
+        .filter((l) => !l.orderId && l.type !== 'ENTRY')
+        .map((l) => {
+          if (l.type === 'TP') {
+            tradingService.addTakeProfit(currentPosition, l.price);
+          }
+          if (l.type === 'SL') {
+            tradingService.addStopLoss(currentPosition, l.price);
+          }
+        });
     }, [chartLines]);
+
+    useEffect(() => {
+      dispatch(resetChartLines());
+
+      if (currentPosition) {
+        // if (currentPosition && !chartLines.find((l) => l.type === 'ENTRY')) {
+        dispatch(
+          addChartLine({
+            type: 'ENTRY',
+            price: currentPosition.avgPrice,
+            qty: Number(currentPosition.size),
+            draggable: false,
+          }),
+        );
+
+        // Create ChartLines from Orders
+        currentOrders.forEach((o) => {
+          if (o.orderType === 'Market') {
+            if (!o.triggerPrice) {
+              return;
+            }
+            dispatch(
+              addChartLine({
+                type: 'SL',
+                price: o.triggerPrice,
+                qty: Number(o.qty),
+                draggable: true,
+                orderId: o.orderId,
+              }),
+            );
+          }
+
+          if (o.orderType === 'Limit') {
+            dispatch(
+              addChartLine({
+                type: 'TP',
+                price: o.price,
+                qty: Number(o.qty),
+                draggable: true,
+                orderId: o.orderId,
+              }),
+            );
+          }
+        });
+      }
+    }, [currentPosition]);
 
     return <WrappedComponent {...(props as P)} isLoading={isLoading} />;
   };

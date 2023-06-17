@@ -31,9 +31,9 @@ flex items-center rounded-md bg-gray-200 px-2 py-2 text-gray-700 hover:bg-gray-3
 
 const IntervalText = tw.div`
 truncate
-w-6
+w-8
 text-left
-sm:w-8
+sm:w-10
 `;
 
 const intervals = [
