@@ -1,9 +1,9 @@
 import { debounce } from 'lodash';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { useApi } from '../../providers';
-import { selectCurrentPosition, selectLeverage, selectTickerInfo, updateLeverage } from '../../slices';
+import { selectLeverage, selectTickerInfo, updateLeverage } from '../../slices';
 import SlidePicker from '../Forms/SlidePicker';
 
 export const LeverageSelector: React.FC = () => {
