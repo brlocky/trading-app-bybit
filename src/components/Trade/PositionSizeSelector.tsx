@@ -3,14 +3,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '../../providers';
 import { TradingService } from '../../services';
 import {
-  resetChartLines,
   selectLeverage,
   selectLines,
   selectPositionSize,
   selectTicker,
   selectTickerInfo,
   selectWallet,
-  updateChartLine,
   updatePositionSize,
 } from '../../slices';
 import Button from '../Button/Button';
@@ -25,16 +23,8 @@ export const PositionSizeSelector: React.FC = () => {
   const positionSize = useSelector(selectPositionSize);
   const wallet = useSelector(selectWallet);
   const lines = useSelector(selectLines);
-  // const takeProfit = useSelector(selectTakeProfit);
-  // const stopLoss = useSelector(selectStopLoss);
 
   const tradingService = TradingService(useApi());
-
-  useEffect(() => {
-    if (tickerInfo?.symbol) {
-      orderQtyChanged(Number(tickerInfo.lotSizeFilter.minOrderQty));
-    }
-  }, [tickerInfo?.symbol]);
 
   const getMaxOrderQty = (): number => {
     if (!wallet || !tickerInfo || !ticker) {

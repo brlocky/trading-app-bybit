@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 import { mapKlineToCandleStickData } from '../mappers';
 import { useApi } from '../providers';
 import { TradingService } from '../services';
-import { addChartLine, resetChartLines, selectLines, updateLeverage } from '../slices';
+import { addChartLine, resetChartLines, selectLines, updateLeverage, updatePositionSize } from '../slices';
 import {
   selectCurrentOrders,
   selectCurrentPosition,
@@ -206,7 +206,11 @@ function withTradingControl<P extends WithTradingControlProps>(
           symbol: symbol,
         })
         .then((res) => {
-          dispatch(updateTickerInfo(res.result.list[0] as LinearInverseInstrumentInfoV5));
+          const linearInformation = res.result.list[0] as LinearInverseInstrumentInfoV5;
+          dispatch(updateTickerInfo(linearInformation));
+          if (!currentPosition) {
+            dispatch(updatePositionSize(Number(linearInformation.lotSizeFilter.minOrderQty)));
+          }
         });
     }, [symbol]);
 
