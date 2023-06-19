@@ -91,80 +91,19 @@ function withTradingControl<P extends WithTradingControlProps>(
       if (!symbol) return;
 
       setIsLoading(true);
-
-      let intervalMinutes = 0;
-      let loop = 0;
-
-      switch (interval) {
-        case '3':
-        case '5':
-          intervalMinutes = 200 * parseInt(interval);
-          loop = 24;
-          break;
-
-        case '15':
-        case '30':
-          intervalMinutes = 200 * parseInt(interval);
-          loop = 5 * 24;
-          break;
-
-        case '60':
-        case '120':
-        case '240':
-        case '360':
-        case '720':
-          intervalMinutes = 200 * 60 * (parseInt(interval) / 60);
-          loop = 24 * 31;
-          break;
-
-        case 'D':
-          intervalMinutes = 200 * 60 * 24;
-          loop = 24 * 100;
-          break;
-
-        case 'W':
-          intervalMinutes = 200 * 60 * 24 * 7;
-          loop = 24 * 360;
-          break;
-
-        case 'M':
-          intervalMinutes = 200 * 60 * 24 * 31;
-          loop = 24 * 1440;
-          break;
-
-        default:
-          intervalMinutes = 200 * parseInt(interval);
-          loop = 8;
-      }
-
-      const startDate = new Date();
-      startDate.setHours(startDate.getHours() - loop);
-
-      let startTime = startDate.getTime();
-      const promises = [];
-
-      while (startTime <= Date.now()) {
-        const endTime = new Date(startTime);
-        endTime.setMinutes(endTime.getMinutes() + intervalMinutes);
-
-        const promise = apiClient.getKline({
+      apiClient
+        .getKline({
           category: 'linear',
           symbol: symbol,
           interval: interval as KlineIntervalV3,
-          start: Math.floor(startTime),
-          end: Math.floor(endTime.getTime()),
+        })
+        .then((r) => {
+          const candleStickData = r.result.list.map(mapKlineToCandleStickData).sort((a, b) => (a.time as number) - (b.time as number));
+          dispatch(updateKlines(candleStickData));
+        })
+        .finally(() => {
+          setIsLoading(false);
         });
-
-        promises.push(promise);
-        startTime = endTime.getTime();
-      }
-
-      Promise.all(promises).then((r) => {
-        const data = r.map((r) => r.result.list).flat();
-        const candleStickData = data.map(mapKlineToCandleStickData).sort((a, b) => (a.time as number) - (b.time as number));
-        dispatch(updateKlines(candleStickData));
-        setIsLoading(false);
-      });
     }, [symbol, interval]);
 
     // TODO replace by 1 initial call to load all tickerInfos
