@@ -117,13 +117,12 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
         lineRef.applyOptions({
           title: getLineTitle(l, ++index) + currentPnL,
           lineWidth: currentPosition ? 2 : 1,
-          price: l.price,
           draggable: l.draggable,
         });
       } else {
         lineRef.applyOptions({
           title: getLineTitle(l, ++index) + formatCurrencyValue(calculateTargetPnL(l.price, entryPrice, l.qty || coinAmount)),
-          price: l.price,
+          lineWidth: currentPosition ? 2 : 1,
         });
       }
     });
