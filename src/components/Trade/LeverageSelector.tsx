@@ -11,28 +11,15 @@ export const LeverageSelector: React.FC = () => {
   const api = useApi();
   const leverage = useSelector(selectLeverage);
   const tickerInfo = useSelector(selectTickerInfo);
-  const currentPosition = useSelector(selectCurrentPosition);
 
   const max = tickerInfo?.leverageFilter.maxLeverage || '100';
   const min = tickerInfo?.leverageFilter.minLeverage || '1';
   const step = 1;
 
-  useEffect(() => {
-    dispatch(updateLeverage(1));
-  }, []);
-
-  useEffect(() => {
-    if (currentPosition) {
-      dispatch(updateLeverage(Number(currentPosition.leverage)));
-    } else {
-      dispatch(updateLeverage(1));
-    }
-  }, [currentPosition]);
-
   const onValueChanged = (v: number) => {
     dispatch(updateLeverage(v));
 
-    if (currentPosition && tickerInfo?.symbol) {
+    if (tickerInfo?.symbol) {
       updateApiLeverage(v, tickerInfo.symbol);
     }
   };

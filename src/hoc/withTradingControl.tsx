@@ -1,10 +1,12 @@
 import { KlineIntervalV3, LinearInverseInstrumentInfoV5 } from 'bybit-api';
 import React, { ComponentType, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router';
 import { toast } from 'react-toastify';
 import { mapKlineToCandleStickData } from '../mappers';
 import { useApi } from '../providers';
-import { addChartLine, resetChartLines, selectLines } from '../slices';
+import { TradingService } from '../services';
+import { addChartLine, resetChartLines, selectLines, updateLeverage } from '../slices';
 import {
   selectCurrentOrders,
   selectCurrentPosition,
@@ -18,9 +20,6 @@ import {
   updateWallet,
 } from '../slices/symbolSlice';
 import { AppDispatch } from '../store';
-import { TradingService } from '../services';
-import { useNavigate } from 'react-router';
-import { Toast } from 'react-toastify/dist/components';
 
 const accountType = 'CONTRACT';
 
@@ -83,7 +82,7 @@ function withTradingControl<P extends WithTradingControlProps>(
         })
         .catch((e) => {
           navigate('/settings');
-          toast.error('Wrong API Credentials')
+          toast.error('Wrong API Credentials');
         });
     }, []);
 
@@ -188,6 +187,19 @@ function withTradingControl<P extends WithTradingControlProps>(
         sellLeverage: currentPosition?.leverage || '1',
       });
 
+      if (currentPosition) {
+        dispatch(updateLeverage(Number(currentPosition.leverage)));
+      } else {
+        // Force Leverage
+        apiClient.setLeverage({
+          category: 'linear',
+          symbol: symbol,
+          buyLeverage: '1',
+          sellLeverage: '1',
+        });
+        dispatch(updateLeverage(1));
+      }
+
       apiClient
         .getInstrumentsInfo({
           category: 'linear',
@@ -264,7 +276,6 @@ function withTradingControl<P extends WithTradingControlProps>(
       dispatch(resetChartLines());
 
       if (currentPosition) {
-        // if (currentPosition && !chartLines.find((l) => l.type === 'ENTRY')) {
         dispatch(
           addChartLine({
             type: 'ENTRY',

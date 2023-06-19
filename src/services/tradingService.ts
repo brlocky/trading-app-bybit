@@ -135,6 +135,7 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
         orderType: 'Market',
         price: props.price,
         stopLoss: props.stopLoss,
+        isLeverage: 1,
       })
       .then((r) => {
         if (r.retCode !== 0) {
@@ -175,6 +176,7 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
         orderType: 'Market',
         price: props.price,
         stopLoss: props.stopLoss,
+        isLeverage: 1,
       })
       .then((r) => {
         if (r.retCode !== 0) {
