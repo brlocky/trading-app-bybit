@@ -80,7 +80,7 @@ function withTradingControl<P extends WithTradingControlProps>(
             });
           }
         })
-        .catch((e) => {
+        .catch(() => {
           navigate('/settings');
           toast.error('Wrong API Credentials');
         });

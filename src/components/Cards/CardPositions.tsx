@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { selectOrders, selectPositions, selectTickerInfo, selectTickers, updateSymbol } from '../../slices';
-import { calculatePositionPnL, formatCurrency, formatCurrencyValue } from '../../utils/tradeUtils';
+import { calculatePositionPnL, formatCurrencyValue } from '../../utils/tradeUtils';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
 
 export default function CardPositions() {
@@ -20,7 +20,6 @@ export default function CardPositions() {
 
     return sortedPositions.map((p, index) => {
       const currentTicker = tickers[p.symbol]?.ticker;
-      const currentTickerInfo = tickers[p.symbol]?.tickerInfo;
 
       const tp = orders
         .filter((o) => o.orderType === 'Limit' && o.symbol === p.symbol)

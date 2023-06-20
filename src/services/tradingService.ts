@@ -1,4 +1,4 @@
-import { AccountOrderV5, LinearInverseInstrumentInfoV5, LinearPositionIdx, OrderTypeV5, PositionV5, RestClientV5 } from 'bybit-api';
+import { AccountOrderV5, LinearInverseInstrumentInfoV5, LinearPositionIdx, PositionV5, RestClientV5 } from 'bybit-api';
 import { toast } from 'react-toastify';
 
 export interface ITradingService {
