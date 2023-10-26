@@ -12,8 +12,8 @@ export const SettingsService = {
     const data = localStorage.getItem('settings');
     if (!data) {
       return {
-        apiKey: 'gmVkzV8nUbDMZLEgq9',
-        apiSecret: 'AcoaLvOQSyZfRFCoFVLMP5DkJnEXP1JOYE0s',
+        apiKey: 'pSRedbNSxAkaofeF4k',
+        apiSecret: 'yEBVX8CHLNAxNwaFAJOvW6qdhpyy9u6ea527',
         testnet: true,
       };
     }

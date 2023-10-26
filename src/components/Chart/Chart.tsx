@@ -9,6 +9,7 @@ import { selectInterval, selectKlines, selectLastKline, selectSymbol, selectTick
 import { CandlestickDataWithVolume } from '../../types';
 import { ChartTools } from './ChartTools';
 import { LineControlManager } from './LineControlManager';
+import { ChartTimer } from './ChartTimer';
 
 interface Props {
   colors?: {
@@ -81,7 +82,7 @@ export const Chart: React.FC<Props> = (props) => {
         ticksVisible: true,
         scaleMargins: {
           top: 0.1,
-          bottom: 0.3,
+          bottom: 0.2,
         },
       },
       crosshair: {
@@ -238,6 +239,7 @@ export const Chart: React.FC<Props> = (props) => {
       {!isLoading ? (
         <>
           <ChartTools />
+          <ChartTimer />
           <LineControlManager chartInstance={chartInstanceRef.current} seriesInstance={newSeries.current} />
         </>
       ) : null}
