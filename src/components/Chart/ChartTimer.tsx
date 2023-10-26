@@ -5,8 +5,6 @@ import { selectInterval } from '../../slices/symbolSlice';
 export const ChartTimer: React.FC = () => {
   const selectedInterval = useSelector(selectInterval);
 
-  console.log('interval', selectedInterval);
-
   const intervals: Record<string, number> = {
     '1': 60,
     '3': 180,
@@ -14,49 +12,52 @@ export const ChartTimer: React.FC = () => {
     '15': 900,
     '60': 3600,
     '240': 14400,
-    D: 86400,
-    W: 604800,
-    M: 2419200,
   };
 
-  // Define the selected interval (for example, '1m' for 1 minute)
+  // Function to format time as hh:mm:ss
+  const formatTime = (timeInSeconds: number) => {
+    const hours = Math.floor(timeInSeconds / 3600);
+    const remainingTime = timeInSeconds % 3600;
+    const minutes = Math.floor(remainingTime / 60);
+    const seconds = Math.floor(remainingTime % 60);
 
-  const [countDown, setCountDown] = useState(intervals[selectedInterval]);
+    if (selectedInterval === '240')
+      return `${hours < 10 ? '0' : ''}${hours}:${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    return `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  };
 
-  // Use a ticker with a 100ms interval
-  const tickerInterval = 100;
-  const [ticker, setTicker] = useState(0);
+  // Define the selected interval duration in seconds
+  const intervalDuration = intervals[selectedInterval];
 
-  // Use useEffect to start the ticker
+  // Calculate the current time in seconds since the epoch
+  const [currentTime, setCurrentTime] = useState(Math.floor(Date.now() / 1000));
+
+  // Use a ticker with a 1-second interval
+  const tickerInterval = 1000;
+
+  // Function to update the current time
+  const updateCurrentTime = () => {
+    setCurrentTime(Math.floor(Date.now() / 1000));
+  };
+
+  // Use useEffect to start the timer and continuously update the time
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      setTicker((prevTicker) => prevTicker + tickerInterval);
-    }, tickerInterval);
+    // Check if the selected interval is 'D', 'W', or 'M'
+    if (selectedInterval !== 'D' && selectedInterval !== 'W' && selectedInterval !== 'M') {
+      const intervalId = setInterval(updateCurrentTime, tickerInterval);
 
-    // Clean up the interval when the component unmounts
-    return () => clearInterval(intervalId);
-  }, []);
-
-  // Use useEffect to update the countdown based on the ticker
-  useEffect(() => {
-    const intervalDuration = intervals[selectedInterval];
-    const elapsedSeconds = ticker / 1000;
-
-    if (elapsedSeconds < intervalDuration) {
-      const remainingSeconds = intervalDuration - elapsedSeconds;
-      setCountDown(remainingSeconds);
-    } else {
-      setCountDown(0); // The interval has expired
+      // Clean up the interval when the component unmounts
+      return () => clearInterval(intervalId);
     }
-  }, [ticker, selectedInterval]);
+  }, [selectedInterval]);
 
-  // Convert timeDifference to minutes and seconds
-  const minutes = Math.floor(countDown / 60);
-  const seconds = Math.floor(countDown % 60);
+  // Calculate the time remaining until the next interval boundary
+  const timeRemaining = intervalDuration - (currentTime % intervalDuration) - 1;
 
-  return (
-    <div className="absolute right-20 top-2 z-10 flex gap-x-2 rounded-lg bg-gray-200 p-2">
-      Time left: {minutes} minutes {seconds} seconds
-    </div>
-  );
+  // Protect against displaying 'D', 'W', and 'M' intervals
+  if (selectedInterval === 'D' || selectedInterval === 'W' || selectedInterval === 'M') {
+    return <></>;
+  }
+
+  return <div className="absolute right-20 top-2 z-10 flex gap-x-2 rounded-lg bg-blue-100 p-2 font-bold">{formatTime(timeRemaining)}</div>;
 };
