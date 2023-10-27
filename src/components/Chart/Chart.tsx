@@ -37,6 +37,7 @@ export const Chart: React.FC<Props> = (props) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [lastCandle, setLastCandle] = useState<CandlestickDataWithVolume | undefined>();
   const [loadedCandles, setLoadedCandles] = useState<CandlestickDataWithVolume[]>([]);
+  const [liveCandles, setLiveCandles] = useState<CandlestickDataWithVolume[]>([]);
 
   const newSeries = useRef<any>(null);
   const newVolumeSeries = useRef<any>(null);
@@ -44,6 +45,7 @@ export const Chart: React.FC<Props> = (props) => {
   const chartInstanceRef = useRef<any>(null);
   const timeScaleRef = useRef<any>(null);
   const loadedCandlesRef = useRef<any>(null);
+  const liveCandlesRef = useRef<any>(null);
 
   const kline = useSelector(selectLastKline);
   const klines = useSelector(selectKlines);
@@ -184,6 +186,10 @@ export const Chart: React.FC<Props> = (props) => {
     }
     newSeries.current.update(parsedKline);
     newVolumeSeries.current.update({ time: kline.time, value: kline.volume, color: 'pink' });
+
+    // Update Live Candles data and ref
+    setLiveCandles([...liveCandles, parsedKline]);
+    liveCandlesRef.current = liveCandles;
   }, [kline]);
 
   // Update loaded candles
@@ -199,6 +205,13 @@ export const Chart: React.FC<Props> = (props) => {
     newVolumeSeries.current.setData(volumeData);
 
     loadedCandlesRef.current = loadedCandles;
+
+    // Update Series with live data
+    if (liveCandlesRef.current)
+      liveCandlesRef.current.forEach((c: CandlestickDataWithVolume) => {
+        newSeries.current.update(c);
+        newVolumeSeries.current.update({ time: c.time, value: c.volume, color: 'pink' });
+      });
   }, [loadedCandles]);
 
   const listenChartTimeScale = useCallback(
