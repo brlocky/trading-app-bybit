@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { mapKlineToCandleStickData } from '../../mappers';
 import { useApi } from '../../providers';
-import { selectInterval, selectKlines, selectLastKline, selectSymbol, selectTickerInfo } from '../../slices/symbolSlice';
+import { selectInterval, selectKlines, selectLastKline, selectSymbol, selectTicker, selectTickerInfo } from '../../slices/symbolSlice';
 import { CandlestickDataWithVolume } from '../../types';
 import { ChartTools } from './ChartTools';
 import { LineControlManager } from './LineControlManager';
@@ -46,9 +46,11 @@ export const Chart: React.FC<Props> = (props) => {
   const timeScaleRef = useRef<any>(null);
   const loadedCandlesRef = useRef<any>(null);
   const liveCandlesRef = useRef<any>(null);
+  const marketLineRef = useRef<any>(null);
 
   const kline = useSelector(selectLastKline);
   const klines = useSelector(selectKlines);
+  const ticker = useSelector(selectTicker);
   const tickerInfo = useSelector(selectTickerInfo);
   const symbol = useSelector(selectSymbol);
   const interval = useSelector(selectInterval);
@@ -104,6 +106,16 @@ export const Chart: React.FC<Props> = (props) => {
         minMove: tickerInfo?.priceFilter.tickSize,
       },
     });
+
+    const marketPriceLine = {
+      price: 0,
+      color: '#d9e710',
+      lineWidth: 2,
+      lineStyle: 2, // LineStyle.Dashed
+      axisLabelVisible: true,
+    };
+
+    marketLineRef.current = newSeries.current.createPriceLine(marketPriceLine);
 
     const allKlines = JSON.parse(JSON.stringify(klines));
     setLoadedCandles(allKlines);
@@ -191,6 +203,16 @@ export const Chart: React.FC<Props> = (props) => {
     setLiveCandles([...liveCandles, parsedKline]);
     liveCandlesRef.current = liveCandles;
   }, [kline]);
+
+  useEffect(() => {
+    if (!ticker) return;
+
+    if (marketLineRef.current) {
+      marketLineRef.current.applyOptions({
+        price: ticker.markPrice,
+      });
+    }
+  }, [ticker]);
 
   // Update loaded candles
   useEffect(() => {
