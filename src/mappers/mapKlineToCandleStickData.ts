@@ -1,6 +1,5 @@
-import { UTCTimestamp } from '@felipecsl/lightweight-charts';
+import { UTCTimestamp } from 'lightweight-charts';
 import { CandlestickDataWithVolume } from '../types';
-
 
 // Mapper function to convert ApiResponse to WsResponse
 export const mapKlineToCandleStickData = (kline: string[]): CandlestickDataWithVolume => {
@@ -23,7 +22,7 @@ interface Props {
   low: string;
   volume: string;
 }
-export const mapKlineObjToCandleStickData = ({ start, open, close, high, low, volume}: Props): CandlestickDataWithVolume => {
+export const mapKlineObjToCandleStickData = ({ start, open, close, high, low, volume }: Props): CandlestickDataWithVolume => {
   return {
     time: (start / 1000) as UTCTimestamp,
     open: parseFloat(open),

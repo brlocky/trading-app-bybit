@@ -1,4 +1,4 @@
-import { ColorType, CrosshairMode, createChart } from '@felipecsl/lightweight-charts';
+import { ColorType, CrosshairMode, createChart } from 'lightweight-charts';
 import { KlineIntervalV3 } from 'bybit-api';
 import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -6,10 +6,10 @@ import { useSelector } from 'react-redux';
 import { mapKlineToCandleStickData } from '../../mappers';
 import { useApi } from '../../providers';
 import { selectInterval, selectKlines, selectLastKline, selectSymbol, selectTicker, selectTickerInfo } from '../../slices/symbolSlice';
-import { CandlestickDataWithVolume, ChartLine } from '../../types';
+import { CandlestickDataWithVolume } from '../../types';
 import { ChartTools } from './ChartTools';
-import { LineControlManager } from './LineControlManager';
 import { ChartTimer } from './ChartTimer';
+import { IndicatorsChartControlManager } from './IndicatorsChartControlManager';
 
 interface Props {
   colors?: {
@@ -47,8 +47,6 @@ export const Chart: React.FC<Props> = (props) => {
   const loadedCandlesRef = useRef<any>(null);
   const liveCandlesRef = useRef<any>(null);
   const marketLineRef = useRef<any>(null);
-  const smaLineRef = useRef<any>(null);
-  const emaLineRef = useRef<any>(null);
 
   const kline = useSelector(selectLastKline);
   const klines = useSelector(selectKlines);
@@ -65,42 +63,6 @@ export const Chart: React.FC<Props> = (props) => {
         width: chartContainerRef.current?.clientWidth || 0,
       });
     }
-  };
-
-  const calculateSMA = (data: CandlestickDataWithVolume[], count: number): ChartLine[] => {
-    const avg = (data: CandlestickDataWithVolume[]): number => data.reduce((sum, item) => sum + item.close, 0) / data.length;
-
-    const result = [];
-
-    for (let i = count - 1, len = data.length; i < len; i++) {
-      const val = avg(data.slice(i - count + 1, i));
-      result.push({ time: data[i].time, value: val });
-    }
-
-    return result;
-  };
-
-  const calculateEMA = (data: CandlestickDataWithVolume[], period: number): ChartLine[] => {
-    const calculateMultiplier = (period: number) => 2 / (period + 1);
-
-    const result: ChartLine[] = [];
-
-    // Calculate the initial SMA
-    let sma = 0;
-    for (let i = 0; i < period; i++) {
-      sma += data[i].close;
-    }
-    sma /= period;
-    result.push({ time: data[period - 1].time, value: sma });
-
-    // Calculate EMA for the remaining data points
-    for (let i = period, len = data.length; i < len; i++) {
-      const close = data[i].close;
-      sma = (close - sma) * calculateMultiplier(period) + sma;
-      result.push({ time: data[i].time, value: sma });
-    }
-
-    return result;
   };
 
   const initChart = () => {
@@ -133,21 +95,6 @@ export const Chart: React.FC<Props> = (props) => {
       width: chartContainerRef.current.clientWidth,
       height: 500,
     });
-
-    smaLineRef.current = chartInstanceRef.current.addLineSeries({
-      title: 'SMA',
-    });
-    emaLineRef.current = chartInstanceRef.current.addLineSeries({
-      title: 'Ema',
-    });
-
-    // Update SMA
-    const smaData = calculateSMA(klines, 10);
-    smaLineRef.current.setData(smaData);
-
-    // Update EMA
-    const emaData = calculateEMA(klines, 9);
-    emaLineRef.current.setData(emaData);
 
     newSeries.current = chartInstanceRef.current.addCandlestickSeries({
       lineColor,
@@ -256,14 +203,6 @@ export const Chart: React.FC<Props> = (props) => {
     // Update Live Candles data and ref
     setLiveCandles([...liveCandles, parsedKline]);
     liveCandlesRef.current = liveCandles;
-
-    // Update SMA
-    const smaData = calculateSMA(klines, 10);
-    smaLineRef.current.setData(smaData);
-
-    // Update EMA
-    const emaData = calculateEMA(klines, 9);
-    emaLineRef.current.setData(emaData);
   }, [kline]);
 
   useEffect(() => {
@@ -337,7 +276,8 @@ export const Chart: React.FC<Props> = (props) => {
         <>
           <ChartTools />
           <ChartTimer />
-          <LineControlManager chartInstance={chartInstanceRef.current} seriesInstance={newSeries.current} />
+          <IndicatorsChartControlManager chartInstance={chartInstanceRef.current} seriesInstance={newSeries.current} />
+          {/* <LineControlManager chartInstance={chartInstanceRef.current} seriesInstance={newSeries.current} /> */}
         </>
       ) : null}
     </div>

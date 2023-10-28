@@ -5,7 +5,6 @@
   "private": true,
   "dependencies": {
     "@babel/core": "^7.16.0",
-    "@felipecsl/lightweight-charts": "4.0.4",
     "@fortawesome/fontawesome-free": "^6.4.0",
     "@heroicons/react": "^2.0.18",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.3",
@@ -41,6 +40,7 @@
     "jest": "^27.4.3",
     "jest-resolve": "^27.4.2",
     "jest-watch-typeahead": "^1.0.0",
+    "lightweight-charts": "^4.1.1",
     "lodash": "^4.17.21",
     "mini-css-extract-plugin": "^2.4.5",
     "postcss": "^8.4.4",

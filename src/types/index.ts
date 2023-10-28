@@ -1,5 +1,5 @@
 import { TickerLinearInverseV5 } from 'bybit-api';
-import { CandlestickData, Time } from '@felipecsl/lightweight-charts';
+import { CandlestickData, Time } from 'lightweight-charts';
 
 export interface IWsConfig {
   key: string;
