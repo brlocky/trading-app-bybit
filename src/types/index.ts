@@ -1,5 +1,5 @@
 import { TickerLinearInverseV5 } from 'bybit-api';
-import { CandlestickData } from '@felipecsl/lightweight-charts';
+import { CandlestickData, Time } from '@felipecsl/lightweight-charts';
 
 export interface IWsConfig {
   key: string;
@@ -35,6 +35,10 @@ export interface IOrderbookResponse {
 }
 
 export type CandlestickDataWithVolume = CandlestickData & { volume: number };
+export type ChartLine = {
+  time: Time;
+  value: number;
+};
 
 export interface ITarget {
   price: number;
