@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { AccountOrderV5, ExecutionV5, LinearInverseInstrumentInfoV5, PositionV5, WalletBalanceV5 } from 'bybit-api';
+import { AccountOrderV5, ExecutionV5, LinearInverseInstrumentInfoV5, PositionV5, PublicTradeV5, WalletBalanceV5 } from 'bybit-api';
 import { RootState } from '../store';
-import { CandlestickDataWithVolume, ITicker } from '../types';
+import { CandlestickDataWithVolume, ITicker, ITradeResponse } from '../types';
 
 interface ArrayTicker {
   [name: string]: {
@@ -20,6 +20,7 @@ interface ISymbolState {
   executions: ExecutionV5[];
   kline: CandlestickDataWithVolume | undefined;
   klines: CandlestickDataWithVolume[];
+  lastTrades: PublicTradeV5[];
 }
 
 const initialState: ISymbolState = {
@@ -32,6 +33,7 @@ const initialState: ISymbolState = {
   executions: [],
   kline: undefined,
   klines: [],
+  lastTrades: [],
 };
 
 const symbolSlice = createSlice({
@@ -40,6 +42,7 @@ const symbolSlice = createSlice({
   reducers: {
     updateSymbol(state, action: PayloadAction<string>) {
       state.symbol = action.payload;
+      state.lastTrades = [];
     },
     updateInterval(state, action: PayloadAction<string>) {
       state.interval = action.payload;
@@ -123,6 +126,10 @@ const symbolSlice = createSlice({
 
       state.positions = currentPositions;
     },
+    updateLastTrades(state, action: PayloadAction<PublicTradeV5[]>) {
+      const newLastTrades = [...action.payload, ...state.lastTrades];
+      state.lastTrades = newLastTrades.slice(0, 500);
+    },
   },
 });
 
@@ -137,6 +144,7 @@ export const {
   updateOrders,
   updateExecutions,
   updatePositions,
+  updateLastTrades,
 } = symbolSlice.actions;
 
 export const symbolReducer = symbolSlice.reducer;
@@ -157,3 +165,4 @@ export const selectPositions = (state: RootState) => state.symbol.positions;
 export const selectCurrentPosition = (state: RootState) => state.symbol.positions.find((p) => p.symbol === state.symbol.symbol);
 export const selectWallet = (state: RootState) => state.symbol.wallet;
 export const selectExecutions = (state: RootState) => state.symbol.executions;
+export const selectLastTrades = (state: RootState) => state.symbol.lastTrades;

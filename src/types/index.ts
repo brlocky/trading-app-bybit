@@ -15,6 +15,16 @@ export interface IWsResponseData<T> {
 
 export type ITicker = TickerLinearInverseV5;
 
+export interface ITradeResponse {
+  i: string; // Trade ID
+  s: string; // Symbol name
+  T: number; // The timestamp (ms) that the order is filled
+  L: string; // Direction of price change. Unique field for future
+  S: string; // Side of taker. Buy,Sell
+  p: string; // Trade price
+  v: string; // Trade size
+  BT: boolean; // Whether it is a block trade order or not
+}
 
 export interface IOrderbookResponse {
   s: string;
@@ -31,7 +41,7 @@ export interface ITarget {
   qty?: number;
 }
 
-export type IChartLineType = 'TP' | 'SL' | 'ENTRY'
+export type IChartLineType = 'TP' | 'SL' | 'ENTRY';
 
 export interface IChartLine {
   type: IChartLineType;

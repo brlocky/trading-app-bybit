@@ -2,6 +2,7 @@ import React from 'react';
 import { LeverageSelector, PositionSizeSelector } from '../Trade';
 import { useSelector } from 'react-redux';
 import { selectCurrentPosition } from '../../slices';
+import { CardLastTrades } from './CardLastTrades';
 
 export const CardSymbol: React.FC = () => {
   const currentPosition = useSelector(selectCurrentPosition);
@@ -9,6 +10,7 @@ export const CardSymbol: React.FC = () => {
     <div className="justify-top flex flex-col gap-y-3">
       {!currentPosition ? <PositionSizeSelector /> : null}
       <LeverageSelector />
+      <CardLastTrades />
 
       {/* <pre>{JSON.stringify(wallet, null, 2)}</pre> */}
       {/* <pre>{JSON.stringify(symbolProps, null, 2)}</pre> */}

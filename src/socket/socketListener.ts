@@ -8,11 +8,13 @@ import {
   selectTickerInfo,
   updateExecutions,
   updateLastKline,
+  updateLastTrades,
   updateOrders,
   updatePositions,
   updateTicker,
   updateWallet,
 } from '../slices/symbolSlice';
+import { mapITradeResponseToPublicTradeV5 } from '../mappers/mapITradeResponseToPublicTradeV5';
 
 export const SocketListener: React.FC = () => {
   const tickerInfo = useSelector(selectTickerInfo);
@@ -23,6 +25,7 @@ export const SocketListener: React.FC = () => {
 
   const [listeningSymbols, setListeningSymbols] = useState<string[]>([]);
   const [kline, setKline] = useState<string | null>(null);
+  const [currentSymbol, setCurrentSymbol] = useState<string | null>(null);
 
   const subscribeTicker = (newSymbol: string) => {
     if (listeningSymbols.find((s) => s === newSymbol)) {
@@ -76,6 +79,15 @@ export const SocketListener: React.FC = () => {
 
     subscribeTicker(tickerInfo.symbol);
     resubscribeKline(tickerInfo.symbol, interval);
+
+    // Trades and order book subscribers
+    if (currentSymbol !== tickerInfo.symbol) {
+      if (currentSymbol) {
+        socket.unsubscribeV5([`publicTrade.${currentSymbol}`], 'linear', false);
+      }
+      socket.subscribeV5([`publicTrade.${tickerInfo.symbol}`], 'linear', false);
+      setCurrentSymbol(tickerInfo.symbol);
+    }
   }, [tickerInfo, interval]);
 
   const StartListeners = () => {
@@ -90,6 +102,12 @@ export const SocketListener: React.FC = () => {
 
       if (topic.toLowerCase().startsWith('kline')) {
         dispatch(updateLastKline(mapKlineObjToCandleStickData(data[0])));
+        return;
+      }
+
+      if (topic.toLowerCase().startsWith('publictrade')) {
+        const newTrades = data.map(mapITradeResponseToPublicTradeV5);
+        dispatch(updateLastTrades(newTrades));
         return;
       }
 
