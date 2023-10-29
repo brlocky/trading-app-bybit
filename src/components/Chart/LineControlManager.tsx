@@ -1,7 +1,6 @@
-import { CustomPriceLineDraggedEventParams } from '@felipecsl/lightweight-charts';
 import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectCurrentPosition, selectEntryPrice, selectLines, selectPositionSize, selectTicker, updateChartLine } from '../../slices';
+import { selectCurrentPosition, selectEntryPrice, selectLines, selectPositionSize, selectTicker } from '../../slices';
 import { calculateTargetPnL, formatCurrencyValue } from '../../utils/tradeUtils';
 import { IChartLine } from '../../types';
 
@@ -34,11 +33,11 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
     setIsLoading(true);
     setupChartLines();
     setIsLoading(false);
-    chartInstance.subscribeCustomPriceLineDragged(priceLineHandler);
+    // chartInstance.subscribeCustomPriceLineDragged(priceLineHandler);
     // Other necessary setup logic goes here
     return () => {
       setIsLoading(true);
-      chartInstance.unsubscribeCustomPriceLineDragged(priceLineHandler);
+      // chartInstance.unsubscribeCustomPriceLineDragged(priceLineHandler);
     };
   }, []);
 
@@ -128,7 +127,7 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
     });
   };
 
-  const priceLineHandler = (params: CustomPriceLineDraggedEventParams) => {
+  /* const priceLineHandler = (params: CustomPriceLineDraggedEventParams) => {
     const { customPriceLine } = params;
     const { title, price } = customPriceLine.options();
     const formatedPrice: string = chartInstance.priceScale('right').formatPrice(price);
@@ -137,7 +136,7 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
     if (title.startsWith(TP) || title.startsWith(SL) || title.startsWith(ENTRY)) {
       dispatch(updateChartLine({ index: extractedIndex, line: { ...linesRef.current[extractedIndex], price: formatedPrice } }));
     }
-  };
+  }; */
 
   return null; // Since this component doesn't render anything, we return null
 };
