@@ -10,6 +10,8 @@ import { CandlestickDataWithVolume } from '../../types';
 import { ChartTools } from './ChartTools';
 import { ChartTimer } from './ChartTimer';
 import { IndicatorsChartControlManager } from './IndicatorsChartControlManager';
+import { LineControlManager } from './LineControlManager';
+import tw from 'twin.macro';
 
 interface Props {
   colors?: {
@@ -21,6 +23,8 @@ interface Props {
     volumeColor?: string;
   };
 }
+
+const Toolbar = tw.div`flex flex-row gap-x-2 p-2 bg-gray-200 rounded-t-md`;
 
 export const Chart: React.FC<Props> = (props) => {
   const {
@@ -271,15 +275,18 @@ export const Chart: React.FC<Props> = (props) => {
   );
 
   return (
-    <div ref={chartContainerRef} className="relative">
-      {!isLoading ? (
-        <>
-          <ChartTools />
-          <ChartTimer />
-          <IndicatorsChartControlManager chartInstance={chartInstanceRef.current} seriesInstance={newSeries.current} />
-          {/* <LineControlManager chartInstance={chartInstanceRef.current} seriesInstance={newSeries.current} /> */}
-        </>
-      ) : null}
+    <div>
+      <Toolbar id="toolbar"></Toolbar>
+      <div ref={chartContainerRef} className="relative">
+        {!isLoading ? (
+          <>
+            <ChartTools />
+            <ChartTimer />
+            {/* <IndicatorsChartControlManager chartInstance={chartInstanceRef.current} seriesInstance={newSeries.current} /> */}
+            <LineControlManager chartInstance={chartInstanceRef.current} seriesInstance={newSeries.current} />
+          </>
+        ) : null}
+      </div>
     </div>
   );
 };

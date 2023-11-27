@@ -3,6 +3,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentPosition, selectEntryPrice, selectLines, selectPositionSize, selectTicker } from '../../slices';
 import { calculateTargetPnL, formatCurrencyValue } from '../../utils/tradeUtils';
 import { IChartLine } from '../../types';
+import { TradingLines } from './extend/plugins/trading-lines/trading-lines';
+import { UserAlertInfo } from './extend/plugins/trading-lines/state';
+import { RectangleDrawingTool } from './extend/plugins/trading-lines/rectangle-drawing-tool';
 
 interface LineControlManagerProps {
   chartInstance: any;
@@ -22,6 +25,7 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
   const lines = useSelector(selectLines);
   const entryPrice = useSelector(selectEntryPrice);
 
+  const linePluginRef = useRef<TradingLines | undefined>(undefined);
   const chartLineRefs = useRef<any[]>([]);
   const linesRef = useRef<any>(undefined);
 
@@ -31,6 +35,24 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
 
   useEffect(() => {
     setIsLoading(true);
+
+    const rect = new RectangleDrawingTool(chartInstance, seriesInstance, document.querySelector<HTMLDivElement>('#toolbar')!, {
+      showLabels: false,
+    });
+    seriesInstance.attachPrimitive(rect);
+
+    linePluginRef.current = new TradingLines();
+    linePluginRef.current.setSymbolName('TP SL');
+    seriesInstance.attachPrimitive(linePluginRef.current);
+
+    linePluginRef.current.alertAdded().subscribe((alertInfo: UserAlertInfo) => {
+      console.log(`➕ Alert added @ ${alertInfo.price} with the id: ${alertInfo.id}`);
+    });
+
+    linePluginRef.current.alertRemoved().subscribe((id: string) => {
+      console.log(`❌ Alert removed with the id: ${id}`);
+    });
+
     setupChartLines();
     setIsLoading(false);
     // chartInstance.subscribeCustomPriceLineDragged(priceLineHandler);
@@ -67,7 +89,7 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
   const getLineConf = (l: IChartLine, index: number) => {
     const sharedConf = {
       title: getLineTitle(l, index),
-      price: l.price,
+      price: parseFloat(l.price),
       draggable: l.draggable,
       lineWidth: 1,
       lineStyle: null,
@@ -96,9 +118,15 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
     // Remove Lines
     removeChartLines();
 
+    lines.forEach((line, index) => {
+      const config = getLineConf(line, index);
+      console.log(config);
+      linePluginRef.current?.addLine(parseFloat(line.price));
+    });
+
     // createCharLines
     lines.forEach((line, index) => {
-      chartLineRefs.current.push(seriesInstance.createPriceLine(getLineConf(line, index)));
+      // chartLineRefs.current.push(seriesInstance.createPriceLine(getLineConf(line, index)));
     });
 
     updateChartLines();
@@ -111,7 +139,7 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
 
     lines.forEach((l, index) => {
       const lineRef = chartLineRefs.current[index];
-
+      if (!lineRef) return;
       if (l.type === 'ENTRY') {
         lineRef.applyOptions({
           title: getLineTitle(l, ++index) + currentPnL,
