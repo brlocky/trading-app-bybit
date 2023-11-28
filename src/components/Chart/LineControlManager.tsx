@@ -4,7 +4,7 @@ import { selectCurrentPosition, selectEntryPrice, selectLines, selectPositionSiz
 import { calculateTargetPnL, formatCurrencyValue } from '../../utils/tradeUtils';
 import { IChartLine } from '../../types';
 import { TradingLines } from './extend/plugins/trading-lines/trading-lines';
-import { UserAlertInfo } from './extend/plugins/trading-lines/state';
+import { TradingLineInfo } from './extend/plugins/trading-lines/state';
 import { RectangleDrawingTool } from './extend/plugins/trading-lines/rectangle-drawing-tool';
 
 interface LineControlManagerProps {
@@ -45,11 +45,11 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
     linePluginRef.current.setSymbolName('TP SL');
     seriesInstance.attachPrimitive(linePluginRef.current);
 
-    linePluginRef.current.alertAdded().subscribe((alertInfo: UserAlertInfo) => {
+    linePluginRef.current.lineAdded().subscribe((alertInfo: TradingLineInfo) => {
       console.log(`➕ Alert added @ ${alertInfo.price} with the id: ${alertInfo.id}`);
     });
 
-    linePluginRef.current.alertRemoved().subscribe((id: string) => {
+    linePluginRef.current.lineRemoved().subscribe((id: string) => {
       console.log(`❌ Alert removed with the id: ${id}`);
     });
 

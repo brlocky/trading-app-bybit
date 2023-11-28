@@ -3,22 +3,11 @@ interface CrosshairRendererData {
   text: string;
 }
 
-interface ShowHoverData {
-  /** Text is used for the hover box */
+export interface LineRendererData {
+  y: number;
   text: string;
-  showHover: true;
   hoverRemove: boolean;
   hoverLabel: boolean;
-}
-
-interface NoHoverData {
-  showHover: false;
-}
-
-interface AlertRendererDataBase {
-  y: number;
-  showHover: boolean;
-  text?: string;
 }
 
 interface CrosshairButtonData {
@@ -27,12 +16,10 @@ interface CrosshairButtonData {
   hovering: boolean;
 }
 
-export type AlertRendererData = AlertRendererDataBase & (ShowHoverData | NoHoverData);
-
 export interface IRendererData {
   alertIcon: Path2D[];
   dragIcon: Path2D[];
-  alerts: AlertRendererData[];
+  lines: LineRendererData[];
   button: CrosshairButtonData | null;
   color: string;
   crosshair: CrosshairRendererData | null;

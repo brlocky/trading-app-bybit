@@ -30,7 +30,9 @@ export const ToggleInput: React.FC<Props> = ({ toggles, defaultToggle, onChange 
       {toggles.map((toggle) => (
         <ToggleLabel
           key={toggle.name}
-          className={`${selectedToggle === toggle.value ? 'bg-blue-500 text-white' : ''} ${toggle.disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+          className={`${selectedToggle === toggle.value ? 'bg-blue-500 text-white' : ''} ${
+            toggle.disabled ? 'cursor-not-allowed' : 'cursor-pointer'
+          }`}
         >
           {toggle.name}
           <input

@@ -21,10 +21,10 @@ import {
   removeButtonWidth,
   showCentreLabelDistance,
 } from './constants';
-import { AlertRendererData, IRendererData } from './irenderer-data';
+import { LineRendererData, IRendererData } from './irenderer-data';
 import { MouseHandlers, MousePosition } from './mouse';
 import { TradingPricePaneView } from './pane-view';
-import { UserAlertInfo, TradingLinesState } from './state';
+import { TradingLineInfo, TradingLinesState } from './state';
 
 export class TradingLines extends TradingLinesState implements ISeriesPrimitive<Time> {
   private _chart: IChartApi | undefined = undefined;
@@ -59,7 +59,7 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
     }, this);
     this._mouseHandlers.clicked().subscribe((mousePosition: MousePosition | null) => {
       if (mousePosition && this._series) {
-        if (this._hoveringID) {
+        if (this._hoveringID && !this._isDragging) {
           this.removeLine(this._hoveringID);
           requestUpdate();
         }
@@ -68,7 +68,6 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
 
     this._mouseHandlers.dragStarted().subscribe((mousePosition: MousePosition | null) => {
       if (mousePosition && this._draggingID) {
-        console.log('Drag Started');
         this._isDragging = true;
         this._chart?.applyOptions({
           handleScroll: false,
@@ -79,15 +78,13 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
 
     this._mouseHandlers.dragged().subscribe((mousePosition: MousePosition | null) => {
       if (mousePosition && this._draggingID && this._isDragging) {
-        console.log('dtagin ', this._draggingID);
-        this.updateAlertPosition(this._draggingID, mousePosition);
+        this.updateLinePosition(this._draggingID, mousePosition);
         requestUpdate(); // Trigger an update to reflect the changes
       }
     }, this);
 
     this._mouseHandlers.dragEnded().subscribe(() => {
       if (this._isDragging) {
-        console.log('Drag Ended');
         this._isDragging = false;
         this._chart?.applyOptions({
           handleScroll: true,
@@ -100,6 +97,9 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
   detached() {
     this._mouseHandlers.mouseMoved().unsubscribeAll(this);
     this._mouseHandlers.clicked().unsubscribeAll(this);
+    this._mouseHandlers.dragStarted().unsubscribeAll(this);
+    this._mouseHandlers.dragged().unsubscribeAll(this);
+    this._mouseHandlers.dragEnded().unsubscribeAll(this);
     this._mouseHandlers.detached();
     this._series = undefined;
   }
@@ -113,11 +113,13 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
   }
 
   updateAllViews(): void {
-    const alerts = this.alerts();
-    const rendererData = this._calculateRendererData(alerts, this._lastMouseUpdate);
+    const lines = this.lines();
+    const rendererData = this._calculateRendererData(lines, this._lastMouseUpdate);
     this._currentCursor = null;
-    if (rendererData?.button?.hovering || rendererData?.alerts.some((alert) => alert.showHover && alert.hoverRemove)) {
+    if (rendererData?.button?.hovering || rendererData?.lines.some((l) => l.hoverRemove)) {
       this._currentCursor = 'pointer';
+    } else if (rendererData?.lines.some((l) => l.hoverLabel)) {
+      this._currentCursor = 'move';
     }
     this._paneViews.forEach((pv) => pv.update(rendererData));
     this._pricePaneViews.forEach((pv) => pv.update(rendererData));
@@ -127,19 +129,19 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
     if (!this._currentCursor) return null;
     return {
       cursorStyle: this._currentCursor,
-      externalId: 'user-alerts-primitive',
+      externalId: 'trading-lines-primitive',
       zOrder: 'top',
     };
   }
 
-  // Add a method to update the position of the alert
-  private updateAlertPosition(alertID: string, newPosition: MousePosition): void {
-    // Find the alert with the given ID and update its position based on the newPosition
+  // Add a method to update the position of the line
+  private updateLinePosition(lineID: string, newPosition: MousePosition): void {
+    // Find the line with the given ID and update its position based on the newPosition
     // You may need to calculate the new price based on the y-coordinate of newPosition
     if (!this._series) return;
     const price = this._series.coordinateToPrice(newPosition.y);
     if (!price) return;
-    this.updateLinePrice(alertID, price);
+    this.updateLinePrice(lineID, price);
   }
 
   setSymbolName(name: string) {
@@ -152,10 +154,19 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
     );
   }
 
-  _isHoveringLabel(mousePosition: MousePosition | null, timescaleWidth: number, alertY: number, textLength: number): boolean {
+  _isHoveringLine(mousePosition: MousePosition | null, timescaleWidth: number, y: number): boolean {
     if (!mousePosition || !timescaleWidth) return false;
 
-    const distanceY = Math.abs(mousePosition.y - alertY);
+    const distanceY = Math.abs(mousePosition.y - y);
+    if (distanceY > 2) return false;
+
+    return true;
+  }
+
+  _isHoveringLabel(mousePosition: MousePosition | null, timescaleWidth: number, y: number, textLength: number): boolean {
+    if (!mousePosition || !timescaleWidth) return false;
+
+    const distanceY = Math.abs(mousePosition.y - y);
     if (distanceY > centreLabelHeight / 2) return false;
 
     const labelWidth = centreLabelInlinePadding * 2 + removeButtonWidth + textLength * averageWidthPerCharacter;
@@ -166,10 +177,10 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
     return Math.abs(mousePosition.x - buttonCentreX) < labelWidth / 2;
   }
 
-  _isHoveringRemoveButton(mousePosition: MousePosition | null, timescaleWidth: number, alertY: number, textLength: number): boolean {
+  _isHoveringRemoveButton(mousePosition: MousePosition | null, timescaleWidth: number, y: number, textLength: number): boolean {
     if (!mousePosition || !timescaleWidth) return false;
 
-    const distanceY = Math.abs(mousePosition.y - alertY);
+    const distanceY = Math.abs(mousePosition.y - y);
     if (distanceY > centreLabelHeight / 2) return false;
 
     const labelWidth = centreLabelInlinePadding * 2 + removeButtonWidth + textLength * averageWidthPerCharacter;
@@ -185,7 +196,7 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
    * because the data is identical for both Renderers so lets
    * rather calculate it once here.
    */
-  _calculateRendererData(alertsInfo: UserAlertInfo[], mousePosition: MousePosition | null): IRendererData | null {
+  _calculateRendererData(tradingLines: TradingLineInfo[], mousePosition: MousePosition | null): IRendererData | null {
     if (!this._series) return null;
     const priceFormatter = this._series.priceFormatter();
 
@@ -197,8 +208,8 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
     let closestDistance = Infinity;
     let closestIndex = -1;
 
-    const alerts: (AlertRendererData & { price: number; id: string })[] = alertsInfo.map((alertInfo, index) => {
-      const y = this._series?.priceToCoordinate(alertInfo.price) ?? -100;
+    const lines: (LineRendererData & { price: number; id: string })[] = tradingLines.map((l, index) => {
+      const y = this._series?.priceToCoordinate(l.price) ?? -100;
       if (mousePosition?.y && y >= 0) {
         const distance = Math.abs(mousePosition.y - y);
         if (distance < closestDistance) {
@@ -206,11 +217,15 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
           closestDistance = distance;
         }
       }
+      const text = `${this._symbolName} crossing ${this._series?.priceFormatter().format(l.price)}`;
+
       return {
         y,
-        showHover: false,
-        price: alertInfo.price,
-        id: alertInfo.id,
+        text: text,
+        hoverRemove: false,
+        hoverLabel: false,
+        price: l.price,
+        id: l.id,
       };
     });
     this._hoveringID = '';
@@ -219,24 +234,24 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
     }
     if (closestIndex >= 0 && closestDistance < showCentreLabelDistance) {
       const timescaleWidth = this._chart?.timeScale().width() ?? 0;
-      const a = alerts[closestIndex];
-      const text = `${this._symbolName} crossing ${this._series.priceFormatter().format(a.price)}`;
+      const a = lines[closestIndex];
+      const text = a.text;
       const hoverRemove = this._isHoveringRemoveButton(mousePosition, timescaleWidth, a.y, text.length);
-      const hoverLabel = this._isHoveringLabel(mousePosition, timescaleWidth, a.y, text.length);
-      alerts[closestIndex] = {
-        ...alerts[closestIndex],
-        showHover: true,
-        text,
+      const hoverLabel =
+        this._isHoveringLine(mousePosition, timescaleWidth, a.y) || this._isHoveringLabel(mousePosition, timescaleWidth, a.y, text.length);
+      lines[closestIndex] = {
+        ...lines[closestIndex],
         hoverRemove,
         hoverLabel,
       };
-      if (hoverRemove) this._hoveringID = a.id;
-      if (!this._isDragging && hoverLabel) this._draggingID = a.id;
+      if (hoverRemove) {
+        this._hoveringID = a.id;
+      } else if (!this._isDragging && hoverLabel) this._draggingID = a.id;
     }
     return {
       alertIcon: clockIconPaths,
       dragIcon: dragIconPaths,
-      alerts,
+      lines: lines,
       button: showButton
         ? {
             hovering: this._isHovering(mousePosition),

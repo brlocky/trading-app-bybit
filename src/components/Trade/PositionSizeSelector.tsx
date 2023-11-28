@@ -12,7 +12,7 @@ import {
   updatePositionSize,
 } from '../../slices';
 import Button from '../Button/Button';
-import SlidePicker from '../Forms/SlidePicker';
+import { SlidePicker } from '../Forms';
 import { RedText, SmallText } from '../Text';
 
 export const PositionSizeSelector: React.FC = () => {
@@ -73,7 +73,7 @@ export const PositionSizeSelector: React.FC = () => {
   } = tickerInfo;
 
   return (
-    <div className="rounded-md bg-gray-200 p-3">
+    <div className="w-full rounded-md bg-gray-200 p-3">
       <div>
         <div className="flex justify-between">
           <SmallText>
@@ -96,6 +96,11 @@ export const PositionSizeSelector: React.FC = () => {
         <Button onClick={shortTrade} className="bg-red-400">
           Short
         </Button>
+      </div>
+      <div className="inline-flex w-full justify-center space-x-4 pt-3">
+        <Button className="bg-red-400">Limit</Button>
+        <Button className="bg-red-400">Market</Button>
+        <Button className="bg-red-400">Armed</Button>
       </div>
       <SmallText className="self-end text-right">
         <RedText>-{((positionSize * Number(ticker.lastPrice) * 0.06) / 100).toFixed(2)} USDT</RedText>

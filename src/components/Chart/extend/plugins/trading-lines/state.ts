@@ -1,88 +1,88 @@
 import { Delegate } from '../../helpers/delegate';
 
-export interface UserAlertInfo {
+export interface TradingLineInfo {
   id: string;
   price: number;
 }
 
 export class TradingLinesState {
-  private _alertAdded: Delegate<UserAlertInfo> = new Delegate();
-  private _alertRemoved: Delegate<string> = new Delegate();
-  private _alertChanged: Delegate<UserAlertInfo> = new Delegate();
-  private _alertsChanged: Delegate = new Delegate();
-  private _alerts: Map<string, UserAlertInfo>;
+  private _lineAdded: Delegate<TradingLineInfo> = new Delegate();
+  private _lineRemoved: Delegate<string> = new Delegate();
+  private _lineChanged: Delegate<TradingLineInfo> = new Delegate();
+  private _linesChanged: Delegate = new Delegate();
+  private _lines: Map<string, TradingLineInfo>;
 
   constructor() {
-    this._alerts = new Map();
-    this._alertsChanged.subscribe(() => {
-      this._updateAlertsArray();
+    this._lines = new Map();
+    this._linesChanged.subscribe(() => {
+      this._updateLinesArray();
     }, this);
   }
 
   destroy() {
     // TODO: add more destroying 💥
-    this._alertsChanged.unsubscribeAll(this);
+    this._linesChanged.unsubscribeAll(this);
   }
 
-  alertAdded(): Delegate<UserAlertInfo> {
-    return this._alertAdded;
+  lineAdded(): Delegate<TradingLineInfo> {
+    return this._lineAdded;
   }
 
-  alertRemoved(): Delegate<string> {
-    return this._alertRemoved;
+  lineRemoved(): Delegate<string> {
+    return this._lineRemoved;
   }
 
-  alertChanged(): Delegate<UserAlertInfo> {
-    return this._alertChanged;
+  lineChanged(): Delegate<TradingLineInfo> {
+    return this._lineChanged;
   }
 
-  alertsChanged(): Delegate {
-    return this._alertsChanged;
+  linesChanged(): Delegate {
+    return this._linesChanged;
   }
 
   addLine(price: number): string {
     const id = this._getNewId();
-    const userAlert: UserAlertInfo = {
+    const line: TradingLineInfo = {
       price,
       id,
     };
-    this._alerts.set(id, userAlert);
-    this._alertAdded.fire(userAlert);
-    this._alertsChanged.fire();
+    this._lines.set(id, line);
+    this._lineAdded.fire(line);
+    this._linesChanged.fire();
     return id;
   }
 
   updateLinePrice(id: string, newPrice: number): void {
-    const existingAlert = this._alerts.get(id);
+    const existingLine = this._lines.get(id);
 
-    if (existingAlert) {
-      existingAlert.price = newPrice;
-      this._alertChanged.fire(existingAlert);
-      this._alertsChanged.fire();
+    if (existingLine) {
+      existingLine.price = newPrice;
+      this._lineChanged.fire(existingLine);
+      this._linesChanged.fire();
     }
   }
 
   removeLine(id: string) {
-    if (!this._alerts.has(id)) return;
-    this._alerts.delete(id);
-    this._alertRemoved.fire(id);
-    this._alertsChanged.fire();
+    if (!this._lines.has(id)) return;
+    this._lines.delete(id);
+    this._lineRemoved.fire(id);
+    this._linesChanged.fire();
   }
 
-  alerts() {
-    return this._alertsArray;
+  lines() {
+    return this._linessArray;
   }
 
-  _alertsArray: UserAlertInfo[] = [];
-  _updateAlertsArray() {
-    this._alertsArray = Array.from(this._alerts.values()).sort((a, b) => {
+  _linessArray: TradingLineInfo[] = [];
+  _updateLinesArray() {
+    this._linessArray = Array.from(this._lines.values()).sort((a, b) => {
       return b.price - a.price;
     });
   }
 
   private _getNewId(): string {
     let id = Math.round(Math.random() * 1000000).toString(16);
-    while (this._alerts.has(id)) {
+    while (this._lines.has(id)) {
       id = Math.round(Math.random() * 1000000).toString(16);
     }
     return id;

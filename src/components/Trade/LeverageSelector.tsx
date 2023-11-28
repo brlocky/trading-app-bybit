@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { useApi } from '../../providers';
 import { selectLeverage, selectTickerInfo, updateLeverage } from '../../slices';
-import SlidePicker from '../Forms/SlidePicker';
+import { SlidePicker } from '../Forms';
 
 export const LeverageSelector: React.FC = () => {
   const dispatch = useDispatch();

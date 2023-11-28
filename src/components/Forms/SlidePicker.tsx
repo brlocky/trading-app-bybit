@@ -7,8 +7,9 @@ interface ISliderPickerProps {
   onValueChanged?: (n: number) => void;
   showValue?: boolean;
   className?: string;
+  locked?: boolean;
 }
-const SlidePicker = ({ value, min, max, step, onValueChanged, showValue, className }: ISliderPickerProps) => {
+export const SlidePicker = ({ value, min, max, step, onValueChanged, showValue, className, locked = false }: ISliderPickerProps) => {
   const [currentValue, setCurrentValue] = useState<number>(value || min);
 
   useEffect(() => {
@@ -28,6 +29,7 @@ const SlidePicker = ({ value, min, max, step, onValueChanged, showValue, classNa
       {showValue ? <label className="mb-2 block text-sm font-medium text-gray-600">{value}</label> : null}
 
       <input
+        disabled={locked}
         type="range"
         min={min}
         max={max}
@@ -39,5 +41,3 @@ const SlidePicker = ({ value, min, max, step, onValueChanged, showValue, classNa
     </div>
   );
 };
-
-export default SlidePicker;

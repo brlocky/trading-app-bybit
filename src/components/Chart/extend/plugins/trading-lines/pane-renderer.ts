@@ -21,8 +21,8 @@ export class PaneRenderer extends PaneRendererBase {
   draw(target: CanvasRenderingTarget2D): void {
     target.useBitmapCoordinateSpace((scope) => {
       if (!this._data) return;
-      this._drawAlertLines(scope);
-      this._drawAlertLabel(scope);
+      this._drawTradingLines(scope);
+      this._drawTradingLineLabels(scope);
     });
   }
 
@@ -54,10 +54,10 @@ export class PaneRenderer extends PaneRendererBase {
     }
   }
 
-  _drawAlertLines(scope: BitmapCoordinatesRenderingScope) {
-    if (!this._data?.alerts) return;
+  _drawTradingLines(scope: BitmapCoordinatesRenderingScope) {
+    if (!this._data?.lines) return;
     const color = this._data.color;
-    this._data.alerts.forEach((alertData) => {
+    this._data.lines.forEach((alertData) => {
       this._drawHorizontalLine(scope, {
         width: scope.mediaSize.width,
         lineWidth: 1,
@@ -68,10 +68,10 @@ export class PaneRenderer extends PaneRendererBase {
   }
 
   _drawAlertIcons(scope: BitmapCoordinatesRenderingScope) {
-    if (!this._data?.alerts) return;
+    if (!this._data?.lines) return;
     const color = this._data.color;
     const icon = this._data.alertIcon;
-    this._data.alerts.forEach((alert) => {
+    this._data.lines.forEach((alert) => {
       this._drawLabel(scope, {
         width: scope.mediaSize.width,
         labelHeight,
@@ -92,77 +92,78 @@ export class PaneRenderer extends PaneRendererBase {
     return centreLabelInlinePadding * 2 + removeButtonWidth + textLength * averageWidthPerCharacter;
   }
 
-  _drawAlertLabel(scope: BitmapCoordinatesRenderingScope) {
-    if (!this._data?.alerts) return;
+  _drawTradingLineLabels(scope: BitmapCoordinatesRenderingScope) {
+    if (!this._data?.lines) return;
     const ctx = scope.context;
-    const activeLabel = this._data.alerts.find((alert) => alert.showHover);
-    if (!activeLabel || !activeLabel.showHover) return;
-    const labelWidth = this._calculateLabelWidth(activeLabel.text.length);
-    const labelXDimensions = positionsLine(scope.mediaSize.width / 2, scope.horizontalPixelRatio, labelWidth);
-    const yDimensions = positionsLine(activeLabel.y, scope.verticalPixelRatio, centreLabelHeight);
-    const iconSize = 9;
-    const scaling = (iconSize / crossViewBoxSize) * scope.horizontalPixelRatio;
+    this._data.lines.forEach((activeLabel) => {
+      if (!activeLabel || !activeLabel.text) return;
+      const labelWidth = this._calculateLabelWidth(activeLabel.text.length);
+      const labelXDimensions = positionsLine(scope.mediaSize.width / 2, scope.horizontalPixelRatio, labelWidth);
+      const yDimensions = positionsLine(activeLabel.y, scope.verticalPixelRatio, centreLabelHeight);
+      const iconSize = 9;
+      const scaling = (iconSize / crossViewBoxSize) * scope.horizontalPixelRatio;
 
-    ctx.save();
-    try {
-      const radius = 4 * scope.horizontalPixelRatio;
-      // draw main body background of label
-      ctx.beginPath();
-      ctx.roundRect(labelXDimensions.position, yDimensions.position, labelXDimensions.length, yDimensions.length, radius);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fill();
-
-      const removeButtonStartX = labelXDimensions.position + labelXDimensions.length - removeButtonWidth * scope.horizontalPixelRatio;
-
-      if (activeLabel.hoverRemove) {
-        // draw hover background for remove button
+      ctx.save();
+      try {
+        const radius = 4 * scope.horizontalPixelRatio;
+        // draw main body background of label
         ctx.beginPath();
-        ctx.roundRect(removeButtonStartX, yDimensions.position, removeButtonWidth * scope.horizontalPixelRatio, yDimensions.length, [
-          0,
-          radius,
-          radius,
-          0,
-        ]);
-        ctx.fillStyle = '#F0F3FA';
+        ctx.roundRect(labelXDimensions.position, yDimensions.position, labelXDimensions.length, yDimensions.length, radius);
+        ctx.fillStyle = '#FFFFFF';
         ctx.fill();
+
+        const removeButtonStartX = labelXDimensions.position + labelXDimensions.length - removeButtonWidth * scope.horizontalPixelRatio;
+
+        if (activeLabel.hoverRemove) {
+          // draw hover background for remove button
+          ctx.beginPath();
+          ctx.roundRect(removeButtonStartX, yDimensions.position, removeButtonWidth * scope.horizontalPixelRatio, yDimensions.length, [
+            0,
+            radius,
+            radius,
+            0,
+          ]);
+          ctx.fillStyle = '#F0F3FA';
+          ctx.fill();
+        }
+
+        // draw button divider
+        ctx.beginPath();
+        const dividerDimensions = positionsLine(removeButtonStartX / scope.horizontalPixelRatio, scope.horizontalPixelRatio, 1);
+        ctx.fillStyle = '#F1F3FB';
+        ctx.fillRect(dividerDimensions.position, yDimensions.position, dividerDimensions.length, yDimensions.length);
+
+        // draw stroke for main body
+        ctx.beginPath();
+        ctx.roundRect(labelXDimensions.position, yDimensions.position, labelXDimensions.length, yDimensions.length, radius);
+        ctx.strokeStyle = '#131722';
+        ctx.lineWidth = 1 * scope.horizontalPixelRatio;
+        ctx.stroke();
+
+        // write text
+        ctx.beginPath();
+        ctx.fillStyle = '#131722';
+        ctx.textBaseline = 'middle';
+        ctx.font = `${Math.round(12 * scope.verticalPixelRatio)}px sans-serif`;
+        ctx.fillText(
+          activeLabel.text,
+          labelXDimensions.position + centreLabelInlinePadding * scope.horizontalPixelRatio,
+          activeLabel.y * scope.verticalPixelRatio,
+        );
+
+        // draw button icon
+        ctx.beginPath();
+        ctx.translate(
+          removeButtonStartX + (scope.horizontalPixelRatio * (removeButtonWidth - iconSize)) / 2,
+          (activeLabel.y - 5) * scope.verticalPixelRatio,
+        );
+        ctx.scale(scaling, scaling);
+        ctx.fillStyle = '#131722';
+        ctx.fill(crossPath, 'evenodd');
+      } finally {
+        ctx.restore();
       }
-
-      // draw button divider
-      ctx.beginPath();
-      const dividerDimensions = positionsLine(removeButtonStartX / scope.horizontalPixelRatio, scope.horizontalPixelRatio, 1);
-      ctx.fillStyle = '#F1F3FB';
-      ctx.fillRect(dividerDimensions.position, yDimensions.position, dividerDimensions.length, yDimensions.length);
-
-      // draw stroke for main body
-      ctx.beginPath();
-      ctx.roundRect(labelXDimensions.position, yDimensions.position, labelXDimensions.length, yDimensions.length, radius);
-      ctx.strokeStyle = '#131722';
-      ctx.lineWidth = 1 * scope.horizontalPixelRatio;
-      ctx.stroke();
-
-      // write text
-      ctx.beginPath();
-      ctx.fillStyle = '#131722';
-      ctx.textBaseline = 'middle';
-      ctx.font = `${Math.round(12 * scope.verticalPixelRatio)}px sans-serif`;
-      ctx.fillText(
-        activeLabel.text,
-        labelXDimensions.position + centreLabelInlinePadding * scope.horizontalPixelRatio,
-        activeLabel.y * scope.verticalPixelRatio,
-      );
-
-      // draw button icon
-      ctx.beginPath();
-      ctx.translate(
-        removeButtonStartX + (scope.horizontalPixelRatio * (removeButtonWidth - iconSize)) / 2,
-        (activeLabel.y - 5) * scope.verticalPixelRatio,
-      );
-      ctx.scale(scaling, scaling);
-      ctx.fillStyle = '#131722';
-      ctx.fill(crossPath, 'evenodd');
-    } finally {
-      ctx.restore();
-    }
+    });
   }
 
   /* _drawCrosshairLine(scope: BitmapCoordinatesRenderingScope) {

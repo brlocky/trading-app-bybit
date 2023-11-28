@@ -31,13 +31,13 @@ export const Tabs: React.FC<TabsProps> = ({ tabs }) => {
   };
 
   return (
-    <div className='flex flex-col'>
+    <div className="flex flex-col">
       <ul className="mb-2 flex w-full gap-x-1 divide-gray-700 text-center text-sm font-medium text-gray-400 shadow">
         {tabs.map((tab, index) => (
           <Tab key={index} title={tab.title} isSelected={selectedTab === index} onClick={() => handleTabClick(index)} />
         ))}
       </ul>
-      <div className="flex w-full h-200 overflow-scroll">{tabs[selectedTab]?.content}</div>
+      <div className="h-200 flex w-full overflow-auto">{tabs[selectedTab]?.content}</div>
     </div>
   );
 };
