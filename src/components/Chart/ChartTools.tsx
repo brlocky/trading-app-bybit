@@ -33,20 +33,20 @@ export const ChartTools: React.FC = () => {
 
   const addTP = () => {
     const index = lines.findIndex((o) => o.type === 'TP');
-    if (index !== -1) {
+    /* if (index !== -1) {
       dispatch(removeChartLine({ index: index }));
     } else {
-      dispatch(addChartLine({ type: 'TP', price: calculateTPPrice(), draggable: true }));
-    }
+      dispatch(addChartLine({ type: 'TP', price: calculateTPPrice(), draggable: true, qty: 0 }));
+    } */
   };
 
   const addSL = () => {
     const index = lines.findIndex((o) => o.type === 'SL');
-    if (index !== -1) {
+    /* if (index !== -1) {
       dispatch(removeChartLine({ index: index }));
     } else {
-      dispatch(addChartLine({ type: 'SL', price: calculateSLPrice(), draggable: true }));
-    }
+      dispatch(addChartLine({ type: 'SL', price: calculateSLPrice(), draggable: true, qty: 0 }));
+    } */
   };
 
   const hasTP = lines.findIndex((o) => o.type === 'TP') !== -1;

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { selectCurrentPosition, selectEntryPrice, selectLines, selectPositionSize, selectTicker } from '../../slices';
-import { calculateTargetPnL, formatCurrencyValue } from '../../utils/tradeUtils';
+import { useSelector } from 'react-redux';
+import { selectCurrentPosition, selectEntryPrice, selectLines, selectPositionSize, selectTicker, selectTickerInfo } from '../../slices';
+import { calculateTargetPnL, formatCurrencyValue, formatPriceWithTickerInfo } from '../../utils/tradeUtils';
 import { IChartLine } from '../../types';
 import { TradingLines } from './extend/plugins/trading-lines/trading-lines';
 import { TradingLineInfo } from './extend/plugins/trading-lines/state';
@@ -12,13 +12,11 @@ interface LineControlManagerProps {
   seriesInstance: any;
 }
 
-const TP = 'TP';
-const SL = 'SL';
-const ENTRY = 'ENTRY';
 const SEPARATOR = ' > ';
 
 export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartInstance, seriesInstance }) => {
   const ticker = useSelector(selectTicker);
+  const tickerInfo = useSelector(selectTickerInfo);
   const currentPosition = useSelector(selectCurrentPosition);
   const positionSize = useSelector(selectPositionSize);
 
@@ -28,8 +26,6 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
   const linePluginRef = useRef<TradingLines | undefined>(undefined);
   const chartLineRefs = useRef<any[]>([]);
   const linesRef = useRef<any>(undefined);
-
-  const dispatch = useDispatch();
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -42,15 +38,18 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
     seriesInstance.attachPrimitive(rect);
 
     linePluginRef.current = new TradingLines();
-    linePluginRef.current.setSymbolName('TP SL');
     seriesInstance.attachPrimitive(linePluginRef.current);
 
-    linePluginRef.current.lineAdded().subscribe((alertInfo: TradingLineInfo) => {
-      console.log(`➕ Alert added @ ${alertInfo.price} with the id: ${alertInfo.id}`);
+    /* linePluginRef.current.lineAdded().subscribe((alertInfo: TradingLineInfo) => {
+      console.log(`➕ Line added @ ${alertInfo.price} with the id: ${alertInfo.id}`);
+    }); */
+
+    linePluginRef.current.lineDragged().subscribe((alertInfo: TradingLineInfo) => {
+      console.log(`➕ Line Dragged @ ${alertInfo.price} with the id: ${alertInfo.id}`);
     });
 
     linePluginRef.current.lineRemoved().subscribe((id: string) => {
-      console.log(`❌ Alert removed with the id: ${id}`);
+      console.log(`❌ Line removed with the id: ${id}`);
     });
 
     setupChartLines();
@@ -120,8 +119,7 @@ export const LineControlManager: React.FC<LineControlManagerProps> = ({ chartIns
 
     lines.forEach((line, index) => {
       const config = getLineConf(line, index);
-      console.log(config);
-      linePluginRef.current?.addLine(parseFloat(line.price));
+      linePluginRef.current?.addLine(parseFloat(line.price), line.qty, line.type, line.side);
     });
 
     // createCharLines

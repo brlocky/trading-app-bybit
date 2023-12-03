@@ -1,8 +1,15 @@
 import { Delegate } from '../../helpers/delegate';
 
+type TradingLineType = 'ENTRY' | 'SL' | 'TP';
+type TradingLineSide = 'Buy' | 'Sell' | 'None';
+
 export interface TradingLineInfo {
   id: string;
   price: number;
+  qty: number;
+  type: TradingLineType;
+  side: TradingLineSide;
+  dragable: boolean;
 }
 
 export class TradingLinesState {
@@ -10,6 +17,7 @@ export class TradingLinesState {
   private _lineRemoved: Delegate<string> = new Delegate();
   private _lineChanged: Delegate<TradingLineInfo> = new Delegate();
   private _linesChanged: Delegate = new Delegate();
+  private _lineDragged: Delegate<TradingLineInfo> = new Delegate();
   private _lines: Map<string, TradingLineInfo>;
 
   constructor() {
@@ -40,11 +48,19 @@ export class TradingLinesState {
     return this._linesChanged;
   }
 
-  addLine(price: number): string {
+  lineDragged(): Delegate<TradingLineInfo> {
+    return this._lineDragged;
+  }
+
+  addLine(price: number, qty: number, type: TradingLineType, side: TradingLineSide): string {
     const id = this._getNewId();
     const line: TradingLineInfo = {
-      price,
       id,
+      price,
+      qty,
+      type: type,
+      side: side,
+      dragable: true,
     };
     this._lines.set(id, line);
     this._lineAdded.fire(line);
@@ -59,6 +75,24 @@ export class TradingLinesState {
       existingLine.price = newPrice;
       this._lineChanged.fire(existingLine);
       this._linesChanged.fire();
+    }
+  }
+
+  getLinePrice(id: string): number {
+    const existingLine = this._lines.get(id);
+
+    if (existingLine) {
+      return existingLine.price;
+    }
+
+    return 0;
+  }
+
+  lineDragEnded(id: string, fromPrice: number): void {
+    const existingLine = this._lines.get(id);
+    console.log('Line dragged => ', fromPrice, ' to ', existingLine?.price);
+    if (existingLine) {
+      this._lineDragged.fire(existingLine);
     }
   }
 

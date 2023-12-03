@@ -1,4 +1,4 @@
-import { TickerLinearInverseV5 } from 'bybit-api';
+import { PositionV5, TickerLinearInverseV5 } from 'bybit-api';
 import { CandlestickData, Time } from 'lightweight-charts';
 
 export interface IWsConfig {
@@ -46,11 +46,13 @@ export interface ITarget {
 }
 
 export type IChartLineType = 'TP' | 'SL' | 'ENTRY';
+export type IChartLineSide = 'Buy' | 'Sell' | 'None';
 
 export interface IChartLine {
   type: IChartLineType;
+  side: IChartLineSide;
   price: string;
-  qty?: number;
+  qty: number;
   draggable: boolean;
   orderId?: string;
 }

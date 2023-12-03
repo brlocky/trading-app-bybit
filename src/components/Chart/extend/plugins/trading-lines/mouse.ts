@@ -62,7 +62,7 @@ export class MouseHandlers {
     return this._down;
   }
 
-  public dragged(): ISubscription<MousePosition | null> {
+  public dragging(): ISubscription<MousePosition | null> {
     return this._mouseMoved;
   }
 

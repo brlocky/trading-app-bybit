@@ -2,17 +2,11 @@ import { BitmapCoordinatesRenderingScope, CanvasRenderingTarget2D } from 'fancy-
 import { PaneRendererBase } from './renderer-base';
 import {
   averageWidthPerCharacter,
-  buttonHeight,
   buttonWidth,
   centreLabelHeight,
   centreLabelInlinePadding,
-  clockIconViewBoxSize,
   crossPath,
   crossViewBoxSize,
-  iconPadding,
-  iconPaddingAlertTop,
-  iconSize,
-  labelHeight,
   removeButtonWidth,
 } from './constants';
 import { positionsLine } from '../../helpers/dimensions/positions';
@@ -47,7 +41,7 @@ export class PaneRenderer extends PaneRendererBase {
       const dash = 4 * scope.horizontalPixelRatio;
       ctx.setLineDash([dash, dash]);
       ctx.moveTo(0, yCentre);
-      ctx.lineTo((data.width - buttonWidth) * scope.horizontalPixelRatio, yCentre);
+      ctx.lineTo(data.width * scope.horizontalPixelRatio, yCentre);
       ctx.stroke();
     } finally {
       ctx.restore();
@@ -57,33 +51,12 @@ export class PaneRenderer extends PaneRendererBase {
   _drawTradingLines(scope: BitmapCoordinatesRenderingScope) {
     if (!this._data?.lines) return;
     const color = this._data.color;
-    this._data.lines.forEach((alertData) => {
+    this._data.lines.forEach((data) => {
       this._drawHorizontalLine(scope, {
         width: scope.mediaSize.width,
         lineWidth: 1,
         color,
-        y: alertData.y,
-      });
-    });
-  }
-
-  _drawAlertIcons(scope: BitmapCoordinatesRenderingScope) {
-    if (!this._data?.lines) return;
-    const color = this._data.color;
-    const icon = this._data.alertIcon;
-    this._data.lines.forEach((alert) => {
-      this._drawLabel(scope, {
-        width: scope.mediaSize.width,
-        labelHeight,
-        y: alert.y,
-        roundedCorners: 2,
-        icon,
-        iconScaling: iconSize / clockIconViewBoxSize,
-        padding: {
-          left: iconPadding,
-          top: iconPaddingAlertTop,
-        },
-        color,
+        y: data.y,
       });
     });
   }
@@ -165,33 +138,6 @@ export class PaneRenderer extends PaneRendererBase {
       }
     });
   }
-
-  /* _drawCrosshairLine(scope: BitmapCoordinatesRenderingScope) {
-    if (!this._data?.crosshair) return;
-    this._drawHorizontalLine(scope, {
-      width: scope.mediaSize.width,
-      lineWidth: 1,
-      color: this._data.color,
-      y: this._data.crosshair.y,
-    });
-  } */
-
-  /* _drawCrosshairLabelButton(scope: BitmapCoordinatesRenderingScope) {
-    if (!this._data?.button || !this._data?.crosshair) return;
-    this._drawLabel(scope, {
-      width: scope.mediaSize.width,
-      labelHeight: buttonHeight,
-      y: this._data.crosshair.y,
-      roundedCorners: [2, 0, 0, 2],
-      icon: this._data.button.crosshairLabelIcon,
-      iconScaling: iconSize / clockIconViewBoxSize,
-      padding: {
-        left: iconPadding,
-        top: iconPadding,
-      },
-      color: this._data.button.hovering ? this._data.button.hoverColor : this._data.color,
-    });
-  } */
 
   _drawLabel(
     scope: BitmapCoordinatesRenderingScope,

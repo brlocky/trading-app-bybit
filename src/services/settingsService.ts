@@ -11,6 +11,7 @@ interface ISettingsData {
 }
 
 export interface IOrderOptionsSettingsData {
+  armed: boolean;
   tp: IOrderOptionSettingsData;
   sl: IOrderOptionSettingsData;
 }
@@ -27,40 +28,55 @@ export interface IOrderOptionData {
 }
 
 export const SettingsService = {
+  getDefaultSettings() {
+    return {
+      apiKey: 'pSRedbNSxAkaofeF4k',
+      apiSecret: 'yEBVX8CHLNAxNwaFAJOvW6qdhpyy9u6ea527',
+      testnet: true,
+    };
+  },
+
   saveSettings(data: ISettingsData) {
     localStorage.setItem('settings', JSON.stringify(data));
   },
   loadSettings(): ISettingsData {
-    const data = localStorage.getItem('settings');
-    if (!data) {
-      return {
-        apiKey: 'pSRedbNSxAkaofeF4k',
-        apiSecret: 'yEBVX8CHLNAxNwaFAJOvW6qdhpyy9u6ea527',
-        testnet: true,
-      };
+    try {
+      const data = localStorage.getItem('settings');
+      if (!data) return this.getDefaultSettings();
+      return JSON.parse(data);
+    } catch (e) {
+      console.log('fail to loadSettings');
     }
-    return JSON.parse(data);
+    return this.getDefaultSettings();
   },
 
+  getDefaultOrderOptions() {
+    return {
+      armed: false,
+      tp: {
+        number: 0,
+        options: [],
+      },
+      sl: {
+        number: 0,
+        options: [],
+      },
+    };
+  },
   saveOrderOptionSettings(data: IOrderOptionsSettingsData) {
     localStorage.setItem('order_option', JSON.stringify(data));
   },
   loadOrderOptionSettings(): IOrderOptionsSettingsData {
-    const data = localStorage.getItem('order_option');
-    if (!data) {
-      const orderOptionDefaultSettings = {
-        tp: {
-          number: 0,
-          options: [],
-        },
-        sl: {
-          number: 0,
-          options: [],
-        },
-      };
-
-      return orderOptionDefaultSettings;
+    try {
+      const data: string | null = localStorage.getItem('order_option');
+      if (!data) {
+        return this.getDefaultOrderOptions();
+      }
+      return JSON.parse(data);
+    } catch (e) {
+      console.log('fail to loadOrderOptionSettings');
     }
-    return JSON.parse(data);
+
+    return this.getDefaultOrderOptions();
   },
 };

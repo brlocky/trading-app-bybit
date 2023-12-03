@@ -52,33 +52,34 @@ function withTradingControl<P extends WithTradingControlProps>(
         })
         .then((r) => {
           const usdtWallet = r.result.list[0];
-          if (usdtWallet) {
-            dispatch(updateWallet(usdtWallet));
-
-            const activeOrdersPromise = apiClient.getActiveOrders({
-              category: 'linear',
-              settleCoin: 'USDT',
-            });
-
-            const positionInfoPromise = apiClient.getPositionInfo({
-              category: 'linear',
-              settleCoin: 'USDT',
-            });
-
-            const excutionListPromise = apiClient.getExecutionList({
-              category: 'linear',
-            });
-
-            Promise.all([activeOrdersPromise, positionInfoPromise, excutionListPromise]).then(([orderInfo, positionInfo, excutionList]) => {
-              orderInfo.retCode === 0 ? dispatch(updateOrders(orderInfo.result.list)) : toast.error('Error loading orders');
-              excutionList.retCode === 0
-                ? dispatch(updateExecutions(excutionList.result.list.sort((a, b) => Number(b.execTime) - Number(a.execTime))))
-                : toast.error('Error loading executions');
-              positionInfo.retCode === 0 ? dispatch(updatePositions(positionInfo.result.list)) : toast.error('Error loading positions');
-
-              setIsLoading(false);
-            });
+          if (!usdtWallet) {
+            throw Error('Could not find USDT wallet');
           }
+          dispatch(updateWallet(usdtWallet));
+
+          const activeOrdersPromise = apiClient.getActiveOrders({
+            category: 'linear',
+            settleCoin: 'USDT',
+          });
+
+          const positionInfoPromise = apiClient.getPositionInfo({
+            category: 'linear',
+            settleCoin: 'USDT',
+          });
+
+          const excutionListPromise = apiClient.getExecutionList({
+            category: 'linear',
+          });
+
+          Promise.all([activeOrdersPromise, positionInfoPromise, excutionListPromise]).then(([orderInfo, positionInfo, excutionList]) => {
+            orderInfo.retCode === 0 ? dispatch(updateOrders(orderInfo.result.list)) : toast.error('Error loading orders');
+            excutionList.retCode === 0
+              ? dispatch(updateExecutions(excutionList.result.list.sort((a, b) => Number(b.execTime) - Number(a.execTime))))
+              : toast.error('Error loading executions');
+            positionInfo.retCode === 0 ? dispatch(updatePositions(positionInfo.result.list)) : toast.error('Error loading positions');
+
+            setIsLoading(false);
+          });
         })
         .catch(() => {
           navigate('/settings');
@@ -222,6 +223,7 @@ function withTradingControl<P extends WithTradingControlProps>(
         dispatch(
           addChartLine({
             type: 'ENTRY',
+            side: currentPosition.side,
             price: currentPosition.avgPrice,
             qty: Number(currentPosition.size),
             draggable: false,
@@ -237,6 +239,7 @@ function withTradingControl<P extends WithTradingControlProps>(
             dispatch(
               addChartLine({
                 type: 'SL',
+                side: currentPosition.side,
                 price: o.triggerPrice,
                 qty: Number(o.qty),
                 draggable: true,
@@ -249,6 +252,7 @@ function withTradingControl<P extends WithTradingControlProps>(
             dispatch(
               addChartLine({
                 type: 'TP',
+                side: currentPosition.side,
                 price: o.price,
                 qty: Number(o.qty),
                 draggable: true,

@@ -14,7 +14,7 @@ interface Props {
 }
 
 const ToggleWrapper = tw.div`flex gap-x-2 bg-gray-200 p-2 rounded-md`;
-const ToggleLabel = tw.label` px-4 py-2 rounded-md w-full text-center`;
+const ToggleLabel = tw.label` px-2 py-2 rounded-md w-full text-center text-xs`;
 
 export const ToggleInput: React.FC<Props> = ({ toggles, defaultToggle, onChange }) => {
   const [selectedToggle, setSelectedToggle] = useState(defaultToggle);
