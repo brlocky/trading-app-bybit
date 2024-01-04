@@ -51,7 +51,7 @@ export type IChartLineSide = 'Buy' | 'Sell' | 'None';
 export interface IChartLine {
   type: IChartLineType;
   side: IChartLineSide;
-  price: string;
+  price: number;
   qty: number;
   draggable: boolean;
   orderId?: string;

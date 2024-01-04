@@ -161,7 +161,9 @@ function withTradingControl<P extends WithTradingControlProps>(
       // Update Orders
       const changedLines = chartLines.filter((l) => {
         const index = currentOrders.findIndex(
-          (o) => o.orderId === l.orderId && ((o.triggerPrice !== l.price && o.price !== l.price) || o.qty !== l.qty?.toString()),
+          (o) =>
+            o.orderId === l.orderId &&
+            ((o.triggerPrice !== l.price.toString() && o.price !== l.price.toString()) || o.qty !== l.qty?.toString()),
         );
         return index !== -1 ? currentOrders[index] : false;
       });
@@ -204,16 +206,16 @@ function withTradingControl<P extends WithTradingControlProps>(
       Promise.all(promises);
 
       // Create Orders
-      chartLines
+      /*       chartLines
         .filter((l) => !l.orderId && l.type !== 'ENTRY')
         .map((l) => {
           if (l.type === 'TP') {
-            tradingService.addTakeProfit(currentPosition, l.price);
+            tradingService.addTakeProfit(currentPosition, l.price.toString());
           }
           if (l.type === 'SL') {
-            tradingService.addStopLoss(currentPosition, l.price);
+            tradingService.addStopLoss(currentPosition, l.price.toString());
           }
-        });
+        }); */
     }, [chartLines]);
 
     useEffect(() => {
@@ -224,7 +226,7 @@ function withTradingControl<P extends WithTradingControlProps>(
           addChartLine({
             type: 'ENTRY',
             side: currentPosition.side,
-            price: currentPosition.avgPrice,
+            price: Number(currentPosition.avgPrice),
             qty: Number(currentPosition.size),
             draggable: false,
           }),
@@ -240,7 +242,7 @@ function withTradingControl<P extends WithTradingControlProps>(
               addChartLine({
                 type: 'SL',
                 side: currentPosition.side,
-                price: o.triggerPrice,
+                price: Number(o.triggerPrice),
                 qty: Number(o.qty),
                 draggable: true,
                 orderId: o.orderId,
@@ -253,7 +255,7 @@ function withTradingControl<P extends WithTradingControlProps>(
               addChartLine({
                 type: 'TP',
                 side: currentPosition.side,
-                price: o.price,
+                price: Number(o.price),
                 qty: Number(o.qty),
                 draggable: true,
                 orderId: o.orderId,

@@ -45,11 +45,8 @@ const tradeSetupSlice = createSlice({
     addChartLine(state, action: PayloadAction<IChartLine>) {
       state.chartLines = [...state.chartLines, { ...action.payload }];
     },
-    addChartLines(state, action: PayloadAction<IChartLine[]>) {
-      state.chartLines = [...state.chartLines, ...action.payload];
-    },
-    updateChartLine(state, action: PayloadAction<{ index: number; line: IChartLine }>) {
-      state.chartLines[action.payload.index] = { ...action.payload.line };
+    setChartLines(state, action: PayloadAction<IChartLine[]>) {
+      state.chartLines = [...action.payload];
     },
     removeChartLine(state, action: PayloadAction<{ index: number }>) {
       state.chartLines.splice(action.payload.index, 1);
@@ -79,9 +76,8 @@ export const {
   updateRiskValue,
   resetChartLines,
   addChartLine,
-  addChartLines,
+  setChartLines,
   removeChartLine,
-  updateChartLine,
   updateLeverage,
   updateOrderSettings,
 } = tradeSetupSlice.actions;

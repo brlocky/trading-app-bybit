@@ -17,8 +17,9 @@ import { ToastContainer } from 'react-toastify';
 const { apiKey, apiSecret, testnet } = SettingsService.loadSettings();
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
-root.render(
-  <React.StrictMode>
+
+const CommonRoot = () => (
+  <React.Fragment>
     <ToastContainer />
     <HashRouter>
       <Provider store={store}>
@@ -32,8 +33,19 @@ root.render(
         </PersistGate>
       </Provider>
     </HashRouter>
-  </React.StrictMode>,
+  </React.Fragment>
 );
+
+const RootComponent =
+  process.env.NODE_ENV !== 'production' ? (
+    <CommonRoot />
+  ) : (
+    <React.StrictMode>
+      <CommonRoot />
+    </React.StrictMode>
+  );
+
+root.render(RootComponent);
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

@@ -1,24 +1,30 @@
-import { AccountOrderV5, LinearInverseInstrumentInfoV5, LinearPositionIdx, PositionV5, RestClientV5 } from 'bybit-api';
+import {
+  AccountOrderV5,
+  LinearInverseInstrumentInfoV5,
+  LinearPositionIdx,
+  OrderSideV5,
+  OrderTypeV5,
+  PositionV5,
+  RestClientV5,
+  SetTradingStopParamsV5,
+} from 'bybit-api';
 import { toast } from 'react-toastify';
 
 export interface ITradingService {
-  addStopLoss: (position: PositionV5, price: string) => Promise<void>;
-  addTakeProfit: (position: PositionV5, price: string) => Promise<void>;
+  addStopLoss: (position: PositionV5, price: string, size?: string) => Promise<boolean>;
+  addTakeProfit: (position: PositionV5, price: string, size?: string) => Promise<boolean>;
   closePosition: (position: PositionV5, qty?: string, price?: string) => Promise<void>;
   closeOrder: (o: AccountOrderV5) => Promise<void>;
   getDomNormalizedAggregatorValues: (tickInfo: LinearInverseInstrumentInfoV5) => string[];
-  convertToNumber: (value: string) => number;
-  formatCurrency: (value: string) => string;
-  openLongTrade: (props: INewTrade) => void;
-  openShortTrade: (props: INewTrade) => void;
+  openPosition: (props: INewPosition) => Promise<PositionV5 | null>;
 }
 
-interface INewTrade {
+interface INewPosition {
   symbol: string;
   qty: string;
+  side: OrderSideV5;
+  type: OrderTypeV5;
   price?: string;
-  takeProfit?: string;
-  stopLoss?: string;
 }
 
 export const TradingService = (apiClient: RestClientV5): ITradingService => {
@@ -28,50 +34,61 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
     return multipliers.map((m) => (m * tickSizeValue).toFixed(Number(tickInfo.priceScale)));
   };
 
-  const convertToNumber = (value: string): number => {
-    return parseFloat(value);
-  };
-
-  const formatCurrency = (value: string): string => {
-    return convertToNumber(value).toFixed(2);
-  };
-
-  const addStopLoss = async (p: PositionV5, price: string) => {
-    apiClient
-      .setTradingStop({
-        positionIdx: p.positionIdx,
-        category: 'linear',
-        symbol: p.symbol,
-        stopLoss: price,
-      })
+  const addStopLoss = async (p: PositionV5, price: string, size?: string) => {
+    const order: SetTradingStopParamsV5 = {
+      positionIdx: p.positionIdx,
+      category: 'linear',
+      symbol: p.symbol,
+      stopLoss: price,
+      slTriggerBy: 'MarkPrice',
+      slOrderType: 'Market',
+    };
+    if (size) {
+      order.tpslMode = 'Partial';
+      order.slSize = size;
+    }
+    return apiClient
+      .setTradingStop(order)
       .then((r) => {
         if (r.retCode !== 0) {
           toast.error(r.retMsg);
         } else {
           toast.success('SL added');
+          return true;
         }
+        return false;
+      })
+      .catch((e) => {
+        console.error(e);
+        return false;
       });
   };
 
-  const addTakeProfit = async (p: PositionV5, price: string) => {
-    apiClient
-      .submitOrder({
-        positionIdx: LinearPositionIdx.OneWayMode,
-        category: 'linear',
-        timeInForce: 'GTC',
-        side: p.side === 'Buy' ? 'Sell' : 'Buy',
-        symbol: p.symbol,
-        qty: p.size,
-        orderType: 'Limit',
-        price: price,
-        reduceOnly: true,
-      })
+  const addTakeProfit = async (p: PositionV5, price: string, size?: string) => {
+    const order: SetTradingStopParamsV5 = {
+      positionIdx: p.positionIdx,
+      category: 'linear',
+      symbol: p.symbol,
+      takeProfit: price,
+    };
+    if (size) {
+      order.tpslMode = 'Partial';
+      order.tpSize = size;
+    }
+    return apiClient
+      .setTradingStop(order)
       .then((r) => {
         if (r.retCode !== 0) {
           toast.error(r.retMsg);
         } else {
           toast.success('TP added');
+          return true;
         }
+        return false;
+      })
+      .catch((e) => {
+        console.error(e);
+        return false;
       });
   };
 
@@ -97,6 +114,7 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
         console.log(e);
       });
   };
+
   const closeOrder = async (order: AccountOrderV5) => {
     apiClient
       .cancelOrder({
@@ -116,104 +134,52 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
       });
   };
 
-  const openLongTrade = async (props: INewTrade) => {
-    // symbol: string;
-    // qty: string;
-    // orderType: OrderTypeV5;
-    // price?: string;
-    // takeProfit?: string;
-    // stopLoss?: string;
-
+  const loadPositionBySymbol = async (symbol: string) => {
     return apiClient
-      .submitOrder({
-        positionIdx: LinearPositionIdx.OneWayMode,
+      .getPositionInfo({
         category: 'linear',
-        timeInForce: 'GTC',
-        side: 'Buy',
-        symbol: props.symbol,
-        qty: props.qty,
-        orderType: 'Market',
-        price: props.price,
-        stopLoss: props.stopLoss,
-        isLeverage: 1,
+        symbol,
       })
       .then((r) => {
-        if (r.retCode !== 0) {
-          toast.error(r.retMsg);
-        } else if (props.takeProfit) {
-          apiClient
-            .submitOrder({
-              positionIdx: LinearPositionIdx.OneWayMode,
-              category: 'linear',
-              timeInForce: 'GTC',
-              side: 'Sell',
-              symbol: props.symbol,
-              qty: props.qty,
-              orderType: 'Limit',
-              price: props.takeProfit,
-              reduceOnly: true,
-            })
-            .then((r) => {
-              if (r.retCode !== 0) {
-                toast.error(r.retMsg);
-              } else {
-                toast.success(`Long open - ${props.symbol}`);
-              }
-            });
+        if (r.retCode === 0 && r.result.list.length === 1) {
+          return r.result.list[0];
         }
+
+        return null;
+      })
+      .catch((e) => {
+        console.error(e);
+        return null;
       });
   };
 
-  const openShortTrade = async (props: INewTrade) => {
-    apiClient
-      .submitOrder({
-        positionIdx: LinearPositionIdx.OneWayMode,
-        category: 'linear',
-        timeInForce: 'GTC',
-        side: 'Sell',
-        symbol: props.symbol,
-        qty: props.qty,
-        orderType: 'Market',
-        price: props.price,
-        stopLoss: props.stopLoss,
-        isLeverage: 1,
-      })
-      .then((r) => {
-        if (r.retCode !== 0) {
-          toast.error(r.retMsg);
-        } else if (props.takeProfit) {
-          apiClient
-            .submitOrder({
-              positionIdx: LinearPositionIdx.OneWayMode,
-              category: 'linear',
-              timeInForce: 'GTC',
-              side: 'Buy',
-              symbol: props.symbol,
-              qty: props.qty,
-              orderType: 'Limit',
-              price: props.takeProfit,
-              reduceOnly: true,
-            })
-            .then((r) => {
-              if (r.retCode !== 0) {
-                toast.error(r.retMsg);
-              } else {
-                toast.success(`Short open - ${props.symbol}`);
-              }
-            });
-        }
-      });
+  const openPosition = async (props: INewPosition) => {
+    const order = await apiClient.submitOrder({
+      positionIdx: LinearPositionIdx.OneWayMode,
+      category: 'linear',
+      timeInForce: 'GTC',
+      side: props.side,
+      symbol: props.symbol,
+      qty: props.qty,
+      orderType: props.type,
+      price: props.price,
+      isLeverage: 1,
+    });
+
+    if (order.retCode !== 0) {
+      toast.error(order.retMsg);
+      return null;
+    }
+
+    return loadPositionBySymbol(props.symbol);
   };
 
   return {
+    openPosition,
     addStopLoss,
     addTakeProfit,
     closePosition,
     closeOrder,
     getDomNormalizedAggregatorValues,
-    convertToNumber,
-    formatCurrency,
-    openLongTrade,
-    openShortTrade,
   };
 };

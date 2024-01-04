@@ -4,7 +4,7 @@ import { useApi } from '../../providers';
 import { RiskManagementService, TradingService } from '../../services';
 import {
   addChartLine,
-  addChartLines,
+  setChartLines,
   selectLeverage,
   selectLines,
   selectOrderSettings,
@@ -24,6 +24,7 @@ import {
 import Button from '../Button/Button';
 import { SlidePicker, ToggleInput } from '../Forms';
 import { RedText, SmallText } from '../Text';
+import { OrderSideV5, OrderTypeV5 } from 'bybit-api';
 
 export const PositionSizeSelector: React.FC = () => {
   const dispatch = useDispatch();
@@ -91,51 +92,66 @@ export const PositionSizeSelector: React.FC = () => {
     }
   };
 
-  const longTrade = () => {
-    if (!tickerInfo) return;
-
-    const tps = lines.filter((l) => l.type === 'TP').map((l) => l.price.toString());
-    const sls = lines.filter((l) => l.type === 'SL').map((l) => l.price.toString());
-
-    tradingService.openLongTrade({
-      symbol: tickerInfo.symbol,
-      qty: positionSize.toString(),
-      takeProfit: tps.length ? tps[0] : undefined,
-      stopLoss: sls.length ? sls[0] : undefined,
-    });
-  };
-  const shortTrade = () => {
-    if (!tickerInfo) return;
-
-    const tps = lines.filter((l) => l.type === 'TP').map((l) => l.price.toString());
-    const sls = lines.filter((l) => l.type === 'SL').map((l) => l.price.toString());
-
-    tradingService.openShortTrade({
-      symbol: tickerInfo.symbol,
-      qty: positionSize.toString(),
-      takeProfit: tps.length ? tps[0] : undefined,
-      stopLoss: sls.length ? sls[0] : undefined,
-    });
-  };
-
   const toggleArmed = () => {
     dispatch(updateOrderSettings({ ...orderSettings, armed: !orderSettings.armed }));
   };
 
-  const toggleOrderSide = () => {
-    dispatch(updateOrderSide(orderSide === 'Buy' ? 'Sell' : 'Buy'));
+  const setOrderSide = (side: OrderSideV5) => {
+    dispatch(updateOrderSide(side));
   };
-  const toggleOrderType = () => {
-    dispatch(updateOrderType(orderType === 'Market' ? 'Limit' : 'Market'));
+  const setOrderType = (orderType: OrderTypeV5) => {
+    dispatch(updateOrderType(orderType));
   };
 
   const openTrade = () => {
     if (!ticker || !tickerInfo) return;
 
-    const chartLines = riskManagementService.getChartLines(orderSide, orderType, orderSettings, ticker, tickerInfo, riskValue, positionSize);
-    console.log('lines', chartLines);
+    const chartLines = riskManagementService.getChartLines(
+      orderSide,
+      orderType,
+      orderSettings,
+      ticker,
+      tickerInfo,
+      riskValue,
+      positionSize,
+    );
 
-    dispatch(addChartLines(chartLines));
+    tradingService
+      .openPosition({
+        symbol: tickerInfo.symbol,
+        qty: positionSize.toString(),
+        side: orderSide,
+        type: orderType,
+      })
+      .then((p) => {
+        if (p) {
+          const stoplosses = chartLines
+            .filter((l) => {
+              return l.type === 'SL';
+            })
+            .map((l) => {
+              return tradingService.addStopLoss(p, l.price.toString(), l.qty.toString());
+            });
+
+          const takeProfits = chartLines
+            .filter((l) => {
+              return l.type === 'TP';
+            })
+            .map((l) => {
+              return tradingService.addTakeProfit(p, l.price.toString(), l.qty.toString());
+            });
+
+          Promise.all([...stoplosses, ...takeProfits]).then((allOrders) => {
+            console.log('All Set', allOrders);
+          });
+        } else {
+          console.log('Fail to create oreder', p);
+        }
+      })
+      .catch((e) => {
+        console.log('Error', e);
+      });
+
     /* if (!orderSettings.armed) {
     } else {
       console.log('create live order');
@@ -201,18 +217,18 @@ export const PositionSizeSelector: React.FC = () => {
         )}
       </div>
       <div className="inline-flex w-full justify-center space-x-4 pt-3">
-        <Button onClick={toggleOrderSide} className={orderSide === 'Buy' ? 'bg-green-400' : 'bg-red-400'}>
+        <Button onClick={() => setOrderSide('Buy')} className={orderSide === 'Buy' ? 'bg-green-400' : 'bg-red-400'}>
           Long
         </Button>
-        <Button onClick={toggleOrderSide} className={orderSide === 'Sell' ? 'bg-green-400' : 'bg-red-400'}>
+        <Button onClick={() => setOrderSide('Sell')} className={orderSide === 'Sell' ? 'bg-green-400' : 'bg-red-400'}>
           Short
         </Button>
       </div>
       <div className="inline-flex w-full justify-center space-x-4 pt-3">
-        <Button className={orderType === 'Limit' ? 'bg-green-400' : 'bg-red-400'} onClick={toggleOrderType}>
+        <Button className={orderType === 'Limit' ? 'bg-green-400' : 'bg-red-400'} onClick={() => setOrderType('Limit')}>
           Limit
         </Button>
-        <Button className={orderType === 'Market' ? 'bg-green-400' : 'bg-red-400'} onClick={toggleOrderType}>
+        <Button className={orderType === 'Market' ? 'bg-green-400' : 'bg-red-400'} onClick={() => setOrderType('Market')}>
           Market
         </Button>
         <Button className={orderSettings.armed === true ? 'bg-green-400' : 'bg-red-400'} onClick={toggleArmed}>

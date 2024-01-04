@@ -48,7 +48,7 @@ export const RiskManagementService = (): IRiskManagementService => {
     lines.push({
       type: 'ENTRY',
       side: orderSide,
-      price: entryPrice,
+      price: Number(entryPrice),
       qty: units,
       draggable: true,
     });
@@ -77,7 +77,7 @@ export const RiskManagementService = (): IRiskManagementService => {
       lines.push({
         type: chartLineType,
         side: orderSide,
-        price: entry.price.toString(),
+        price: entry.price,
         qty: roundedQty,
         draggable: true,
       });
@@ -85,8 +85,15 @@ export const RiskManagementService = (): IRiskManagementService => {
     return lines;
   };
 
+  const getDecimalPrecision = (value: number): number => {
+    const match = value.toString().match(/(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/);
+    if (!match) return 0;
+    return Math.max(0, (match[1] ? match[1].length : 0) - (match[2] ? +match[2] : 0));
+  };
+
   const _calculateLinePrices = (entryPrice: string, tickSize: number, orderSide: OrderSideV5, options: IOrderOptionData[]): PriceLine[] => {
     const priceLines = [];
+    const precision = getDecimalPrecision(Number(entryPrice));
     for (let i = 0; i < options.length; i++) {
       const option = options[i];
       const { number, ticks, percentage } = option;
@@ -96,7 +103,7 @@ export const RiskManagementService = (): IRiskManagementService => {
       const priceTarget = orderSide === 'Buy' ? Number(entryPrice) + priceGap : Number(entryPrice) - priceGap;
       priceLines.push({
         number: number,
-        price: priceTarget,
+        price: Number(priceTarget.toFixed(precision)),
         percentage: percentage,
       });
     }

@@ -12,12 +12,17 @@ export interface TradingLineInfo {
   dragable: boolean;
 }
 
+export interface TradingLinedDragInfo {
+  from: TradingLineInfo;
+  to: TradingLineInfo;
+}
+
 export class TradingLinesState {
   private _lineAdded: Delegate<TradingLineInfo> = new Delegate();
-  private _lineRemoved: Delegate<string> = new Delegate();
+  private _lineRemoved: Delegate<TradingLineInfo> = new Delegate();
   private _lineChanged: Delegate<TradingLineInfo> = new Delegate();
   private _linesChanged: Delegate = new Delegate();
-  private _lineDragged: Delegate<TradingLineInfo> = new Delegate();
+  private _lineDragged: Delegate<TradingLinedDragInfo> = new Delegate();
   private _lines: Map<string, TradingLineInfo>;
 
   constructor() {
@@ -36,7 +41,7 @@ export class TradingLinesState {
     return this._lineAdded;
   }
 
-  lineRemoved(): Delegate<string> {
+  lineRemoved(): Delegate<TradingLineInfo> {
     return this._lineRemoved;
   }
 
@@ -48,7 +53,7 @@ export class TradingLinesState {
     return this._linesChanged;
   }
 
-  lineDragged(): Delegate<TradingLineInfo> {
+  lineDragged(): Delegate<TradingLinedDragInfo> {
     return this._lineDragged;
   }
 
@@ -66,6 +71,21 @@ export class TradingLinesState {
     this._lineAdded.fire(line);
     this._linesChanged.fire();
     return id;
+  }
+
+  updateLine(id: string, line: TradingLineInfo): void {
+    const existingLine = this._lines.get(id);
+
+    if (existingLine) {
+      const newLine = { ...existingLine, ...line };
+      this._lines.set(id, newLine);
+      this._lineChanged.fire(existingLine);
+      this._linesChanged.fire();
+    }
+  }
+
+  truncate() {
+    this._lines = new Map();
   }
 
   updateLinePrice(id: string, newPrice: number): void {
@@ -90,17 +110,21 @@ export class TradingLinesState {
 
   lineDragEnded(id: string, fromPrice: number): void {
     const existingLine = this._lines.get(id);
-    console.log('Line dragged => ', fromPrice, ' to ', existingLine?.price);
     if (existingLine) {
-      this._lineDragged.fire(existingLine);
+      console.log('Line dragged => ', fromPrice, ' to ', existingLine?.price);
+      const fromLine = { ...existingLine, price: fromPrice };
+      this._lineDragged.fire({ from: fromLine, to: existingLine });
     }
   }
 
   removeLine(id: string) {
     if (!this._lines.has(id)) return;
+    const line = this._lines.get(id);
     this._lines.delete(id);
-    this._lineRemoved.fire(id);
-    this._linesChanged.fire();
+    if (line) {
+      this._lineRemoved.fire(line);
+      this._linesChanged.fire();
+    }
   }
 
   lines() {
