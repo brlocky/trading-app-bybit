@@ -1,9 +1,10 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { selectOrders, selectPositions, selectTickerInfo, updateSymbol } from '../../slices';
-import { formatCurrencyValue } from '../../utils/tradeUtils';
+import { selectOrders, selectPositions, selectTickerInfo, selectTickers, updateSymbol } from '../../slices';
+import { calculatePositionPnL, formatCurrency, formatCurrencyValue } from '../../utils/tradeUtils';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
 
 export default function CardPositions() {
+  const tickers = useSelector(selectTickers);
   const tickerInfo = useSelector(selectTickerInfo);
   const positions = useSelector(selectPositions);
   const orders = useSelector(selectOrders);
@@ -31,14 +32,16 @@ export default function CardPositions() {
       const isTPError = tps.length && totalTP !== Number(p.size) ? true : false;
       const isSLError = sls.length && totalSL !== Number(p.size) ? true : false;
 
-      const pnl = p.unrealisedPnl;
+      const currentTicker = tickers[p.symbol]?.ticker;
+      const currentTickerInfo = tickers[p.symbol]?.tickerInfo;
+      const pnl = currentTicker ? Number(calculatePositionPnL(p, currentTicker)) : 0;
       return (
         <Row key={index}>
           <Col onClick={() => dispatch(updateSymbol(p.symbol))}>
             <i className={p.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {p.symbol} (
             {p.leverage}x)
           </Col>
-          <Col>{p.avgPrice}</Col>
+          <Col>{formatCurrency(p.avgPrice, currentTickerInfo?.priceScale || '0')}</Col>
           <Col>{p.size}</Col>
           <Col>{formatCurrencyValue(p.positionValue)}</Col>
           <Col>
