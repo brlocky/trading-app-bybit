@@ -1,12 +1,10 @@
+import { OrderSideV5, OrderTypeV5 } from 'bybit-api';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '../../providers';
 import { RiskManagementService, TradingService } from '../../services';
 import {
-  addChartLine,
-  setChartLines,
   selectLeverage,
-  selectLines,
   selectOrderSettings,
   selectOrderSide,
   selectOrderType,
@@ -15,6 +13,7 @@ import {
   selectTicker,
   selectTickerInfo,
   selectWallet,
+  setChartLines,
   updateOrderSettings,
   updateOrderSide,
   updateOrderType,
@@ -24,7 +23,6 @@ import {
 import Button from '../Button/Button';
 import { SlidePicker, ToggleInput } from '../Forms';
 import { RedText, SmallText } from '../Text';
-import { OrderSideV5, OrderTypeV5 } from 'bybit-api';
 
 export const PositionSizeSelector: React.FC = () => {
   const dispatch = useDispatch();
@@ -34,7 +32,6 @@ export const PositionSizeSelector: React.FC = () => {
   const positionSize = useSelector(selectPositionSize);
   const riskValue = useSelector(selectRiskValue);
   const wallet = useSelector(selectWallet);
-  const lines = useSelector(selectLines);
   const orderSide = useSelector(selectOrderSide);
   const orderType = useSelector(selectOrderType);
   const orderSettings = useSelector(selectOrderSettings);
@@ -103,7 +100,8 @@ export const PositionSizeSelector: React.FC = () => {
     dispatch(updateOrderType(orderType));
   };
 
-  const openTrade = () => {
+  // TODO: clean - move to hoc comp or service
+  const openPosition = () => {
     if (!ticker || !tickerInfo) return;
 
     const chartLines = riskManagementService.getChartLines(
@@ -115,6 +113,11 @@ export const PositionSizeSelector: React.FC = () => {
       riskValue,
       positionSize,
     );
+
+    if (orderType === 'Limit') {
+      dispatch(setChartLines(chartLines));
+      return;
+    }
 
     tradingService
       .openPosition({
@@ -151,22 +154,6 @@ export const PositionSizeSelector: React.FC = () => {
       .catch((e) => {
         console.log('Error', e);
       });
-
-    /* if (!orderSettings.armed) {
-    } else {
-      console.log('create live order');
-    }
-    const tps = lines.filter((l) => l.type === 'TP').map((l) => l.price.toString());
-    const sls = lines.filter((l) => l.type === 'SL').map((l) => l.price.toString()); */
-
-    // orderSettings
-
-    /* tradingService.openShortTrade({
-      symbol: tickerInfo.symbol,
-      qty: positionSize.toString(),
-      takeProfit: tps.length ? tps[0] : undefined,
-      stopLoss: sls.length ? sls[0] : undefined,
-    }); */
   };
 
   if (!tickerInfo || !ticker) return <div className="rounded-md bg-gray-200 p-3">Select Symbol</div>;
@@ -216,7 +203,7 @@ export const PositionSizeSelector: React.FC = () => {
           </div>
         )}
       </div>
-      <div className="inline-flex w-full justify-center space-x-4 pt-3">
+      <div className="inline-flex w-full justify-start space-x-4 pt-3">
         <Button onClick={() => setOrderSide('Buy')} className={orderSide === 'Buy' ? 'bg-green-400' : 'bg-red-400'}>
           Long
         </Button>
@@ -224,7 +211,7 @@ export const PositionSizeSelector: React.FC = () => {
           Short
         </Button>
       </div>
-      <div className="inline-flex w-full justify-center space-x-4 pt-3">
+      <div className="inline-flex w-full justify-start space-x-4 pt-3">
         <Button className={orderType === 'Limit' ? 'bg-green-400' : 'bg-red-400'} onClick={() => setOrderType('Limit')}>
           Limit
         </Button>
@@ -235,11 +222,10 @@ export const PositionSizeSelector: React.FC = () => {
           Armed
         </Button>
       </div>
-      <div className="inline-flex w-full justify-center space-x-4 pt-3">
-        <Button className="bg-blue-200" onClick={openTrade}>
+      <div className="inline-flex w-full justify-start space-x-4 pt-3">
+        <Button className="bg-blue-200" onClick={openPosition}>
           Open
         </Button>
-        <Button className="bg-blue-200">Close</Button>
       </div>
       <SmallText className="self-end text-right">
         <RedText>-{((positionSize * Number(ticker.lastPrice) * 0.06) / 100).toFixed(2)} USDT</RedText>

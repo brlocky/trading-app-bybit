@@ -53,9 +53,7 @@ const tradeSetupSlice = createSlice({
     },
     // reset only when filled, to avoid rerender issues
     resetChartLines(state) {
-      if (state.chartLines.length) {
-        state.chartLines = [];
-      }
+      state.chartLines = [];
     },
     updateLeverage(state, action: PayloadAction<number>) {
       state.leverage = action.payload;

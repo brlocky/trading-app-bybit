@@ -50,7 +50,8 @@ export const RiskManagementService = (): IRiskManagementService => {
       side: orderSide,
       price: Number(entryPrice),
       qty: units,
-      draggable: true,
+      draggable: orderType === 'Limit' ? true : false,
+      isServer: false,
     });
 
     return lines;
@@ -80,6 +81,7 @@ export const RiskManagementService = (): IRiskManagementService => {
         price: entry.price,
         qty: roundedQty,
         draggable: true,
+        isServer: false,
       });
     }
     return lines;

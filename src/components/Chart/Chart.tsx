@@ -10,7 +10,6 @@ import { CandlestickDataWithVolume } from '../../types';
 import { ChartTools } from './ChartTools';
 import { ChartTimer } from './ChartTimer';
 import { TradeControlManager } from './TradeControlManager';
-import tw from 'twin.macro';
 
 interface Props {
   colors?: {

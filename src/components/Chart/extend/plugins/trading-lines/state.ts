@@ -9,7 +9,8 @@ export interface TradingLineInfo {
   qty: number;
   type: TradingLineType;
   side: TradingLineSide;
-  dragable: boolean;
+  draggable: boolean;
+  isLive: boolean;
 }
 
 export interface TradingLinedDragInfo {
@@ -57,7 +58,7 @@ export class TradingLinesState {
     return this._lineDragged;
   }
 
-  addLine(price: number, qty: number, type: TradingLineType, side: TradingLineSide): string {
+  addLine(price: number, qty: number, type: TradingLineType, side: TradingLineSide, draggable: boolean, isLive: boolean): string {
     const id = this._getNewId();
     const line: TradingLineInfo = {
       id,
@@ -65,7 +66,8 @@ export class TradingLinesState {
       qty,
       type: type,
       side: side,
-      dragable: true,
+      draggable: draggable,
+      isLive: isLive,
     };
     this._lines.set(id, line);
     this._lineAdded.fire(line);
@@ -85,17 +87,31 @@ export class TradingLinesState {
   }
 
   truncate() {
+    const isLength = !!this._lines.size;
     this._lines = new Map();
+
+    if (isLength) {
+      this._linesChanged.fire();
+    }
   }
 
   updateLinePrice(id: string, newPrice: number): void {
     const existingLine = this._lines.get(id);
 
-    if (existingLine) {
+    if (existingLine && existingLine.price !== newPrice) {
       existingLine.price = newPrice;
       this._lineChanged.fire(existingLine);
       this._linesChanged.fire();
     }
+  }
+
+  updateLines(lines: TradingLineInfo[]): void {
+    this._lines = new Map();
+    lines.map((l) => {
+      this._lines.set(l.id, l);
+    });
+
+    this._linesChanged.fire();
   }
 
   getLinePrice(id: string): number {
@@ -114,6 +130,15 @@ export class TradingLinesState {
       console.log('Line dragged => ', fromPrice, ' to ', existingLine?.price);
       const fromLine = { ...existingLine, price: fromPrice };
       this._lineDragged.fire({ from: fromLine, to: existingLine });
+
+      if (existingLine.type === 'ENTRY' && existingLine.isLive === false) {
+        const priceDiff = existingLine.price - fromPrice;
+        this.lines().forEach((l) => {
+          if (l.type !== 'ENTRY') {
+            this.lineDragEnded(l.id, l.price - priceDiff);
+          }
+        });
+      }
     }
   }
 

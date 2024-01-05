@@ -80,13 +80,13 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
     this._mouseHandlers.dragEnded().subscribe(() => {
       if (this._isDragging && this._draggingID) {
         this.lineDragEnded(this._draggingID, this._draggingFromPrice as number);
-        requestUpdate(); // Trigger an update to reflect the changes
         this._isDragging = false;
         this._draggingFromPrice = null;
         this._chart?.applyOptions({
           handleScroll: true,
           handleScale: true,
         });
+        requestUpdate(); // Trigger an update to reflect the changes
       }
     }, this);
   }
@@ -146,7 +146,27 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
       this._draggingFromPrice = this.getLinePrice(lineID);
     }
 
-    this.updateLinePrice(lineID, formattedPrice);
+    const existingLine = this.lines().find((l) => l.id === lineID);
+
+    if (existingLine) {
+      const oldPrice = existingLine.price;
+      existingLine.price = formattedPrice;
+      const updateLines = [existingLine];
+      if (existingLine.type === 'ENTRY' && existingLine.isLive === false) {
+        const priceDiff = existingLine.price - oldPrice;
+
+        /*  this.lines().forEach((l) => {
+          if (l.type !== 'ENTRY') {
+            const formattedPriceDiff = Number(this._series?.priceFormatter().format(l.price + priceDiff));
+            l.price = formattedPriceDiff;
+            updateLines.push(l);
+          }
+        }); */
+      }
+
+      // this.updateLines(updateLines);
+      this.updateLine(lineID, existingLine);
+    }
   }
 
   _isHovering(mousePosition: MousePosition | null): boolean {
@@ -249,8 +269,11 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
         hoverLabel: false,
         price: price,
         id: l.id,
+        draggable: l.draggable,
+        isLive: l.isLive,
       };
     });
+
     this._hoveringID = '';
     if (!this._isDragging) {
       this._draggingID = null;
@@ -259,9 +282,12 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
       const timescaleWidth = this._chart?.timeScale().width() ?? 0;
       const a = lines[closestIndex];
       const text = a.text;
-      const hoverRemove = this._isHoveringRemoveButton(mousePosition, timescaleWidth, a.y, text.length);
       const hoverLabel =
-        this._isHoveringLine(mousePosition, timescaleWidth, a.y) || this._isHoveringLabel(mousePosition, timescaleWidth, a.y, text.length);
+        a.draggable &&
+        (this._isHoveringLine(mousePosition, timescaleWidth, a.y) ||
+          this._isHoveringLabel(mousePosition, timescaleWidth, a.y, text.length));
+      const hoverRemove = this._isHoveringRemoveButton(mousePosition, timescaleWidth, a.y, text.length);
+
       lines[closestIndex] = {
         ...lines[closestIndex],
         hoverRemove,

@@ -2,7 +2,6 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { AccountOrderV5, ExecutionV5, LinearInverseInstrumentInfoV5, PositionV5, PublicTradeV5, WalletBalanceV5 } from 'bybit-api';
 import { RootState } from '../store';
 import { CandlestickDataWithVolume, ITicker } from '../types';
-import { IOrderOptionsSettingsData, SettingsService } from '../services';
 
 interface ArrayTicker {
   [name: string]: {
