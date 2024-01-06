@@ -86,8 +86,9 @@ export const RiskManagementService = (): IRiskManagementService => {
     const maxQty = Number(maxOrderQty);
 
     let finalPositionSize = Math.max(minQty, Math.min(maxQty, positionSize));
-    finalPositionSize = Math.round(finalPositionSize / Number(qtyStep)) * Number(qtyStep);
-
+    finalPositionSize = Number(
+      (Math.round(finalPositionSize / Number(qtyStep)) * Number(qtyStep)).toFixed(qtyStep.toString().split('.')[1]?.length || 0),
+    );
     return finalPositionSize;
   };
 
@@ -105,7 +106,7 @@ export const RiskManagementService = (): IRiskManagementService => {
     for (let i = entryPrices.length - 1; i >= 0; i--) {
       const entry = entryPrices[i];
       const rawQty = (units * entry.percentage) / totalPercentage;
-      let roundedQty = Math.round(rawQty / qtyStep) * qtyStep;
+      let roundedQty = Number((Math.round(rawQty / qtyStep) * qtyStep).toFixed(qtyStep.toString().split('.')[1]?.length || 0));
 
       // Update remaining quantity
       remainingQty -= roundedQty;
@@ -113,6 +114,7 @@ export const RiskManagementService = (): IRiskManagementService => {
       // Add remaining quantity to the first position
       if (i === 0) {
         roundedQty += remainingQty;
+        roundedQty = Number((Math.round(roundedQty / qtyStep) * qtyStep).toFixed(qtyStep.toString().split('.')[1]?.length || 0));
       }
 
       lines.push({
