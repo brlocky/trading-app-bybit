@@ -68,7 +68,7 @@ export const RiskManagementService = (): IRiskManagementService => {
     qtyStep: string,
   ): number => {
     const totalRiskPerShare = stopLosses.reduce((total, sl) => {
-      const priceDifference = entryPrice - sl.price;
+      const priceDifference = Math.abs(entryPrice - sl.price);
       const percentage = sl.percentage || 0; // Use the correct property based on your data structure
       return total + (priceDifference * percentage) / 100;
     }, 0);
