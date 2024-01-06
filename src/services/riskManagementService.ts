@@ -15,7 +15,7 @@ export interface IRiskManagementService {
     settings: IOrderOptionsSettingsData,
     ticker: ITicker,
     tickerInfo: LinearInverseInstrumentInfoV5,
-    riskValue: number,
+    riskAmount: number,
     positionSize: number,
   ) => IChartLine[];
 }
@@ -27,7 +27,7 @@ export const RiskManagementService = (): IRiskManagementService => {
     settings: IOrderOptionsSettingsData,
     ticker: ITicker,
     tickerInfo: LinearInverseInstrumentInfoV5,
-    riskValue: number,
+    riskAmount: number,
     positionSize: number,
   ): IChartLine[] => {
     const tickSize = Number(tickerInfo.priceFilter.tickSize);
@@ -38,11 +38,13 @@ export const RiskManagementService = (): IRiskManagementService => {
     const tpPrices = _calculateLinePrices(entryPrice, tickSize, orderSide, tp.options);
     const slPrices = _calculateLinePrices(entryPrice, tickSize, orderSide, sl.options);
 
-    const units = positionSize != 0 ? positionSize : _calculatePositionSize(riskValue, Number(entryPrice), slPrices);
+    const { minOrderQty, maxOrderQty, qtyStep } = tickerInfo.lotSizeFilter;
+    const units =
+      riskAmount === 0 ? positionSize : _calculatePositionSize(riskAmount, Number(entryPrice), slPrices, minOrderQty, maxOrderQty, qtyStep);
 
     const lines: IChartLine[] = [
-      ..._convertLinePriceToChartLine(tpPrices, units, 'TP', orderSide),
-      ..._convertLinePriceToChartLine(slPrices, units, 'SL', orderSide),
+      ..._convertLinePriceToChartLine(tpPrices, units, 'TP', orderSide, Number(qtyStep)),
+      ..._convertLinePriceToChartLine(slPrices, units, 'SL', orderSide, Number(qtyStep)),
     ];
 
     lines.push({
@@ -57,33 +59,59 @@ export const RiskManagementService = (): IRiskManagementService => {
     return lines;
   };
 
-  const _calculatePositionSize = (riskAmount: number, entryPrice: number, stopLosses: PriceLine[]): number => {
-    // Calculate total risk per share based on all stop losses
-    const totalRiskPerShare = stopLosses.reduce((total, sl) => total + (entryPrice - sl.price), 0);
+  const _calculatePositionSize = (
+    riskAmount: number,
+    entryPrice: number,
+    stopLosses: PriceLine[],
+    minOrderQty: string,
+    maxOrderQty: string,
+    qtyStep: string,
+  ): number => {
+    const totalRiskPerShare = stopLosses.reduce((total, sl) => {
+      const priceDifference = entryPrice - sl.price;
+      const percentage = sl.percentage || 0; // Use the correct property based on your data structure
+      return total + (priceDifference * percentage) / 100;
+    }, 0);
 
-    // Calculate effective risk percentage based on all stop losses
-    const effectiveRiskPercentage = (totalRiskPerShare / entryPrice) * 100;
+    const positionSize = riskAmount / totalRiskPerShare;
 
-    // Calculate position size based on the effective risk percentage
-    const positionSize = (riskAmount / effectiveRiskPercentage) * 100;
+    // Apply quantity constraints
+    const minQty = Number(minOrderQty);
+    const maxQty = Number(maxOrderQty);
 
-    return positionSize;
+    let finalPositionSize = Math.max(minQty, Math.min(maxQty, positionSize));
+    finalPositionSize = Math.round(finalPositionSize / Number(qtyStep)) * Number(qtyStep);
+
+    return finalPositionSize;
   };
 
-  const _convertLinePriceToChartLine = (entryPrices: PriceLine[], units: number, chartLineType: IChartLineType, orderSide: OrderSideV5) => {
+  const _convertLinePriceToChartLine = (
+    entryPrices: PriceLine[],
+    units: number,
+    chartLineType: IChartLineType,
+    orderSide: OrderSideV5,
+    qtyStep: number,
+  ) => {
     const lines: IChartLine[] = [];
+
     for (let i = 0; i < entryPrices.length; i++) {
       const entry = entryPrices[i];
-      const roundedQty = (units * entry.percentage) / 100;
+      const rawQty = (units * entry.percentage) / 100;
+      const roundedQty = Math.round(rawQty / qtyStep) * qtyStep;
+
+      // Calculate the remaining quantity for the last position
+      const remainingQty = i === entryPrices.length - 1 ? units - lines.reduce((total, line) => total + line.qty, 0) : 0;
+
       lines.push({
         type: chartLineType,
         side: orderSide,
         price: entry.price,
-        qty: roundedQty,
+        qty: i === entryPrices.length - 1 ? remainingQty : roundedQty,
         draggable: true,
         isServer: false,
       });
     }
+
     return lines;
   };
 

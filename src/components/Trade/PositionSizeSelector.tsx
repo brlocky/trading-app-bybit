@@ -1,5 +1,5 @@
 import { OrderSideV5, OrderTypeV5 } from 'bybit-api';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '../../providers';
 import { RiskManagementService, TradingService } from '../../services';
@@ -9,7 +9,6 @@ import {
   selectOrderSide,
   selectOrderType,
   selectPositionSize,
-  selectRiskValue,
   selectTicker,
   selectTickerInfo,
   selectWallet,
@@ -18,7 +17,6 @@ import {
   updateOrderSide,
   updateOrderType,
   updatePositionSize,
-  updateRiskValue,
 } from '../../slices';
 import Button from '../Button/Button';
 import { SlidePicker, ToggleInput } from '../Forms';
@@ -30,13 +28,19 @@ export const PositionSizeSelector: React.FC = () => {
   const ticker = useSelector(selectTicker);
   const leverage = useSelector(selectLeverage);
   const positionSize = useSelector(selectPositionSize);
-  const riskValue = useSelector(selectRiskValue);
   const wallet = useSelector(selectWallet);
   const orderSide = useSelector(selectOrderSide);
   const orderType = useSelector(selectOrderType);
   const orderSettings = useSelector(selectOrderSettings);
   const tradingService = TradingService(useApi());
   const riskManagementService = RiskManagementService();
+  const riskPercentageRef = useRef<number>(orderSettings.percentageRisk);
+
+  useEffect(() => {
+    if (riskPercentageRef.current !== orderSettings.percentageRisk) {
+      riskPercentageRef.current = orderSettings.percentageRisk;
+    }
+  }, [orderSettings.percentageRisk]);
 
   const getMaxOrderQty = (): number => {
     if (!wallet || !tickerInfo || !ticker) {
@@ -56,36 +60,19 @@ export const PositionSizeSelector: React.FC = () => {
     return Number(value.toFixed(2));
   };
 
-  const getRiskPercentage = (riskValue: number): number => {
-    if (!wallet) {
-      return 0;
-    }
-
-    const coin = wallet.coin[0];
-    const availableToWithdraw = Number(coin.availableToWithdraw);
-
-    if (availableToWithdraw === 0) {
-      return 0;
-    }
-
-    const riskPercentage = (riskValue / availableToWithdraw) * 100;
-    return Number(riskPercentage.toFixed(2));
-  };
-
   const orderQtyChanged = (value: number) => {
     dispatch(updatePositionSize(value));
   };
 
   const riskPercentageChanged = (percentage: number) => {
-    const riskValue = getRiskValue(percentage);
-    dispatch(updateRiskValue(riskValue));
+    dispatch(updateOrderSettings({ ...orderSettings, percentageRisk: percentage }));
   };
 
   const positionTypeChanged = (positionType: string) => {
     if (positionType === 'risk') {
-      dispatch(updateRiskValue(getRiskValue(1)));
+      dispatch(updateOrderSettings({ ...orderSettings, percentageRisk: 1 }));
     } else {
-      dispatch(updatePositionSize(1));
+      dispatch(updateOrderSettings({ ...orderSettings, percentageRisk: 0 }));
     }
   };
 
@@ -103,6 +90,7 @@ export const PositionSizeSelector: React.FC = () => {
   // TODO: clean - move to hoc comp or service
   const openPosition = () => {
     if (!ticker || !tickerInfo) return;
+    const riskValue = riskPercentageRef.current;
 
     const chartLines = riskManagementService.getChartLines(
       orderSide,
@@ -110,7 +98,7 @@ export const PositionSizeSelector: React.FC = () => {
       orderSettings,
       ticker,
       tickerInfo,
-      riskValue,
+      getRiskValue(riskValue),
       positionSize,
     );
 
@@ -119,10 +107,12 @@ export const PositionSizeSelector: React.FC = () => {
       return;
     }
 
+    const orderQty = chartLines.find((c) => c.type === 'ENTRY')?.qty;
+    if (!orderQty) return;
     tradingService
       .openPosition({
         symbol: tickerInfo.symbol,
-        qty: positionSize.toString(),
+        qty: orderQty.toString(),
         side: orderSide,
         type: orderType,
       })
@@ -161,7 +151,7 @@ export const PositionSizeSelector: React.FC = () => {
   const {
     lotSizeFilter: { minOrderQty, qtyStep },
   } = tickerInfo;
-
+  const riskValue = riskPercentageRef.current;
   return (
     <div className="w-full rounded-md bg-gray-200 p-3">
       <ToggleInput
@@ -173,14 +163,14 @@ export const PositionSizeSelector: React.FC = () => {
         onChange={positionTypeChanged}
       />
       <div className="p-2">
-        {riskValue != 0 ? (
+        {riskValue > 0 ? (
           <div className="flex items-end gap-x-10">
             <div className="flex w-full flex-col">
               <div className="flex w-full justify-between">
-                <SmallText>{getRiskPercentage(riskValue)} %</SmallText>
-                <SmallText>{riskValue} USDT</SmallText>
+                <SmallText>{riskValue} %</SmallText>
+                <SmallText>{getRiskValue(riskValue)} USDT</SmallText>
               </div>
-              <SlidePicker min={0} value={getRiskPercentage(riskValue)} max={100} step={0.5} onValueChanged={riskPercentageChanged} />
+              <SlidePicker min={1} value={riskValue} max={10} step={0.5} onValueChanged={riskPercentageChanged} />
             </div>
           </div>
         ) : (

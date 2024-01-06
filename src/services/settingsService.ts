@@ -12,6 +12,7 @@ interface ISettingsData {
 
 export interface IOrderOptionsSettingsData {
   armed: boolean;
+  percentageRisk: number;
   tp: IOrderOptionSettingsData;
   sl: IOrderOptionSettingsData;
 }
@@ -52,6 +53,7 @@ export const SettingsService = {
 
   getDefaultOrderOptions() {
     return {
+      percentageRisk: 1,
       armed: false,
       tp: {
         number: 0,
