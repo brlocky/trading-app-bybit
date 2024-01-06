@@ -45,9 +45,14 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
   };
 
   const dispatchChartLineRemoved = (line: TradingLineInfo) => {
-    const lineIndex = chartLinesRef.current.findIndex((l) => l.price === line.price && l.qty === line.qty);
-    if (lineIndex !== -1) {
-      dispatch(removeChartLine({ index: lineIndex }));
+    if (line.type === 'ENTRY' && line.isLive === false) {
+      // Remove all chart lines when Limit entry is deleted
+      dispatch(setChartLines([]));
+    } else {
+      const lineIndex = chartLinesRef.current.findIndex((l) => l.price === line.price && l.qty === line.qty);
+      if (lineIndex !== -1) {
+        dispatch(removeChartLine({ index: lineIndex }));
+      }
     }
   };
 
