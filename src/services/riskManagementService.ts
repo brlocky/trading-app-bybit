@@ -67,10 +67,16 @@ export const RiskManagementService = (): IRiskManagementService => {
     maxOrderQty: string,
     qtyStep: string,
   ): number => {
-    const totalRiskPerShare = stopLosses.reduce((total, sl) => {
+    const totalPercentage = stopLosses.reduce((total, sl) => total + (sl.percentage || 0), 0);
+
+    const normalizedStopLosses = stopLosses.map((sl) => ({
+      ...sl,
+      percentage: (sl.percentage / totalPercentage) * 100,
+    }));
+
+    const totalRiskPerShare = normalizedStopLosses.reduce((total, sl) => {
       const priceDifference = Math.abs(entryPrice - sl.price);
-      const percentage = sl.percentage || 0; // Use the correct property based on your data structure
-      return total + (priceDifference * percentage) / 100;
+      return total + (priceDifference * sl.percentage) / 100;
     }, 0);
 
     const positionSize = riskAmount / totalRiskPerShare;
@@ -93,26 +99,33 @@ export const RiskManagementService = (): IRiskManagementService => {
     qtyStep: number,
   ) => {
     const lines: IChartLine[] = [];
+    const totalPercentage = entryPrices.reduce((total, entry) => total + (entry.percentage || 0), 0);
+    let remainingQty = units;
 
-    for (let i = 0; i < entryPrices.length; i++) {
+    for (let i = entryPrices.length - 1; i >= 0; i--) {
       const entry = entryPrices[i];
-      const rawQty = (units * entry.percentage) / 100;
-      const roundedQty = Math.round(rawQty / qtyStep) * qtyStep;
+      const rawQty = (units * entry.percentage) / totalPercentage;
+      let roundedQty = Math.round(rawQty / qtyStep) * qtyStep;
 
-      // Calculate the remaining quantity for the last position
-      const remainingQty = i === entryPrices.length - 1 ? units - lines.reduce((total, line) => total + line.qty, 0) : 0;
+      // Update remaining quantity
+      remainingQty -= roundedQty;
+
+      // Add remaining quantity to the first position
+      if (i === 0) {
+        roundedQty += remainingQty;
+      }
 
       lines.push({
         type: chartLineType,
         side: orderSide,
         price: entry.price,
-        qty: i === entryPrices.length - 1 ? remainingQty : roundedQty,
+        qty: roundedQty,
         draggable: true,
         isServer: false,
       });
     }
 
-    return lines;
+    return lines.reverse();
   };
 
   const getDecimalPrecision = (value: number): number => {

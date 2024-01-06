@@ -12,7 +12,7 @@ type OnChangeCallback<T> = (value: T) => void;
 export default function CardOrderSettings() {
   const dispatch = useDispatch();
 
-  const renderOptions = (n: number, options: IOrderOptionData[], onChange: OnChangeCallback<IOrderOptionData>) => {
+  const renderOptions = (n: number, type: 'TP' | 'SL', options: IOrderOptionData[], onChange: OnChangeCallback<IOrderOptionData>) => {
     let percentageUsed = 0;
     const option = options.find((o) => {
       if (o.number === n) {
@@ -51,7 +51,7 @@ export default function CardOrderSettings() {
               <SmallText>{option.ticks}</SmallText>
             </div>
             <div className="col-span-6">
-              <SlidePicker value={option.ticks} min={-100} max={100} step={1} onValueChanged={onTickChange} />
+              <SlidePicker value={Math.abs(option.ticks)} min={1} max={100} step={1} onValueChanged={onTickChange} />
             </div>
           </div>
           <div className="grid grid-cols-12 gap-4">
@@ -60,7 +60,7 @@ export default function CardOrderSettings() {
               <SmallText>{option.percentage}%</SmallText>
             </div>
             <div className="col-span-6">
-              <SlidePicker value={option.percentage} min={0} max={100} step={1} onValueChanged={onPercentageChanged} />
+              <SlidePicker value={option.percentage} min={1} max={100} step={1} onValueChanged={onPercentageChanged} />
             </div>
           </div>
         </div>
@@ -86,7 +86,7 @@ export default function CardOrderSettings() {
 
     const levels = [];
     for (let i = 1; i <= n; i++) {
-      levels.push(renderOptions(i, takeProfitOptions, onOptionChange));
+      levels.push(renderOptions(i, 'TP', takeProfitOptions, onOptionChange));
     }
     return levels;
   };
@@ -112,6 +112,7 @@ export default function CardOrderSettings() {
 
   const renderSLLevels = (n: number) => {
     const onOptionChange = (option: IOrderOptionData) => {
+      option.ticks = 0 - Math.abs(option.ticks);
       const updatedOptions = stopLossesOptions.map((o) => (o.number === option.number ? option : o));
       setStopLossesOptions(updatedOptions);
 
@@ -128,7 +129,7 @@ export default function CardOrderSettings() {
 
     const levels = [];
     for (let i = 1; i <= n; i++) {
-      levels.push(renderOptions(i, stopLossesOptions, onOptionChange));
+      levels.push(renderOptions(i, 'SL', stopLossesOptions, onOptionChange));
     }
     return levels;
   };
