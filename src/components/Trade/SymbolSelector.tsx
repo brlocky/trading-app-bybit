@@ -42,7 +42,7 @@ export const SymbolSelector: React.FunctionComponent = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [tickers, setTickers] = useState<TickerLinearInverseV5[]>([]);
   const [filterValue, setFilterValue] = useState('');
-
+  const symbol = useSelector(selectSymbol);
   const apiClient = useApi();
 
   useEffect(() => {
@@ -62,6 +62,9 @@ export const SymbolSelector: React.FunctionComponent = () => {
       const sorted = tickers.filter((item) => item.symbol.endsWith('USDT')).sort((a, b) => Number(b.price24hPcnt) - Number(a.price24hPcnt));
 
       setTickers(sorted);
+      if (!symbol && sorted.length) {
+        dispatch(updateSymbol(sorted[0].symbol));
+      }
     });
   };
 
