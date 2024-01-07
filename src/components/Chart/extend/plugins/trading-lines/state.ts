@@ -1,7 +1,7 @@
 import { Delegate } from '../../helpers/delegate';
 
-type TradingLineType = 'ENTRY' | 'SL' | 'TP';
-type TradingLineSide = 'Buy' | 'Sell' | 'None';
+export type TradingLineType = 'ENTRY' | 'SL' | 'TP';
+export type TradingLineSide = 'Buy' | 'Sell' | 'None';
 
 export interface TradingLineInfo {
   id: string;

@@ -1,7 +1,8 @@
 import { IOrderOptionData, IOrderOptionsSettingsData } from './settingsService';
-import { IChartLine, IChartLineType, ITicker } from '../types';
+import { IChartLine, ITicker } from '../types';
 import { LinearInverseInstrumentInfoV5, OrderSideV5, OrderTypeV5 } from 'bybit-api';
 import { v4 as uuidv4 } from 'uuid';
+import { TradingLineType } from '../components/Chart/extend/plugins/trading-lines/state';
 
 interface PriceLine {
   number: number;
@@ -97,7 +98,7 @@ export const RiskManagementService = (): IRiskManagementService => {
   const _convertLinePriceToChartLine = (
     entryPrices: PriceLine[],
     units: number,
-    chartLineType: IChartLineType,
+    chartLineType: TradingLineType,
     orderSide: OrderSideV5,
     qtyStep: number,
   ) => {

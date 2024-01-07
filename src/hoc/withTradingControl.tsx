@@ -27,9 +27,10 @@ import {
   updateWallet,
 } from '../slices/symbolSlice';
 import { AppDispatch } from '../store';
-import { IChartLine, IChartLineType } from '../types';
+import { IChartLine } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { TradingService } from '../services';
+import { TradingLineType } from '../components/Chart/extend/plugins/trading-lines/state';
 
 const accountType = 'CONTRACT';
 
@@ -259,7 +260,7 @@ function withTradingControl<P extends WithTradingControlProps>(
 
         // Create ChartLines from Orders
         currentOrdersRef.current.forEach((o) => {
-          let orderType: IChartLineType = 'TP';
+          let orderType: TradingLineType = 'TP';
           if (isLong) {
             orderType = o.triggerDirection === 0 ? 'TP' : 'SL';
           } else {

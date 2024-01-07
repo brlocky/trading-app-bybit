@@ -16,6 +16,7 @@ import {
 } from './constants';
 import { positionsLine } from '../../helpers/dimensions/positions';
 import { BitmapPositionLength } from '../../helpers/dimensions/common';
+import { LineRendererData } from './irenderer-data';
 
 export class PaneRenderer extends PaneRendererBase {
   draw(target: CanvasRenderingTarget2D): void {
@@ -151,10 +152,37 @@ export class PaneRenderer extends PaneRendererBase {
         if (activeLabel.showSend) {
           this._drawSendButton(scope, sendXDimensions, sendYDimensions, activeLabel.hoverSend);
         }
+
+        if (activeLabel.line.type !== 'ENTRY') {
+          this._drawPnlLabel(scope, activeLabel);
+        }
       } finally {
         ctx.restore();
       }
     });
+  }
+
+  _drawPnlLabel(scope: BitmapCoordinatesRenderingScope, activeLabel: LineRendererData) {
+    const ctx = scope.context;
+
+    const xDimensions = positionsLine(scope.mediaSize.width - sendButtonWidth / 2, scope.horizontalPixelRatio, sendButtonWidth);
+    const yDimensions = positionsLine(activeLabel.y, scope.verticalPixelRatio, buttonHeight);
+
+    const radius = 4 * scope.horizontalPixelRatio;
+
+    ctx.roundRect(xDimensions.position, yDimensions.position, xDimensions.length, yDimensions.length, [radius, 0, 0, radius]);
+    ctx.strokeStyle = '#131722';
+    ctx.fillStyle = activeLabel.line.type === 'TP' ? 'darkgreen' : 'darkred';
+    ctx.lineWidth = 1 * scope.horizontalPixelRatio;
+    ctx.stroke();
+    ctx.fill();
+
+    // Draw button text
+    ctx.fillStyle = 'white';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('$' + activeLabel.pnl, xDimensions.position + xDimensions.length / 2, yDimensions.position + yDimensions.length / 2);
   }
 
   _drawSendButton(

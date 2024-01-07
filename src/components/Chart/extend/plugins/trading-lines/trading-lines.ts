@@ -18,7 +18,7 @@ import {
   sendButtonWidth,
   showCentreLabelDistance,
 } from './constants';
-import { LineRendererData, IRendererData } from './irenderer-data';
+import { IRendererData, LineRendererData } from './irenderer-data';
 import { MouseHandlers, MousePosition } from './mouse';
 import { TradingPricePaneView } from './pane-view';
 import { TradingLineInfo, TradingLinesState } from './state';
@@ -237,10 +237,9 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
     let closestIndex = -1;
 
     const entry = tradingLines.find((l) => l.type === 'ENTRY');
-
-    const calculatePnl = (entry: TradingLineInfo, line: TradingLineInfo): string | null => {
-      if (!entry || line.type === 'ENTRY') {
-        return null;
+    const calculatePnl = (entry: TradingLineInfo, line: TradingLineInfo): string => {
+      if (line.type === 'ENTRY') {
+        return 'x';
       }
 
       // Determine the direction of the trade
@@ -252,7 +251,7 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
       return pnl.toFixed(2);
     };
 
-    const lines: (LineRendererData & { price: number; id: string })[] = tradingLines.map((l, index) => {
+    const lines: LineRendererData[] = tradingLines.map((l, index) => {
       const price = Number(priceFormatter.format(l.price));
       const y = serie.priceToCoordinate(price) as number;
       if (mousePosition?.y && y) {
@@ -263,14 +262,8 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
         }
       }
 
-      let text = `#${l.type} qty@${l.qty}`;
-
-      if (entry) {
-        const pnl = calculatePnl(entry, l);
-        if (pnl) {
-          text += ' pnl@' + pnl;
-        }
-      }
+      const text = `${l.type} @${l.qty}`;
+      const pnl = entry ? calculatePnl(entry, l) : '';
 
       return {
         y,
@@ -278,11 +271,10 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
         hoverRemove: false,
         hoverLabel: false,
         hoverSend: false,
+        pnl: pnl,
+        line: l,
         showSend: !l.isLive && l.type === 'ENTRY',
         price: price,
-        id: l.id,
-        draggable: l.draggable,
-        isLive: l.isLive,
       };
     });
 
@@ -301,7 +293,7 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
 
       const hoverLabel = this._hoverSend
         ? false
-        : a.draggable &&
+        : a.line.draggable &&
           (this._isHoveringLine(mousePosition, timescaleWidth, a.y) ||
             this._isHoveringLabel(mousePosition, timescaleWidth, a.y, text.length));
 
@@ -312,9 +304,9 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
         hoverSend: this._hoverSend,
       };
       if (this._hoverRemove || hoverLabel || this._hoverSend) {
-        this._hoveringID = a.id;
+        this._hoveringID = a.line.id;
         if (!this._isDragging) {
-          this._draggingID = a.id;
+          this._draggingID = a.line.id;
         }
       }
     }
