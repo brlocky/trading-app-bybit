@@ -32,17 +32,11 @@ export default function CardOrders() {
       const pnl = orderEntry ? calculateOrderPnL(orderEntry.avgPrice, o) : undefined;
       return (
         <Row key={index}>
-          <Col onClick={() => dispatch(updateSymbol(o.symbol))}>
-            {isTrigger ? '' : <i className={o.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i>}
-            {o.symbol}
-          </Col>
+          <Col onClick={() => dispatch(updateSymbol(o.symbol))}>{o.symbol}</Col>
           <Col>{isTrigger ? o.stopOrderType : o.side}</Col>
           <Col>{o.qty}</Col>
 
           <Col>{isTrigger ? o.triggerPrice : o.price}</Col>
-          <Col>
-            {isTrigger ? '-' : o.takeProfit} / {isTrigger ? '-' : o.stopLoss}
-          </Col>
           <Col>
             {pnl ? (
               Number(pnl) >= 0 ? (
@@ -75,7 +69,6 @@ export default function CardOrders() {
         <HeaderCol>Type</HeaderCol>
         <HeaderCol>Qty</HeaderCol>
         <HeaderCol>Price</HeaderCol>
-        <HeaderCol>TP/SL</HeaderCol>
         <HeaderCol>Profit</HeaderCol>
         <HeaderCol>Date</HeaderCol>
         <HeaderCol>Actions</HeaderCol>
@@ -85,7 +78,7 @@ export default function CardOrders() {
           renderOrders()
         ) : (
           <Row>
-            <Col colSpan={8}> ---</Col>
+            <Col colSpan={7}> ---</Col>
           </Row>
         )}
       </tbody>

@@ -1,3 +1,6 @@
+import { OrderSideV5, OrderTypeV5 } from 'bybit-api';
+import { IChartLine } from '../types';
+
 interface ISettingsData {
   apiKey: string;
   apiSecret: string;
@@ -15,6 +18,13 @@ export interface IOrderOptionsSettingsData {
   percentageRisk: number;
   tp: IOrderOptionSettingsData;
   sl: IOrderOptionSettingsData;
+}
+
+export interface ICreateOrder {
+  type: OrderTypeV5;
+  side: OrderSideV5;
+  symbol: string;
+  chartLines: IChartLine[];
 }
 
 export interface IOrderOptionSettingsData {

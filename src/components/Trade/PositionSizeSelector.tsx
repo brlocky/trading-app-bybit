@@ -13,6 +13,7 @@ import {
   selectTickerInfo,
   selectWallet,
   setChartLines,
+  setCreateOrder,
   updateOrderSettings,
   updateOrderSide,
   updateOrderType,
@@ -87,7 +88,6 @@ export const PositionSizeSelector: React.FC = () => {
     dispatch(updateOrderType(orderType));
   };
 
-  // TODO: clean - move to hoc comp or service
   const openPosition = () => {
     if (!ticker || !tickerInfo) return;
     const riskValue = riskPercentageRef.current;
@@ -107,43 +107,14 @@ export const PositionSizeSelector: React.FC = () => {
       return;
     }
 
-    const orderQty = chartLines.find((c) => c.type === 'ENTRY')?.qty;
-    if (!orderQty) return;
-    tradingService
-      .openPosition({
+    dispatch(
+      setCreateOrder({
         symbol: tickerInfo.symbol,
-        qty: orderQty.toString(),
         side: orderSide,
         type: orderType,
-      })
-      .then((p) => {
-        if (p) {
-          const stoplosses = chartLines
-            .filter((l) => {
-              return l.type === 'SL';
-            })
-            .map((l) => {
-              return tradingService.addStopLoss(p, l.price.toString(), l.qty.toString());
-            });
-
-          const takeProfits = chartLines
-            .filter((l) => {
-              return l.type === 'TP';
-            })
-            .map((l) => {
-              return tradingService.addTakeProfit(p, l.price.toString(), l.qty.toString());
-            });
-
-          Promise.all([...stoplosses, ...takeProfits]).then((allOrders) => {
-            console.log('All Set', allOrders);
-          });
-        } else {
-          console.log('Fail to create oreder', p);
-        }
-      })
-      .catch((e) => {
-        console.log('Error', e);
-      });
+        chartLines: chartLines
+      }),
+    );
   };
 
   if (!tickerInfo || !ticker) return <div className="rounded-md bg-gray-200 p-3">Select Symbol</div>;

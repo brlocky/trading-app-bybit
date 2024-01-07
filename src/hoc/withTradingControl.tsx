@@ -5,7 +5,15 @@ import { useNavigate } from 'react-router';
 import { toast } from 'react-toastify';
 import { mapKlineToCandleStickData } from '../mappers';
 import { useApi } from '../providers';
-import { resetChartLines, selectLines, setChartLines, updateLeverage, updatePositionSize } from '../slices';
+import {
+  resetChartLines,
+  selectCreateOrder,
+  selectLines,
+  setChartLines,
+  setCreateOrder,
+  updateLeverage,
+  updatePositionSize,
+} from '../slices';
 import {
   selectCurrentOrders,
   selectCurrentPosition,
@@ -21,6 +29,7 @@ import {
 import { AppDispatch } from '../store';
 import { IChartLine, IChartLineType } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { TradingService } from '../services';
 
 const accountType = 'CONTRACT';
 
@@ -38,12 +47,14 @@ function withTradingControl<P extends WithTradingControlProps>(
     const currentOrders = useSelector(selectCurrentOrders);
     const currentPosition = useSelector(selectCurrentPosition);
     const chartLines = useSelector(selectLines);
+    const createOrder = useSelector(selectCreateOrder);
 
     const currentOrdersRef = useRef<AccountOrderV5[]>(currentOrders);
     const currentSymbolRef = useRef<string>(symbol || '');
     const apiClient = useApi(); // Use the useApi hook to access the API context
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
+    const tradingService = TradingService(apiClient);
 
     // Initial Load
     useEffect(() => {
@@ -180,13 +191,26 @@ function withTradingControl<P extends WithTradingControlProps>(
       // Find changed orders
       const changedLines = chartLines.filter((l) => {
         const index = currentOrdersRef.current.findIndex((o) => {
-          return o.orderId === l.orderId && (Number(o.triggerPrice) !== l.price || Number(o.qty) !== l.qty);
+          if (o.orderId !== l.orderId) {
+            return false;
+          }
+          const orderPrice = l.type == 'TP' ? o.price : o.triggerPrice;
+          return o.orderId === l.orderId && (Number(orderPrice) !== l.price || Number(o.qty) !== l.qty);
         });
         return index !== -1 ? currentOrdersRef.current[index] : false;
       });
 
       // Update Orders
       const ammendOrders = changedLines.map((l) => {
+        if (l.type === 'TP') {
+          return apiClient.amendOrder({
+            category: 'linear',
+            symbol: symbol,
+            orderId: l.orderId,
+            qty: l.qty.toString(),
+            price: l.price.toString(),
+          });
+        }
         return apiClient.amendOrder({
           category: 'linear',
           symbol: symbol,
@@ -237,16 +261,17 @@ function withTradingControl<P extends WithTradingControlProps>(
         currentOrdersRef.current.forEach((o) => {
           let orderType: IChartLineType = 'TP';
           if (isLong) {
-            orderType = o.triggerDirection === 1 ? 'TP' : 'SL';
+            orderType = o.triggerDirection === 0 ? 'TP' : 'SL';
           } else {
-            orderType = o.triggerDirection === 2 ? 'TP' : 'SL';
+            orderType = o.triggerDirection === 0 ? 'TP' : 'SL';
           }
+          const price = orderType === 'SL' ? Number(o.triggerPrice) : Number(o.price);
 
           const order: IChartLine = {
             id: uuidv4(),
             type: orderType,
             side: currentPosition.side,
-            price: Number(o.triggerPrice),
+            price: price,
             qty: Number(o.qty),
             draggable: true,
             orderId: o.orderId,
@@ -259,6 +284,55 @@ function withTradingControl<P extends WithTradingControlProps>(
         dispatch(setChartLines(newChartLines));
       }
     }, [currentPosition]);
+
+    useEffect(() => {
+      if (!createOrder) {
+        return;
+      }
+
+      const entry = createOrder.chartLines.find((c) => c.type === 'ENTRY');
+      if (!entry) {
+        return;
+      }
+
+      tradingService
+        .openPosition({
+          symbol: createOrder.symbol,
+          qty: entry.qty.toString(),
+          side: createOrder.side,
+          type: 'Limit',
+          price: entry.price.toString(),
+        })
+        .then((position) => {
+          if (position) {
+            const stoplosses = createOrder.chartLines
+              .filter((l) => {
+                return l.type === 'SL';
+              })
+              .map((l) => {
+                return tradingService.addStopLoss(position, l.price.toString(), l.qty.toString());
+              });
+
+            const takeProfits = createOrder.chartLines
+              .filter((l) => {
+                return l.type === 'TP';
+              })
+              .map((l) => {
+                return tradingService.addTakeProfit(position, l.price.toString(), l.qty.toString());
+              });
+
+            Promise.all([...stoplosses, ...takeProfits]).then((allOrders) => {
+              console.log('All Set', allOrders);
+            });
+          } else {
+            console.log('Fail to create oreder', position);
+          }
+        })
+        .catch((e) => {
+          console.log('Error', e);
+        });
+      dispatch(setCreateOrder(null));
+    }, [createOrder]);
 
     return <WrappedComponent {...(props as P)} isLoading={isLoading} />;
   };

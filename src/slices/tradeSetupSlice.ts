@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 import { IChartLine } from '../types';
-import { IOrderOptionsSettingsData, SettingsService } from '../services';
+import { ICreateOrder, IOrderOptionsSettingsData, SettingsService } from '../services';
 import { OrderSideV5, OrderTypeV5 } from 'bybit-api';
 
 interface ITradeSetupState {
@@ -11,6 +11,7 @@ interface ITradeSetupState {
   chartLines: IChartLine[];
   leverage: number; // 1.. 100
   orderSettings: IOrderOptionsSettingsData;
+  createOrder: ICreateOrder | null;
 }
 
 const initialState: ITradeSetupState = {
@@ -20,6 +21,7 @@ const initialState: ITradeSetupState = {
   chartLines: [],
   leverage: 1,
   orderSettings: SettingsService.loadOrderOptionSettings(),
+  createOrder: null,
 };
 
 const tradeSetupSlice = createSlice({
@@ -57,6 +59,9 @@ const tradeSetupSlice = createSlice({
       // Persist in settings
       SettingsService.saveOrderOptionSettings(state.orderSettings);
     },
+    setCreateOrder(state, action: PayloadAction<ICreateOrder | null>) {
+      state.createOrder = action.payload;
+    },
   },
 });
 
@@ -70,6 +75,7 @@ export const {
   removeChartLine,
   updateLeverage,
   updateOrderSettings,
+  setCreateOrder,
 } = tradeSetupSlice.actions;
 
 export const tradeSetupReducer = tradeSetupSlice.reducer;
@@ -87,3 +93,4 @@ export const selectEntryPrice = (state: RootState) =>
   state.symbol.kline?.close ||
   '0';
 export const selectOrderSettings = (state: RootState) => state.tradeSetup.orderSettings;
+export const selectCreateOrder = (state: RootState) => state.tradeSetup.createOrder;

@@ -1,7 +1,7 @@
 import {
   AccountOrderV5,
-  LinearInverseInstrumentInfoV5,
   LinearPositionIdx,
+  OrderParamsV5,
   OrderSideV5,
   OrderTypeV5,
   PositionV5,
@@ -12,10 +12,9 @@ import { toast } from 'react-toastify';
 
 export interface ITradingService {
   addStopLoss: (position: PositionV5, price: string, size?: string) => Promise<boolean>;
-  addTakeProfit: (position: PositionV5, price: string, size?: string) => Promise<boolean>;
+  addTakeProfit: (position: PositionV5, price: string, size: string) => Promise<boolean>;
   closePosition: (position: PositionV5, qty?: string, price?: string) => Promise<void>;
   closeOrder: (o: AccountOrderV5) => Promise<void>;
-  getDomNormalizedAggregatorValues: (tickInfo: LinearInverseInstrumentInfoV5) => string[];
   openPosition: (props: INewPosition) => Promise<PositionV5 | null>;
 }
 
@@ -28,12 +27,6 @@ interface INewPosition {
 }
 
 export const TradingService = (apiClient: RestClientV5): ITradingService => {
-  const getDomNormalizedAggregatorValues = (tickInfo: LinearInverseInstrumentInfoV5): string[] => {
-    const multipliers = [1, 2, 4, 10, 20, 50, 100];
-    const tickSizeValue = parseFloat(tickInfo.priceFilter.tickSize);
-    return multipliers.map((m) => (m * tickSizeValue).toFixed(Number(tickInfo.priceScale)));
-  };
-
   const addStopLoss = async (p: PositionV5, price: string, size?: string) => {
     const order: SetTradingStopParamsV5 = {
       positionIdx: p.positionIdx,
@@ -64,19 +57,23 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
       });
   };
 
-  const addTakeProfit = async (p: PositionV5, price: string, size?: string) => {
-    const order: SetTradingStopParamsV5 = {
+  const addTakeProfit = async (p: PositionV5, price: string, size: string) => {
+    const order: OrderParamsV5 = {
       positionIdx: p.positionIdx,
       category: 'linear',
       symbol: p.symbol,
-      takeProfit: price,
+      isLeverage: 1,
+      side: p.side === 'Buy' ? 'Sell' : 'Buy',
+      orderType: 'Limit',
+      qty: size,
+      price,
+      triggerDirection: p.side === 'Buy' ? 2 : 1,
+      orderFilter: 'tpslOrder',
+      reduceOnly: true,
     };
-    if (size) {
-      order.tpslMode = 'Partial';
-      order.tpSize = size;
-    }
+
     return apiClient
-      .setTradingStop(order)
+      .submitOrder(order)
       .then((r) => {
         if (r.retCode !== 0) {
           toast.error(r.retMsg);
@@ -180,6 +177,5 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
     addTakeProfit,
     closePosition,
     closeOrder,
-    getDomNormalizedAggregatorValues,
   };
 };

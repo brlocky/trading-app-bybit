@@ -54,7 +54,7 @@ export const SymbolSelector: React.FunctionComponent = () => {
     return () => {
       clearInterval(intervalId);
     };
-  }, []);
+  }, [symbol]);
 
   const loadTicker = () => {
     apiClient.getTickers({ category: 'linear' }).then((t) => {

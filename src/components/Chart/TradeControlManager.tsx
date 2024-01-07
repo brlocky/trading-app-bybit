@@ -1,7 +1,7 @@
 import { IChartApi, ISeriesApi, SeriesType } from 'lightweight-charts';
 import React, { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { removeChartLine, selectLines, setChartLines } from '../../slices';
+import { removeChartLine, selectLines, selectOrderSide, selectOrderType, selectSymbol, setChartLines, setCreateOrder } from '../../slices';
 import { IChartLine } from '../../types';
 import { TradingLineInfo, TradingLinedDragInfo } from './extend/plugins/trading-lines/state';
 import { TradingLines } from './extend/plugins/trading-lines/trading-lines';
@@ -13,6 +13,9 @@ interface LineControlManagerProps {
 
 export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesInstance }) => {
   const chartLines = useSelector(selectLines);
+  const side = useSelector(selectOrderSide);
+  const type = useSelector(selectOrderType);
+  const symbol = useSelector(selectSymbol);
 
   const linePluginRef = useRef<TradingLines | undefined>(undefined);
   const chartLinesRef = useRef<IChartLine[]>(chartLines);
@@ -35,7 +38,7 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
       linePluginRef.current?.lineRemoved().unsubscribe(dispatchChartLineRemoved);
       linePluginRef.current?.orderSent().unsubscribe(dispatchChartLinesOrder);
     };
-  }, []);
+  }, [symbol, type, side]);
 
   const dispatchChartLineUpdate = (lineDragInfo: TradingLinedDragInfo) => {
     const lineIndex = chartLinesRef.current.findIndex((l) => l.id === lineDragInfo.to.id);
@@ -64,7 +67,15 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
   };
 
   const dispatchChartLinesOrder = () => {
-    console.log('create order with ', chartLinesRef.current);
+    if (!symbol) return;
+    dispatch(
+      setCreateOrder({
+        symbol,
+        side,
+        type,
+        chartLines: [...chartLinesRef.current],
+      }),
+    );
   };
 
   const dispatchChartLineRemoved = (line: TradingLineInfo) => {

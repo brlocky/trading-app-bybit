@@ -8,8 +8,8 @@ export const isCloseLong = (order: AccountOrderV5): boolean => order.positionIdx
 export const isOpenShort = (order: AccountOrderV5): boolean => order.positionIdx === LinearPositionIdx.SellSide && order.side === 'Sell';
 export const isCloseShort = (order: AccountOrderV5): boolean => order.positionIdx === LinearPositionIdx.SellSide && order.side === 'Buy';
 export const isOrderTPorSL = (o: AccountOrderV5): boolean => isOrderTP(o) || isOrderSL(o);
-export const isOrderTP = (o: AccountOrderV5): boolean => o.stopOrderType === 'TakeProfit';
-export const isOrderSL = (o: AccountOrderV5): boolean => o.stopOrderType === 'StopLoss';
+export const isOrderTP = (o: AccountOrderV5): boolean => o.stopOrderType === 'TakeProfit' || o.stopOrderType === 'PartialTakeProfit';
+export const isOrderSL = (o: AccountOrderV5): boolean => o.stopOrderType === 'StopLoss' || o.stopOrderType === 'PartialStopLoss';
 
 export const calculatePositionPnL = (position: PositionV5, price: ITicker): string => {
   let diff = 0;
@@ -65,7 +65,6 @@ export const formatPriceWithTickerInfo = (value: string | number, tickerInfo: Li
   const numericPrice = isNumber(value) ? value : Number(value);
   return numericPrice.toFixed(Number(tickerInfo.priceScale));
 };
-
 
 export const formatCurrencyValue = (amount: number | string, currency = 'USD') => {
   const typedAmount = isNumber(amount) ? amount : Number(amount);

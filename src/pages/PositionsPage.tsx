@@ -10,7 +10,8 @@ import { Tabs } from '../components/Tabs';
 import { IntervalSelector } from '../components/Trade/IntervalSelector';
 import { SymbolSelector } from '../components/Trade/SymbolSelector';
 import withTradingControl, { WithTradingControlProps } from '../hoc/withTradingControl';
-import { selectCurrentPosition, selectPositions } from '../slices';
+import { selectCurrentPosition, selectOrders, selectPositions } from '../slices';
+import CardOrders from '../components/Cards/CardOrders';
 
 const ContentWrapper = tw.div`
 flex
@@ -48,6 +49,7 @@ overflow-hidden
 const PositionsPageComponent: React.FC<WithTradingControlProps> = ({ isLoading }) => {
   const currentPosition = useSelector(selectCurrentPosition);
   const positions = useSelector(selectPositions);
+  const orders = useSelector(selectOrders);
   return (
     <ContentWrapper>
       {isLoading ? <LoadingContent /> : null}
@@ -83,10 +85,10 @@ const PositionsPageComponent: React.FC<WithTradingControlProps> = ({ isLoading }
                     title: `Positions (${positions.length})`,
                     content: <CardPositions />,
                   },
-                  // {
-                  //   title: `Orders (${orders.length})`,
-                  //   content: <CardOrders />,
-                  // },
+                  {
+                    title: `Orders (${orders.length})`,
+                    content: <CardOrders />,
+                  },
                   {
                     title: 'Executions',
                     content: <CardExecutions />,
