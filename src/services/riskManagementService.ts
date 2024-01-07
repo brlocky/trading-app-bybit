@@ -1,8 +1,8 @@
-import { IOrderOptionData, IOrderOptionsSettingsData } from './settingsService';
-import { IChartLine, ITicker } from '../types';
-import { LinearInverseInstrumentInfoV5, OrderSideV5, OrderTypeV5 } from 'bybit-api';
+import { LinearInverseInstrumentInfoV5, OrderSideV5 } from 'bybit-api';
 import { v4 as uuidv4 } from 'uuid';
 import { TradingLineType } from '../components/Chart/extend/plugins/trading-lines/state';
+import { IChartLine, ITicker } from '../types';
+import { IOrderOptionData, IOrderOptionsSettingsData } from './settingsService';
 
 interface PriceLine {
   number: number;
@@ -13,7 +13,6 @@ interface PriceLine {
 export interface IRiskManagementService {
   getChartLines: (
     orderSide: OrderSideV5,
-    orderType: OrderTypeV5,
     settings: IOrderOptionsSettingsData,
     ticker: ITicker,
     tickerInfo: LinearInverseInstrumentInfoV5,
@@ -25,7 +24,6 @@ export interface IRiskManagementService {
 export const RiskManagementService = (): IRiskManagementService => {
   const getChartLines = (
     orderSide: OrderSideV5,
-    orderType: OrderTypeV5,
     settings: IOrderOptionsSettingsData,
     ticker: ITicker,
     tickerInfo: LinearInverseInstrumentInfoV5,
@@ -55,7 +53,7 @@ export const RiskManagementService = (): IRiskManagementService => {
       side: orderSide,
       price: Number(entryPrice),
       qty: units,
-      draggable: orderType === 'Limit' ? true : false,
+      draggable: false,
       isServer: false,
     });
 

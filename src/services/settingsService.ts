@@ -1,4 +1,4 @@
-import { OrderSideV5, OrderTypeV5 } from 'bybit-api';
+import { OrderSideV5 } from 'bybit-api';
 import { IChartLine } from '../types';
 
 interface ISettingsData {
@@ -21,7 +21,6 @@ export interface IOrderOptionsSettingsData {
 }
 
 export interface ICreateOrder {
-  type: OrderTypeV5;
   side: OrderSideV5;
   symbol: string;
   chartLines: IChartLine[];

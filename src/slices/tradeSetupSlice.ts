@@ -1,12 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { OrderSideV5 } from 'bybit-api';
+import { ICreateOrder, IOrderOptionsSettingsData, SettingsService } from '../services';
 import { RootState } from '../store';
 import { IChartLine } from '../types';
-import { ICreateOrder, IOrderOptionsSettingsData, SettingsService } from '../services';
-import { OrderSideV5, OrderTypeV5 } from 'bybit-api';
 
 interface ITradeSetupState {
   orderSide: OrderSideV5;
-  orderType: OrderTypeV5;
   positionSize: number;
   chartLines: IChartLine[];
   leverage: number; // 1.. 100
@@ -16,7 +15,6 @@ interface ITradeSetupState {
 
 const initialState: ITradeSetupState = {
   orderSide: 'Buy',
-  orderType: 'Limit',
   positionSize: 0,
   chartLines: [],
   leverage: 1,
@@ -30,9 +28,6 @@ const tradeSetupSlice = createSlice({
   reducers: {
     updateOrderSide(state, action: PayloadAction<OrderSideV5>) {
       state.orderSide = action.payload;
-    },
-    updateOrderType(state, action: PayloadAction<OrderTypeV5>) {
-      state.orderType = action.payload;
     },
     updatePositionSize(state, action: PayloadAction<number>) {
       state.positionSize = action.payload;
@@ -67,7 +62,6 @@ const tradeSetupSlice = createSlice({
 
 export const {
   updateOrderSide,
-  updateOrderType,
   updatePositionSize,
   resetChartLines,
   addChartLine,
@@ -82,7 +76,6 @@ export const tradeSetupReducer = tradeSetupSlice.reducer;
 
 // Other code such as selectors can use the imported `RootState` type
 export const selectOrderSide = (state: RootState) => state.tradeSetup.orderSide;
-export const selectOrderType = (state: RootState) => state.tradeSetup.orderType;
 export const selectPositionSize = (state: RootState) => state.tradeSetup.positionSize;
 export const selectTakeProfits = (state: RootState) => state.tradeSetup.chartLines.filter((l) => l.type === 'TP');
 export const selectStopLosses = (state: RootState) => state.tradeSetup.chartLines.filter((l) => l.type === 'SL');

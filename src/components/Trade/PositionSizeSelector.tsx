@@ -1,22 +1,18 @@
-import { OrderSideV5, OrderTypeV5 } from 'bybit-api';
+import { OrderSideV5 } from 'bybit-api';
 import React, { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useApi } from '../../providers';
-import { RiskManagementService, TradingService } from '../../services';
+import { RiskManagementService } from '../../services';
 import {
   selectLeverage,
   selectOrderSettings,
   selectOrderSide,
-  selectOrderType,
   selectPositionSize,
   selectTicker,
   selectTickerInfo,
   selectWallet,
-  setChartLines,
   setCreateOrder,
   updateOrderSettings,
   updateOrderSide,
-  updateOrderType,
   updatePositionSize,
 } from '../../slices';
 import Button from '../Button/Button';
@@ -31,9 +27,7 @@ export const PositionSizeSelector: React.FC = () => {
   const positionSize = useSelector(selectPositionSize);
   const wallet = useSelector(selectWallet);
   const orderSide = useSelector(selectOrderSide);
-  const orderType = useSelector(selectOrderType);
   const orderSettings = useSelector(selectOrderSettings);
-  const tradingService = TradingService(useApi());
   const riskManagementService = RiskManagementService();
   const riskPercentageRef = useRef<number>(orderSettings.percentageRisk);
 
@@ -77,15 +71,8 @@ export const PositionSizeSelector: React.FC = () => {
     }
   };
 
-  const toggleArmed = () => {
-    dispatch(updateOrderSettings({ ...orderSettings, armed: !orderSettings.armed }));
-  };
-
   const setOrderSide = (side: OrderSideV5) => {
     dispatch(updateOrderSide(side));
-  };
-  const setOrderType = (orderType: OrderTypeV5) => {
-    dispatch(updateOrderType(orderType));
   };
 
   const openPosition = () => {
@@ -94,7 +81,6 @@ export const PositionSizeSelector: React.FC = () => {
 
     const chartLines = riskManagementService.getChartLines(
       orderSide,
-      orderType,
       orderSettings,
       ticker,
       tickerInfo,
@@ -102,17 +88,11 @@ export const PositionSizeSelector: React.FC = () => {
       positionSize,
     );
 
-    if (orderType === 'Limit') {
-      dispatch(setChartLines(chartLines));
-      return;
-    }
-
     dispatch(
       setCreateOrder({
         symbol: tickerInfo.symbol,
         side: orderSide,
-        type: orderType,
-        chartLines: chartLines
+        chartLines: chartLines,
       }),
     );
   };
@@ -171,19 +151,7 @@ export const PositionSizeSelector: React.FC = () => {
         <Button onClick={() => setOrderSide('Sell')} className={orderSide === 'Sell' ? 'bg-green-400' : 'bg-red-400'}>
           Short
         </Button>
-      </div>
-      <div className="inline-flex w-full justify-start space-x-4 pt-3">
-        <Button className={orderType === 'Limit' ? 'bg-green-400' : 'bg-red-400'} onClick={() => setOrderType('Limit')}>
-          Limit
-        </Button>
-        <Button className={orderType === 'Market' ? 'bg-green-400' : 'bg-red-400'} onClick={() => setOrderType('Market')}>
-          Market
-        </Button>
-        <Button className={orderSettings.armed === true ? 'bg-green-400' : 'bg-red-400'} onClick={toggleArmed}>
-          Armed
-        </Button>
-      </div>
-      <div className="inline-flex w-full justify-start space-x-4 pt-3">
+
         <Button className="bg-blue-200" onClick={openPosition}>
           Open
         </Button>
