@@ -1,12 +1,11 @@
 import { ISeriesPrimitivePaneRenderer, ISeriesPrimitivePaneView, SeriesPrimitivePaneViewZOrder } from 'lightweight-charts';
 import { IRendererData } from './irenderer-data';
 import { PaneRenderer } from './pane-renderer';
-import { PriceScalePaneRenderer } from './price-scale-pane-renderer';
 
 export class TradingPricePaneView implements ISeriesPrimitivePaneView {
-  _renderer: PaneRenderer | PriceScalePaneRenderer;
-  constructor(isPriceScale: boolean) {
-    this._renderer = isPriceScale ? new PriceScalePaneRenderer() : new PaneRenderer();
+  _renderer: PaneRenderer;
+  constructor() {
+    this._renderer = new PaneRenderer();
   }
 
   zOrder(): SeriesPrimitivePaneViewZOrder {

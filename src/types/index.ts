@@ -49,6 +49,7 @@ export type IChartLineType = 'TP' | 'SL' | 'ENTRY';
 export type IChartLineSide = 'Buy' | 'Sell' | 'None';
 
 export interface IChartLine {
+  id: string;
   type: IChartLineType;
   side: IChartLineSide;
   price: number;

@@ -20,6 +20,7 @@ import {
 } from '../slices/symbolSlice';
 import { AppDispatch } from '../store';
 import { IChartLine, IChartLineType } from '../types';
+import { v4 as uuidv4 } from 'uuid';
 
 const accountType = 'CONTRACT';
 
@@ -221,6 +222,7 @@ function withTradingControl<P extends WithTradingControlProps>(
       if (currentPosition) {
         const newChartLines: IChartLine[] = [];
         newChartLines.push({
+          id: uuidv4(),
           type: 'ENTRY',
           side: currentPosition.side,
           price: Number(currentPosition.avgPrice),
@@ -241,6 +243,7 @@ function withTradingControl<P extends WithTradingControlProps>(
           }
 
           const order: IChartLine = {
+            id: uuidv4(),
             type: orderType,
             side: currentPosition.side,
             price: Number(o.triggerPrice),

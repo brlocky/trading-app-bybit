@@ -2,14 +2,20 @@ import { BitmapCoordinatesRenderingScope, CanvasRenderingTarget2D } from 'fancy-
 import { PaneRendererBase } from './renderer-base';
 import {
   averageWidthPerCharacter,
+  buttonHeight,
   buttonWidth,
   centreLabelHeight,
   centreLabelInlinePadding,
   crossPath,
   crossViewBoxSize,
+  iconPadding,
+  iconSize,
   removeButtonWidth,
+  sendButtonHeight,
+  sendButtonWidth,
 } from './constants';
 import { positionsLine } from '../../helpers/dimensions/positions';
+import { BitmapPositionLength } from '../../helpers/dimensions/common';
 
 export class PaneRenderer extends PaneRendererBase {
   draw(target: CanvasRenderingTarget2D): void {
@@ -17,6 +23,19 @@ export class PaneRenderer extends PaneRendererBase {
       if (!this._data) return;
       this._drawTradingLines(scope);
       this._drawTradingLineLabels(scope);
+    });
+  }
+
+  _drawTradingLines(scope: BitmapCoordinatesRenderingScope) {
+    if (!this._data?.lines) return;
+    const color = this._data.color;
+    this._data.lines.forEach((data) => {
+      this._drawHorizontalLine(scope, {
+        width: scope.mediaSize.width,
+        lineWidth: 1,
+        color,
+        y: data.y,
+      });
     });
   }
 
@@ -48,19 +67,6 @@ export class PaneRenderer extends PaneRendererBase {
     }
   }
 
-  _drawTradingLines(scope: BitmapCoordinatesRenderingScope) {
-    if (!this._data?.lines) return;
-    const color = this._data.color;
-    this._data.lines.forEach((data) => {
-      this._drawHorizontalLine(scope, {
-        width: scope.mediaSize.width,
-        lineWidth: 1,
-        color,
-        y: data.y,
-      });
-    });
-  }
-
   _calculateLabelWidth(textLength: number) {
     return centreLabelInlinePadding * 2 + removeButtonWidth + textLength * averageWidthPerCharacter;
   }
@@ -70,10 +76,17 @@ export class PaneRenderer extends PaneRendererBase {
     const ctx = scope.context;
     this._data.lines.forEach((activeLabel) => {
       if (!activeLabel || !activeLabel.text) return;
+
       const labelWidth = this._calculateLabelWidth(activeLabel.text.length);
       const labelXDimensions = positionsLine(scope.mediaSize.width / 2, scope.horizontalPixelRatio, labelWidth);
+      const sendXDimensions = positionsLine(
+        scope.mediaSize.width - sendButtonWidth / 2 - iconPadding,
+        scope.horizontalPixelRatio,
+        sendButtonWidth,
+      );
+      const sendYDimensions = positionsLine(activeLabel.y, scope.verticalPixelRatio, sendButtonHeight);
+
       const yDimensions = positionsLine(activeLabel.y, scope.verticalPixelRatio, centreLabelHeight);
-      const iconSize = 9;
       const scaling = (iconSize / crossViewBoxSize) * scope.horizontalPixelRatio;
 
       ctx.save();
@@ -86,7 +99,6 @@ export class PaneRenderer extends PaneRendererBase {
         ctx.fill();
 
         const removeButtonStartX = labelXDimensions.position + labelXDimensions.length - removeButtonWidth * scope.horizontalPixelRatio;
-
         if (activeLabel.hoverRemove) {
           // draw hover background for remove button
           ctx.beginPath();
@@ -133,10 +145,41 @@ export class PaneRenderer extends PaneRendererBase {
         ctx.scale(scaling, scaling);
         ctx.fillStyle = '#131722';
         ctx.fill(crossPath, 'evenodd');
+        ctx.resetTransform();
+
+        // Draw Send Button
+        if (activeLabel.showSend) {
+          this._drawSendButton(scope, sendXDimensions, sendYDimensions, activeLabel.hoverSend);
+        }
       } finally {
         ctx.restore();
       }
     });
+  }
+
+  _drawSendButton(
+    scope: BitmapCoordinatesRenderingScope,
+    xDimensions: BitmapPositionLength,
+    yDimensions: BitmapPositionLength,
+    isHover: boolean,
+  ) {
+    const ctx = scope.context;
+
+    const radius = 4 * scope.horizontalPixelRatio;
+
+    ctx.roundRect(xDimensions.position, yDimensions.position, xDimensions.length, yDimensions.length, radius);
+    ctx.strokeStyle = '#131722';
+    ctx.fillStyle = isHover ? '#F0F3FA' : 'darkgreen';
+    ctx.lineWidth = 1 * scope.horizontalPixelRatio;
+    ctx.stroke();
+    ctx.fill();
+
+    // Draw button text
+    ctx.fillStyle = isHover ? 'black' : 'white';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Send', xDimensions.position + xDimensions.length / 2, yDimensions.position + yDimensions.length / 2);
   }
 
   _drawLabel(

@@ -23,18 +23,22 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
     linePluginRef.current = new TradingLines();
     seriesInstance.attachPrimitive(linePluginRef.current);
 
-    linePluginRef.current.lineDragged().subscribe(dispatchChartLinesUpdate);
+    linePluginRef.current.lineDragged().subscribe(dispatchChartLineUpdate);
+    linePluginRef.current.linesDragged().subscribe(dispatchChartLinesUpdate);
     linePluginRef.current.lineRemoved().subscribe(dispatchChartLineRemoved);
+    linePluginRef.current.orderSent().subscribe(dispatchChartLinesOrder);
 
     setupChartLines();
     return () => {
-      linePluginRef.current?.lineDragged().unsubscribe(dispatchChartLinesUpdate);
+      linePluginRef.current?.lineDragged().unsubscribe(dispatchChartLineUpdate);
+      linePluginRef.current?.linesDragged().unsubscribe(dispatchChartLinesUpdate);
       linePluginRef.current?.lineRemoved().unsubscribe(dispatchChartLineRemoved);
+      linePluginRef.current?.orderSent().unsubscribe(dispatchChartLinesOrder);
     };
   }, []);
 
-  const dispatchChartLinesUpdate = (lineDragInfo: TradingLinedDragInfo) => {
-    const lineIndex = chartLinesRef.current.findIndex((l) => l.price === lineDragInfo.from.price && l.qty === lineDragInfo.from.qty);
+  const dispatchChartLineUpdate = (lineDragInfo: TradingLinedDragInfo) => {
+    const lineIndex = chartLinesRef.current.findIndex((l) => l.id === lineDragInfo.to.id);
     if (lineIndex !== -1) {
       const changedLine = { ...chartLinesRef.current[lineIndex] };
       const newLines = [...chartLinesRef.current];
@@ -44,12 +48,31 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
     }
   };
 
+  const dispatchChartLinesUpdate = (lineDragsInfo: TradingLinedDragInfo[]) => {
+    const currentChartLines = [...chartLinesRef.current];
+    lineDragsInfo.forEach((dragInfo) => {
+      const lineIndex = chartLinesRef.current.findIndex((l) => l.id === dragInfo.to.id);
+      if (lineIndex !== -1) {
+        const changedLine = { ...chartLinesRef.current[lineIndex] };
+        changedLine.price = dragInfo.to.price;
+        currentChartLines[lineIndex] = changedLine;
+      } else {
+        console.error('could not find it');
+      }
+    });
+    dispatch(setChartLines(currentChartLines));
+  };
+
+  const dispatchChartLinesOrder = () => {
+    console.log('create order with ', chartLinesRef.current);
+  };
+
   const dispatchChartLineRemoved = (line: TradingLineInfo) => {
     if (line.type === 'ENTRY' && line.isLive === false) {
       // Remove all chart lines when Limit entry is deleted
       dispatch(setChartLines([]));
     } else {
-      const lineIndex = chartLinesRef.current.findIndex((l) => l.price === line.price && l.qty === line.qty);
+      const lineIndex = chartLinesRef.current.findIndex((l) => l.id === line.id);
       if (lineIndex !== -1) {
         dispatch(removeChartLine({ index: lineIndex }));
       }
@@ -57,7 +80,7 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
   };
 
   useEffect(() => {
-    chartLinesRef.current = chartLines;
+    chartLinesRef.current = [...chartLines];
     setupChartLines();
   }, [chartLines]);
 
@@ -70,7 +93,16 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
     removeChartLines();
 
     chartLinesRef.current.forEach((line) => {
-      linePluginRef.current?.addLine(line.price, line.qty, line.type, line.side, line.draggable, line.isServer);
+      const newLine: TradingLineInfo = {
+        id: line.id,
+        price: line.price,
+        qty: line.qty,
+        type: line.type,
+        side: line.side,
+        draggable: line.draggable,
+        isLive: line.isServer,
+      };
+      linePluginRef.current?.addLine(newLine);
     });
   };
 

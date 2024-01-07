@@ -21,9 +21,11 @@ export interface TradingLinedDragInfo {
 export class TradingLinesState {
   private _lineAdded: Delegate<TradingLineInfo> = new Delegate();
   private _lineRemoved: Delegate<TradingLineInfo> = new Delegate();
+  private _orderSent: Delegate<void> = new Delegate();
   private _lineChanged: Delegate<TradingLineInfo> = new Delegate();
   private _linesChanged: Delegate = new Delegate();
   private _lineDragged: Delegate<TradingLinedDragInfo> = new Delegate();
+  private _linesDragged: Delegate<TradingLinedDragInfo[]> = new Delegate();
   private _lines: Map<string, TradingLineInfo>;
 
   constructor() {
@@ -46,6 +48,10 @@ export class TradingLinesState {
     return this._lineRemoved;
   }
 
+  orderSent(): Delegate<void> {
+    return this._orderSent;
+  }
+
   lineChanged(): Delegate<TradingLineInfo> {
     return this._lineChanged;
   }
@@ -54,25 +60,22 @@ export class TradingLinesState {
     return this._linesChanged;
   }
 
+  linesDragged(): Delegate<TradingLinedDragInfo[]> {
+    return this._linesDragged;
+  }
+
   lineDragged(): Delegate<TradingLinedDragInfo> {
     return this._lineDragged;
   }
 
-  addLine(price: number, qty: number, type: TradingLineType, side: TradingLineSide, draggable: boolean, isLive: boolean): string {
-    const id = this._getNewId();
-    const line: TradingLineInfo = {
-      id,
-      price,
-      qty,
-      type: type,
-      side: side,
-      draggable: draggable,
-      isLive: isLive,
-    };
-    this._lines.set(id, line);
+  addLine(line: TradingLineInfo): void {
+    this._lines.set(line.id, line);
     this._lineAdded.fire(line);
     this._linesChanged.fire();
-    return id;
+  }
+
+  sendOrder(): void {
+    this._orderSent.fire();
   }
 
   updateLine(id: string, line: TradingLineInfo): void {
@@ -127,17 +130,23 @@ export class TradingLinesState {
   lineDragEnded(id: string, fromPrice: number): void {
     const existingLine = this._lines.get(id);
     if (existingLine) {
-      console.log('Line dragged => ', fromPrice, ' to ', existingLine?.price);
       const fromLine = { ...existingLine, price: fromPrice };
-      this._lineDragged.fire({ from: fromLine, to: existingLine });
+      const dragsInfo = [{ from: fromLine, to: existingLine }];
+      const priceDiff = existingLine.price - fromPrice;
 
+      const formatPrice = (price: number, formatNumber: number) => {
+        return Number(price.toFixed(formatNumber.toString().split('.')[1]?.length || 0));
+      };
       if (existingLine.type === 'ENTRY' && existingLine.isLive === false) {
-        const priceDiff = existingLine.price - fromPrice;
         this.lines().forEach((l) => {
           if (l.type !== 'ENTRY') {
-            this.lineDragEnded(l.id, l.price - priceDiff);
+            const f = { ...l, price: formatPrice(l.price - priceDiff, l.price) };
+            dragsInfo.push({ from: f, to: l });
           }
         });
+        this._linesDragged.fire(dragsInfo);
+      } else {
+        this._lineDragged.fire({ from: fromLine, to: existingLine });
       }
     }
   }
@@ -161,13 +170,5 @@ export class TradingLinesState {
     this._linessArray = Array.from(this._lines.values()).sort((a, b) => {
       return b.price - a.price;
     });
-  }
-
-  private _getNewId(): string {
-    let id = Math.round(Math.random() * 1000000).toString(16);
-    while (this._lines.has(id)) {
-      id = Math.round(Math.random() * 1000000).toString(16);
-    }
-    return id;
   }
 }

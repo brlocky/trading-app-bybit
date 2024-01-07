@@ -8,6 +8,8 @@ export interface LineRendererData {
   text: string;
   hoverRemove: boolean;
   hoverLabel: boolean;
+  hoverSend: boolean;
+  showSend: boolean;
   isLive: boolean;
   draggable: boolean;
 }

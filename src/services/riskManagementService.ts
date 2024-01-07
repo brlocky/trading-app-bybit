@@ -1,6 +1,7 @@
 import { IOrderOptionData, IOrderOptionsSettingsData } from './settingsService';
 import { IChartLine, IChartLineType, ITicker } from '../types';
 import { LinearInverseInstrumentInfoV5, OrderSideV5, OrderTypeV5 } from 'bybit-api';
+import { v4 as uuidv4 } from 'uuid';
 
 interface PriceLine {
   number: number;
@@ -48,6 +49,7 @@ export const RiskManagementService = (): IRiskManagementService => {
     ];
 
     lines.push({
+      id: uuidv4(),
       type: 'ENTRY',
       side: orderSide,
       price: Number(entryPrice),
@@ -118,6 +120,7 @@ export const RiskManagementService = (): IRiskManagementService => {
       }
 
       lines.push({
+        id: uuidv4(),
         type: chartLineType,
         side: orderSide,
         price: entry.price,
