@@ -20,6 +20,7 @@ export interface IRiskManagementService {
     tickerInfo: LinearInverseInstrumentInfoV5,
     riskAmount: number,
     positionSize: number,
+    accountBalance: number,
   ) => IChartLine[];
 
   getTPLine: (position: PositionV5, orders: AccountOrderV5[], ticker: SubTicker) => IChartLine | null;
@@ -144,6 +145,7 @@ export const RiskManagementService = (): IRiskManagementService => {
     tickerInfo: LinearInverseInstrumentInfoV5,
     riskAmount: number,
     positionSize: number,
+    accountBalance: number,
   ): IChartLine[] => {
     const tickSize = Number(tickerInfo.priceFilter.tickSize);
     const entryPrice = orderSide === 'Buy' ? ticker.ask1Price : ticker.bid1Price;
@@ -156,10 +158,13 @@ export const RiskManagementService = (): IRiskManagementService => {
     const { minOrderQty, maxOrderQty, qtyStep } = tickerInfo.lotSizeFilter;
     const units =
       riskAmount === 0 ? positionSize : _calculatePositionSize(riskAmount, Number(entryPrice), slPrices, minOrderQty, maxOrderQty, qtyStep);
+    const maxUnits = (accountBalance - accountBalance * 0.1) / Number(entryPrice);
+
+    const qty = roundQty(Math.min(maxUnits, units), Number(qtyStep));
 
     const lines: IChartLine[] = [
-      ..._convertLinePriceToChartLine(tpPrices, units, 'TP', orderSide, Number(qtyStep)),
-      ..._convertLinePriceToChartLine(slPrices, units, 'SL', orderSide, Number(qtyStep)),
+      ..._convertLinePriceToChartLine(tpPrices, qty, 'TP', orderSide, Number(qtyStep)),
+      ..._convertLinePriceToChartLine(slPrices, qty, 'SL', orderSide, Number(qtyStep)),
     ];
 
     lines.push({
@@ -167,7 +172,7 @@ export const RiskManagementService = (): IRiskManagementService => {
       type: 'ENTRY',
       side: orderSide,
       price: Number(entryPrice),
-      qty: units,
+      qty: qty,
       draggable: false,
       isServer: false,
     });
@@ -260,7 +265,7 @@ export const RiskManagementService = (): IRiskManagementService => {
       const option = options[i];
       const { number, ticks, percentage } = option;
 
-      const priceGap = ticks * tickSize;
+      const priceGap = ticks * tickSize * 10;
 
       const priceTarget = orderSide === 'Buy' ? Number(entryPrice) + priceGap : Number(entryPrice) - priceGap;
       priceLines.push({

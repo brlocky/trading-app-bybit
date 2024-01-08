@@ -75,8 +75,10 @@ export const PositionSizeSelector: React.FC = () => {
   };
 
   const openPosition = () => {
-    if (!ticker || !tickerInfo) return;
+    if (!ticker || !tickerInfo || !wallet) return;
     const riskValue = riskPercentageRef.current;
+
+    const coin = wallet.coin[0];
 
     const chartLines = riskManagementService.getChartLines(
       orderSide,
@@ -85,6 +87,7 @@ export const PositionSizeSelector: React.FC = () => {
       tickerInfo,
       getRiskValue(riskValue),
       positionSize,
+      Number(coin.availableToWithdraw),
     );
 
     dispatch(

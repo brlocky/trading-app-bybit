@@ -1,9 +1,11 @@
+import { AccountOrderV5, PositionV5 } from 'bybit-api';
 import { IChartApi, ISeriesApi, SeriesType } from 'lightweight-charts';
 import React, { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useApi } from '../../providers';
+import { IOrderOptionsSettingsData, RiskManagementService, TradingService } from '../../services';
 import {
   SubTicker,
-  addChartLine,
   removeChartLine,
   selectCurrentOrders,
   selectCurrentPosition,
@@ -16,10 +18,6 @@ import {
 import { IChartLine } from '../../types';
 import { TradingLineInfo, TradingLinedDragInfo } from './extend/plugins/trading-lines/state';
 import { TradingLines } from './extend/plugins/trading-lines/trading-lines';
-import { AccountOrderV5, OrderSideV5, PositionV5 } from 'bybit-api';
-import { IOrderOptionsSettingsData, RiskManagementService, TradingService } from '../../services';
-import { isOrderTP, isOrderTPorSL } from '../../utils/tradeUtils';
-import { useApi } from '../../providers';
 
 interface LineControlManagerProps {
   chartInstance: IChartApi;
