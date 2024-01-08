@@ -92,19 +92,11 @@ export const RiskManagementService = (): IRiskManagementService => {
     if (!ticker.ticker || !ticker.tickerInfo) return [];
 
     const qtyStep = Number(ticker.tickerInfo.lotSizeFilter.qtyStep);
-    const tickSize = Number(ticker.tickerInfo.priceFilter.tickSize);
     const entryPrice = Number(order.price) || Number(order.triggerPrice);
-
-    let newEntryPrice = entryPrice;
-    if (isOrderTP(order)) {
-      newEntryPrice = position.side === 'Buy' ? entryPrice + tickSize * 20 : entryPrice - tickSize * 20;
-    }
-    if (isOrderSL(order)) {
-      newEntryPrice = position.side === 'Buy' ? entryPrice - tickSize * 20 : entryPrice + tickSize * 20;
-    }
 
     const units = Number(order.qty) / 2;
     const halfUnits = roundQty(units, qtyStep);
+    const halfUnits2 = roundQty(Number(order.qty) - halfUnits, qtyStep);
 
     if (!units) return [];
     return [
@@ -121,8 +113,8 @@ export const RiskManagementService = (): IRiskManagementService => {
         id: uuidv4(),
         type: isOrderTP(order) ? 'TP' : 'SL',
         side: position.side === 'Buy' ? 'Sell' : 'Buy',
-        price: roundPrice(newEntryPrice, entryPrice),
-        qty: halfUnits,
+        price: entryPrice,
+        qty: halfUnits2,
         draggable: true,
         isServer: false,
       },
@@ -238,15 +230,17 @@ export const RiskManagementService = (): IRiskManagementService => {
         roundedQty = Number((Math.round(roundedQty / qtyStep) * qtyStep).toFixed(qtyStep.toString().split('.')[1]?.length || 0));
       }
 
-      lines.push({
-        id: uuidv4(),
-        type: chartLineType,
-        side: orderSide,
-        price: entry.price,
-        qty: roundedQty,
-        draggable: true,
-        isServer: false,
-      });
+      if (roundedQty > 0) {
+        lines.push({
+          id: uuidv4(),
+          type: chartLineType,
+          side: orderSide,
+          price: entry.price,
+          qty: roundedQty,
+          draggable: true,
+          isServer: false,
+        });
+      }
     }
 
     return lines.reverse();
@@ -268,9 +262,10 @@ export const RiskManagementService = (): IRiskManagementService => {
       const priceGap = ticks * tickSize * 10;
 
       const priceTarget = orderSide === 'Buy' ? Number(entryPrice) + priceGap : Number(entryPrice) - priceGap;
+      const validatedPriceTarget = priceTarget > 0 ? priceTarget : 0;
       priceLines.push({
         number: number,
-        price: Number(priceTarget.toFixed(precision)),
+        price: Number(validatedPriceTarget.toFixed(precision)),
         percentage: percentage,
       });
     }
