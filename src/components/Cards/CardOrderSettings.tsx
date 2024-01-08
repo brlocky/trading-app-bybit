@@ -51,7 +51,7 @@ export default function CardOrderSettings() {
               <SmallText>{option.ticks}</SmallText>
             </div>
             <div className="col-span-6">
-              <SlidePicker value={Math.abs(option.ticks)} min={1} max={100} step={1} onValueChanged={onTickChange} />
+              <SlidePicker value={Math.abs(option.ticks)} min={1} max={300} step={1} onValueChanged={onTickChange} />
             </div>
           </div>
           <div className="grid grid-cols-12 gap-4">
