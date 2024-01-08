@@ -201,7 +201,11 @@ export class PaneRenderer extends PaneRendererBase {
     ctx.font = '12px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('$' + activeLabel.pnl, xDimensions.position + xDimensions.length / 2, yDimensions.position + yDimensions.length / 2);
+    ctx.fillText(
+      '$' + Math.abs(Number(activeLabel.pnl)),
+      xDimensions.position + xDimensions.length / 2,
+      yDimensions.position + yDimensions.length / 2,
+    );
     ctx.restore();
   }
 
