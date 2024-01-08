@@ -45,7 +45,7 @@ export const CardPositionControl: React.FC = () => {
         <Button
           disabled={!currentPosition}
           onClick={() => {
-            currentPosition && closePosition(currentPosition);
+            currentPosition && closePosition(currentPosition, currentPosition.size, closePrice);
           }}
           key={'Close'}
         >
