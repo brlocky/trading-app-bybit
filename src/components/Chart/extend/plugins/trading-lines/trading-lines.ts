@@ -284,15 +284,16 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
 
     const entry = tradingLines.find((l) => l.type === 'ENTRY');
     const calculatePnl = (entry: TradingLineInfo, line: TradingLineInfo): string => {
-      if (line.type === 'ENTRY') {
-        return 'x';
-      }
-
       // Determine the direction of the trade
       const isLongTrade = entry.side === 'Buy';
 
-      // Calculate PnL based on the trade direction
-      const pnl = isLongTrade ? line.qty * (line.price - entry.price) : line.qty * (entry.price - line.price);
+      let pnl = 0;
+      if (line.type === 'ENTRY') {
+        const price = this.getMarketPrice();
+        if (price > 0) pnl = isLongTrade ? entry.qty * (price - entry.price) : entry.qty * (entry.price - price);
+      } else {
+        pnl = isLongTrade ? line.qty * (line.price - entry.price) : line.qty * (entry.price - line.price);
+      }
 
       return pnl.toFixed(2);
     };
@@ -308,7 +309,7 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
         }
       }
 
-      const text = `${l.type} @${l.qty}`;
+      const text = `${l.type} ${l.price}@${l.qty} `;
       const pnl = entry ? calculatePnl(entry, l) : '';
 
       return {

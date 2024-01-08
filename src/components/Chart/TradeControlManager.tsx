@@ -76,6 +76,9 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
     currentPositionRef.current = currentPosition;
     currentOrdersRef.current = currentOrders;
     orderSettingsRef.current = orderSettings;
+    if (ticker && ticker.ticker && ticker !== tickerRef.current && ticker.ticker.lastPrice) {
+      linePluginRef.current?.setMarketPrice(Number(ticker.ticker.lastPrice));
+    }
     tickerRef.current = ticker;
   }, [currentPosition, currentOrders, orderSettings, ticker]);
 

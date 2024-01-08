@@ -30,12 +30,54 @@ export class TradingLinesState {
   private _lineDragged: Delegate<TradingLinedDragInfo> = new Delegate();
   private _linesDragged: Delegate<TradingLinedDragInfo[]> = new Delegate();
   private _lines: Map<string, TradingLineInfo>;
+  private _marketPrice = 0;
 
   constructor() {
     this._lines = new Map();
     this._linesChanged.subscribe(() => {
       this._updateLinesArray();
     }, this);
+  }
+
+  addLine(line: TradingLineInfo): void {
+    this._lines.set(line.id, line);
+    this._lineAdded.fire(line);
+    this._linesChanged.fire();
+  }
+
+  setMarketPrice(price: number): void {
+    this._marketPrice = price;
+  }
+
+  addTP(): void {
+    this._addTP.fire();
+  }
+
+  addSL(): void {
+    this._addSL.fire();
+  }
+
+  addBE(): void {
+    this._addBE.fire();
+  }
+
+  addSplit(id: string): void {
+    if (!this._lines.has(id)) return;
+    const line = this._lines.get(id);
+    if (line) {
+      this._addSplit.fire(line);
+    }
+  }
+
+  updateLine(id: string, line: TradingLineInfo): void {
+    const existingLine = this._lines.get(id);
+
+    if (existingLine) {
+      const newLine = { ...existingLine, ...line };
+      this._lines.set(id, newLine);
+      this._lineChanged.fire(existingLine);
+      this._linesChanged.fire();
+    }
   }
 
   destroy() {
@@ -83,43 +125,6 @@ export class TradingLinesState {
     return this._lineDragged;
   }
 
-  addLine(line: TradingLineInfo): void {
-    this._lines.set(line.id, line);
-    this._lineAdded.fire(line);
-    this._linesChanged.fire();
-  }
-
-  addTP(): void {
-    this._addTP.fire();
-  }
-
-  addSL(): void {
-    this._addSL.fire();
-  }
-
-  addBE(): void {
-    this._addBE.fire();
-  }
-
-  addSplit(id: string): void {
-    if (!this._lines.has(id)) return;
-    const line = this._lines.get(id);
-    if (line) {
-      this._addSplit.fire(line);
-    }
-  }
-
-  updateLine(id: string, line: TradingLineInfo): void {
-    const existingLine = this._lines.get(id);
-
-    if (existingLine) {
-      const newLine = { ...existingLine, ...line };
-      this._lines.set(id, newLine);
-      this._lineChanged.fire(existingLine);
-      this._linesChanged.fire();
-    }
-  }
-
   truncate() {
     const isLength = !!this._lines.size;
     this._lines = new Map();
@@ -156,6 +161,10 @@ export class TradingLinesState {
     }
 
     return 0;
+  }
+
+  getMarketPrice(): number {
+    return this._marketPrice;
   }
 
   lineDragEnded(id: string, fromPrice: number): void {

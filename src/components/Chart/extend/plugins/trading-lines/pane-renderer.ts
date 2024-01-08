@@ -150,9 +150,7 @@ export class PaneRenderer extends PaneRendererBase {
       ctx.fill(crossPath, 'evenodd');
       ctx.resetTransform();
 
-      if (activeLabel.line.type !== 'ENTRY') {
-        this._drawPnlLabel(scope, activeLabel);
-      }
+      this._drawPnlLabel(scope, activeLabel);
     } finally {
       ctx.restore();
     }
@@ -167,7 +165,7 @@ export class PaneRenderer extends PaneRendererBase {
 
     this._drawButton(scope, 'BE', activeLabel.hoverBE ? 'lightgreen' : 'yellow', xBE, yDimensions);
     this._drawButton(scope, 'TP', activeLabel.hoverTP ? 'lightgreen' : 'green', xTP, yDimensions);
-    this._drawButton(scope, 'SL', activeLabel.hoverSL ? 'lightred' : 'red', xSL, yDimensions);
+    this._drawButton(scope, 'SL', activeLabel.hoverSL ? 'lightgreen' : 'red', xSL, yDimensions);
   }
 
   _drawSplitButton(scope: BitmapCoordinatesRenderingScope, activeLabel: LineRendererData, labelWidth: number) {
@@ -175,7 +173,7 @@ export class PaneRenderer extends PaneRendererBase {
     const xSplit = positionsLine(startX, scope.horizontalPixelRatio, buttonWidth);
     const yDimensions = positionsLine(activeLabel.y, scope.verticalPixelRatio, buttonHeight);
 
-    this._drawButton(scope, 'Split', activeLabel.hoverSplit ? 'lightgreen' : 'green', xSplit, yDimensions);
+    this._drawButton(scope, 'S', activeLabel.hoverSplit ? 'lightgreen' : 'green', xSplit, yDimensions);
   }
 
   _drawPnlLabel(scope: BitmapCoordinatesRenderingScope, activeLabel: LineRendererData) {
@@ -186,26 +184,26 @@ export class PaneRenderer extends PaneRendererBase {
 
     const radius = 4 * scope.horizontalPixelRatio;
 
+    const pnl = Number(activeLabel.pnl);
+    const positivePnl = pnl > 0;
+    const formattedPnl = positivePnl ? `$${pnl}` : `-$${Math.abs(pnl)}`;
+    const isEntry = activeLabel.line.type === 'ENTRY';
     ctx.beginPath();
     // Save the current canvas state
     ctx.save();
     ctx.roundRect(xDimensions.position, yDimensions.position, xDimensions.length, yDimensions.length, [radius, 0, 0, radius]);
     ctx.strokeStyle = '#131722';
-    ctx.fillStyle = activeLabel.line.type === 'TP' ? 'darkgreen' : 'darkred';
+    ctx.fillStyle = isEntry ? 'white' : positivePnl ? 'green' : 'red';
     ctx.lineWidth = 1 * scope.horizontalPixelRatio;
     ctx.stroke();
     ctx.fill();
 
     // Draw button text
-    ctx.fillStyle = 'white';
-    ctx.font = '12px Arial';
+    ctx.fillStyle = isEntry ? (positivePnl ? 'green' : 'red') : 'white';
+    ctx.font = `${Math.round(10 * scope.verticalPixelRatio)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(
-      '$' + Math.abs(Number(activeLabel.pnl)),
-      xDimensions.position + xDimensions.length / 2,
-      yDimensions.position + yDimensions.length / 2,
-    );
+    ctx.fillText(formattedPnl, xDimensions.position + xDimensions.length / 2, yDimensions.position + yDimensions.length / 2);
     ctx.restore();
   }
 
@@ -231,7 +229,7 @@ export class PaneRenderer extends PaneRendererBase {
 
     // Draw button text
     ctx.fillStyle = 'black';
-    ctx.font = '12px Arial';
+    ctx.font = `${Math.round(10 * scope.verticalPixelRatio)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(text, xDimensions.position + xDimensions.length / 2, yDimensions.position + yDimensions.length / 2);
