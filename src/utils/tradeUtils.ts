@@ -47,8 +47,14 @@ export const formatCurrency = (value: string | number, precision?: string) => {
   return parseFloat(newValue).toFixed(Number(precision) || 2);
 };
 
-export const calculateClosePositionSize = (order: PositionV5, percentage: number): string => {
-  return ((parseFloat(order.size) * percentage) / 100).toFixed(3);
+export const calculateClosePositionSize = (position: PositionV5, percentage: number): string => {
+  const getDecimalPrecision = (value: number): number => {
+    const match = value.toString().match(/(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/);
+    if (!match) return 0;
+    return Math.max(0, (match[1] ? match[1].length : 0) - (match[2] ? +match[2] : 0));
+  };
+  const precision = getDecimalPrecision(Number(position.size));
+  return ((parseFloat(position.size) * percentage) / 100).toFixed(precision);
 };
 
 export const getPositionFromOrder = (positions: PositionV5[], order: AccountOrderV5): PositionV5 | undefined => {
