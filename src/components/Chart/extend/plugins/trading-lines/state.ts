@@ -21,7 +21,10 @@ export interface TradingLinedDragInfo {
 export class TradingLinesState {
   private _lineAdded: Delegate<TradingLineInfo> = new Delegate();
   private _lineRemoved: Delegate<TradingLineInfo> = new Delegate();
-  private _orderSent: Delegate<void> = new Delegate();
+  private _addTP: Delegate<void> = new Delegate();
+  private _addSL: Delegate<void> = new Delegate();
+  private _addBE: Delegate<void> = new Delegate();
+  private _addSplit: Delegate<TradingLineInfo> = new Delegate();
   private _lineChanged: Delegate<TradingLineInfo> = new Delegate();
   private _linesChanged: Delegate = new Delegate();
   private _lineDragged: Delegate<TradingLinedDragInfo> = new Delegate();
@@ -48,8 +51,20 @@ export class TradingLinesState {
     return this._lineRemoved;
   }
 
-  orderSent(): Delegate<void> {
-    return this._orderSent;
+  tpAdded(): Delegate<void> {
+    return this._addTP;
+  }
+
+  slAdded(): Delegate<void> {
+    return this._addSL;
+  }
+
+  beAdded(): Delegate<void> {
+    return this._addBE;
+  }
+
+  splitAdded(): Delegate<TradingLineInfo> {
+    return this._addSplit;
   }
 
   lineChanged(): Delegate<TradingLineInfo> {
@@ -74,8 +89,24 @@ export class TradingLinesState {
     this._linesChanged.fire();
   }
 
-  sendOrder(): void {
-    this._orderSent.fire();
+  addTP(): void {
+    this._addTP.fire();
+  }
+
+  addSL(): void {
+    this._addSL.fire();
+  }
+
+  addBE(): void {
+    this._addBE.fire();
+  }
+
+  addSplit(id: string): void {
+    if (!this._lines.has(id)) return;
+    const line = this._lines.get(id);
+    if (line) {
+      this._addSplit.fire(line);
+    }
   }
 
   updateLine(id: string, line: TradingLineInfo): void {

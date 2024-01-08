@@ -1,7 +1,9 @@
-import { LinearInverseInstrumentInfoV5, OrderSideV5 } from 'bybit-api';
+import { AccountOrderV5, LinearInverseInstrumentInfoV5, OrderSideV5, PositionV5 } from 'bybit-api';
 import { v4 as uuidv4 } from 'uuid';
 import { TradingLineType } from '../components/Chart/extend/plugins/trading-lines/state';
+import { SubTicker } from '../slices';
 import { IChartLine, ITicker } from '../types';
+import { isOrderSL, isOrderTP } from '../utils/tradeUtils';
 import { IOrderOptionData, IOrderOptionsSettingsData } from './settingsService';
 
 interface PriceLine {
@@ -19,9 +21,122 @@ export interface IRiskManagementService {
     riskAmount: number,
     positionSize: number,
   ) => IChartLine[];
+
+  getTPLine: (position: PositionV5, orders: AccountOrderV5[], ticker: SubTicker) => IChartLine | null;
+  getSLLine: (position: PositionV5, orders: AccountOrderV5[], ticker: SubTicker) => IChartLine | null;
+  splitOrder: (position: PositionV5, orders: AccountOrderV5, ticker: SubTicker) => IChartLine[];
 }
 
 export const RiskManagementService = (): IRiskManagementService => {
+  const getTPLine = (position: PositionV5, orders: AccountOrderV5[], ticker: SubTicker): IChartLine | null => {
+    if (!ticker.ticker || !ticker.tickerInfo) return null;
+
+    const qtyStep = Number(ticker.tickerInfo.lotSizeFilter.qtyStep);
+    const tickSize = Number(ticker.tickerInfo.priceFilter.tickSize);
+    const entryPrice = position.side === 'Buy' ? Number(ticker.ticker.ask1Price) : Number(ticker.ticker.bid1Price);
+    const tpPrice = position.side === 'Buy' ? entryPrice + tickSize * 50 : entryPrice - tickSize * 50;
+
+    const coveredByOrders: number = orders.reduce((total: number, o: AccountOrderV5) => {
+      if (!isOrderTP(o)) {
+        return total;
+      }
+      return total + Number(o.qty);
+    }, 0);
+
+    const units = Number(position.size) - coveredByOrders;
+
+    if (!units) return null;
+    return {
+      id: uuidv4(),
+      type: 'TP',
+      side: position.side === 'Buy' ? 'Sell' : 'Buy',
+      price: roundPrice(tpPrice, entryPrice),
+      qty: roundQty(units, qtyStep),
+      draggable: true,
+      isServer: false,
+    };
+  };
+
+  const getSLLine = (position: PositionV5, orders: AccountOrderV5[], ticker: SubTicker): IChartLine | null => {
+    if (!ticker.ticker || !ticker.tickerInfo) return null;
+
+    const qtyStep = Number(ticker.tickerInfo.lotSizeFilter.qtyStep);
+    const tickSize = Number(ticker.tickerInfo.priceFilter.tickSize);
+    const entryPrice = position.side === 'Sell' ? Number(ticker.ticker.ask1Price) : Number(ticker.ticker.bid1Price);
+
+    const slPrice = position.side === 'Buy' ? entryPrice - tickSize * 50 : entryPrice + tickSize * 50;
+
+    const coveredByOrders: number = orders.reduce((total: number, o: AccountOrderV5) => {
+      if (!isOrderSL(o)) {
+        return total;
+      }
+      return total + Number(o.qty);
+    }, 0);
+
+    const units = Number(position.size) - coveredByOrders;
+
+    if (!units) return null;
+    return {
+      id: uuidv4(),
+      type: 'SL',
+      side: position.side === 'Buy' ? 'Sell' : 'Buy',
+      price: roundPrice(slPrice, entryPrice),
+      qty: roundQty(units, qtyStep),
+      draggable: true,
+      isServer: false,
+    };
+  };
+
+  const splitOrder = (position: PositionV5, order: AccountOrderV5, ticker: SubTicker): IChartLine[] => {
+    if (!ticker.ticker || !ticker.tickerInfo) return [];
+
+    const qtyStep = Number(ticker.tickerInfo.lotSizeFilter.qtyStep);
+    const tickSize = Number(ticker.tickerInfo.priceFilter.tickSize);
+    const entryPrice = Number(order.price) || Number(order.triggerPrice);
+
+    let newEntryPrice = entryPrice;
+    if (isOrderTP(order)) {
+      newEntryPrice = position.side === 'Buy' ? entryPrice + tickSize * 20 : entryPrice - tickSize * 20;
+    }
+    if (isOrderSL(order)) {
+      newEntryPrice = position.side === 'Buy' ? entryPrice - tickSize * 20 : entryPrice + tickSize * 20;
+    }
+
+    const units = Number(order.qty) / 2;
+    const halfUnits = roundQty(units, qtyStep);
+
+    if (!units) return [];
+    return [
+      {
+        id: uuidv4(),
+        type: isOrderTP(order) ? 'TP' : 'SL',
+        side: position.side === 'Buy' ? 'Sell' : 'Buy',
+        price: entryPrice,
+        qty: halfUnits,
+        draggable: true,
+        isServer: false,
+      },
+      {
+        id: uuidv4(),
+        type: isOrderTP(order) ? 'TP' : 'SL',
+        side: position.side === 'Buy' ? 'Sell' : 'Buy',
+        price: roundPrice(newEntryPrice, entryPrice),
+        qty: halfUnits,
+        draggable: true,
+        isServer: false,
+      },
+    ];
+  };
+
+  const roundQty = (qty: number, qtyStep: number): number => {
+    return Number((Math.round(qty / qtyStep) * qtyStep).toFixed(qtyStep.toString().split('.')[1]?.length || 0));
+  };
+
+  const roundPrice = (price: number, roundedPrice: number): number => {
+    const precision = getDecimalPrecision(roundedPrice);
+    return Number(price.toFixed(precision));
+  };
+
   const getChartLines = (
     orderSide: OrderSideV5,
     settings: IOrderOptionsSettingsData,
@@ -145,7 +260,7 @@ export const RiskManagementService = (): IRiskManagementService => {
       const option = options[i];
       const { number, ticks, percentage } = option;
 
-      const priceGap = ticks * tickSize * 10;
+      const priceGap = ticks * tickSize;
 
       const priceTarget = orderSide === 'Buy' ? Number(entryPrice) + priceGap : Number(entryPrice) - priceGap;
       priceLines.push({
@@ -160,5 +275,8 @@ export const RiskManagementService = (): IRiskManagementService => {
 
   return {
     getChartLines,
+    getTPLine,
+    getSLLine,
+    splitOrder,
   };
 };

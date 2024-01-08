@@ -5,7 +5,7 @@ import { useSocket } from '../providers';
 import {
   selectInterval,
   selectPositions,
-  selectTickerInfo,
+  selectTicker,
   updateExecutions,
   updateLastKline,
   updateLastTrades,
@@ -17,7 +17,7 @@ import {
 import { mapITradeResponseToPublicTradeV5 } from '../mappers/mapITradeResponseToPublicTradeV5';
 
 export const SocketListener: React.FC = () => {
-  const tickerInfo = useSelector(selectTickerInfo);
+  const tickerInfo = useSelector(selectTicker)?.tickerInfo;
   const interval = useSelector(selectInterval);
   const positions = useSelector(selectPositions);
   const dispatch = useDispatch();

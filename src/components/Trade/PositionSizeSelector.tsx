@@ -8,7 +8,6 @@ import {
   selectOrderSide,
   selectPositionSize,
   selectTicker,
-  selectTickerInfo,
   selectWallet,
   setCreateOrder,
   updateOrderSettings,
@@ -21,8 +20,8 @@ import { RedText, SmallText } from '../Text';
 
 export const PositionSizeSelector: React.FC = () => {
   const dispatch = useDispatch();
-  const tickerInfo = useSelector(selectTickerInfo);
-  const ticker = useSelector(selectTicker);
+  const ticker = useSelector(selectTicker)?.ticker;
+  const tickerInfo = useSelector(selectTicker)?.tickerInfo;
   const leverage = useSelector(selectLeverage);
   const positionSize = useSelector(selectPositionSize);
   const wallet = useSelector(selectWallet);

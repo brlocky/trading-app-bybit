@@ -2,7 +2,7 @@ import { AccountOrderV5 } from 'bybit-api';
 import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '../../providers';
 import { TradingService } from '../../services';
-import { selectOrders, selectPositions, selectTickerInfo, updateSymbol } from '../../slices';
+import { selectOrders, selectPositions, selectTicker, updateSymbol } from '../../slices';
 import { calculateOrderPnL, formatCurrencyValue, getPositionFromOrder, isOrderTPorSL } from '../../utils/tradeUtils';
 import Button from '../Button/Button';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
@@ -11,7 +11,7 @@ export default function CardOrders() {
   const tradingService = TradingService(useApi());
   const orders = useSelector(selectOrders);
   const positions = useSelector(selectPositions);
-  const tickerInfo = useSelector(selectTickerInfo);
+  const tickerInfo = useSelector(selectTicker)?.tickerInfo;
   const dispatch = useDispatch();
 
   const cancelOrder = (o: AccountOrderV5) => {

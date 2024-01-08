@@ -8,7 +8,8 @@ export const isCloseLong = (order: AccountOrderV5): boolean => order.positionIdx
 export const isOpenShort = (order: AccountOrderV5): boolean => order.positionIdx === LinearPositionIdx.SellSide && order.side === 'Sell';
 export const isCloseShort = (order: AccountOrderV5): boolean => order.positionIdx === LinearPositionIdx.SellSide && order.side === 'Buy';
 export const isOrderTPorSL = (o: AccountOrderV5): boolean => isOrderTP(o) || isOrderSL(o);
-export const isOrderTP = (o: AccountOrderV5): boolean => o.stopOrderType === 'TakeProfit' || o.stopOrderType === 'PartialTakeProfit';
+export const isOrderTP = (o: AccountOrderV5): boolean =>
+  (o.orderType === 'Limit' && o.reduceOnly) || o.stopOrderType === 'TakeProfit' || o.stopOrderType === 'PartialTakeProfit';
 export const isOrderSL = (o: AccountOrderV5): boolean => o.stopOrderType === 'StopLoss' || o.stopOrderType === 'PartialStopLoss';
 
 export const calculatePositionPnL = (position: PositionV5, price: ITicker): string => {

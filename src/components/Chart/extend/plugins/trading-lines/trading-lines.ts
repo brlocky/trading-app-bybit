@@ -15,7 +15,6 @@ import {
   centreLabelInlinePadding,
   iconPadding,
   removeButtonWidth,
-  sendButtonWidth,
   showCentreLabelDistance,
 } from './constants';
 import { IRendererData, LineRendererData } from './irenderer-data';
@@ -34,8 +33,12 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
   private _currentCursor: string | null = null;
 
   private _draggingID: string | null = null;
+  private _hoverLabel = false;
   private _hoverRemove = false;
-  private _hoverSend = false;
+  private _hoverTP = false;
+  private _hoverSL = false;
+  private _hoverBE = false;
+  private _hoverSplit = false;
   private _draggingFromPrice: number | null = null;
   private _isDragging = false;
 
@@ -61,14 +64,20 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
         if (this._hoverRemove) {
           this.removeLine(this._hoveringID);
           requestUpdate();
-        } else if (this._hoverSend) {
-          this.sendOrder();
+        } else if (this._hoverTP) {
+          this.addTP();
+        } else if (this._hoverSL) {
+          this.addSL();
+        } else if (this._hoverBE) {
+          this.addBE();
+        } else if (this._hoverSplit) {
+          this.addSplit(this._hoveringID);
         }
       }
     }, this);
 
     this._mouseHandlers.dragStarted().subscribe((mousePosition: MousePosition | null) => {
-      if (mousePosition && this._draggingID) {
+      if (mousePosition && this._draggingID && this._hoverLabel) {
         this._isDragging = true;
         this._chart?.applyOptions({
           handleScroll: false,
@@ -116,7 +125,7 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
     const lines = this.lines();
     const rendererData = this._calculateRendererData(lines, this._lastMouseUpdate);
     this._currentCursor = null;
-    if (rendererData?.lines.some((l) => l.hoverRemove || l.hoverSend)) {
+    if (rendererData?.lines.some((l) => l.hoverRemove || l.hoverTP || l.hoverSL || l.hoverBE || l.hoverSplit)) {
       this._currentCursor = 'pointer';
     } else if (rendererData?.lines.some((l) => l.hoverLabel)) {
       this._currentCursor = 'move';
@@ -183,30 +192,60 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
     return mousePosition.xPositionRelativeToPriceScale >= 1 && mousePosition.x < timescaleWidth;
   }
 
-  _isHoveringLabel(mousePosition: MousePosition | null, timescaleWidth: number, y: number, textLength: number): boolean {
+  _isHoveringLabel(mousePosition: MousePosition | null, timescaleWidth: number, y: number, labelWidth: number): boolean {
     if (!mousePosition || !timescaleWidth) return false;
 
     const distanceY = Math.abs(mousePosition.y - y);
     if (distanceY > centreLabelHeight / 2) return false;
 
-    const labelWidth = centreLabelInlinePadding * 2 + removeButtonWidth + textLength * averageWidthPerCharacter;
     const buttonCentreX = (timescaleWidth + labelWidth) * 0.5 - labelWidth * 0.5;
     return Math.abs(mousePosition.x - buttonCentreX) < labelWidth / 2;
   }
 
-  _isHoveringRemoveButton(mousePosition: MousePosition | null, timescaleWidth: number, y: number, textLength: number): boolean {
+  _isHoveringRemoveButton(mousePosition: MousePosition | null, timescaleWidth: number, y: number, labelWidth: number): boolean {
     if (!mousePosition || !timescaleWidth) return false;
 
     const distanceY = Math.abs(mousePosition.y - y);
     if (distanceY > centreLabelHeight / 2) return false;
 
-    const labelWidth = centreLabelInlinePadding * 2 + removeButtonWidth + textLength * averageWidthPerCharacter;
     const buttonCentreX = (timescaleWidth + labelWidth - removeButtonWidth) * 0.5;
 
     return Math.abs(mousePosition.x - buttonCentreX) < removeButtonWidth / 2;
   }
 
-  _isHoveringSendButton(mousePosition: MousePosition | null, timescaleWidth: number, y: number): boolean {
+  _isHoveringTP(mousePosition: MousePosition | null, timescaleWidth: number, y: number, labelWidth: number): boolean {
+    if (!mousePosition || !timescaleWidth) return false;
+
+    const distanceY = Math.abs(mousePosition.y - y);
+    if (distanceY > centreLabelHeight / 2) return false;
+
+    const buttonCentreX = timescaleWidth / 2 - labelWidth / 2 - buttonWidth / 2 - iconPadding - buttonWidth - iconPadding;
+    return Math.abs(mousePosition.x - buttonCentreX) < buttonWidth / 2;
+  }
+
+  _isHoveringSL(mousePosition: MousePosition | null, timescaleWidth: number, y: number, labelWidth: number): boolean {
+    if (!mousePosition || !timescaleWidth) return false;
+
+    const distanceY = Math.abs(mousePosition.y - y);
+    if (distanceY > centreLabelHeight / 2) return false;
+
+    const buttonCentreX = timescaleWidth / 2 - labelWidth / 2 - buttonWidth / 2 - iconPadding;
+
+    return Math.abs(mousePosition.x - buttonCentreX) < buttonWidth / 2;
+  }
+
+  _isHoveringBE(mousePosition: MousePosition | null, timescaleWidth: number, y: number, labelWidth: number): boolean {
+    if (!mousePosition || !timescaleWidth) return false;
+
+    const distanceY = Math.abs(mousePosition.y - y);
+    if (distanceY > centreLabelHeight / 2) return false;
+
+    const buttonCentreX =
+      timescaleWidth / 2 - labelWidth / 2 - buttonWidth / 2 - iconPadding - buttonWidth - iconPadding - buttonWidth - iconPadding;
+    return Math.abs(mousePosition.x - buttonCentreX) < buttonWidth / 2;
+  }
+
+  /*   _isHoveringSendButton(mousePosition: MousePosition | null, timescaleWidth: number, y: number): boolean {
     if (!mousePosition || !timescaleWidth) return false;
 
     const distanceY = Math.abs(mousePosition.y - y);
@@ -215,10 +254,17 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
     const buttonCentreX = timescaleWidth - iconPadding - sendButtonWidth / 2;
 
     return Math.abs(mousePosition.x - buttonCentreX) < sendButtonWidth / 2;
-  }
+  } */
 
   private _hoveringID = '';
 
+  _calculdateTextWidth(textLength: number) {
+    return centreLabelInlinePadding * 2 + removeButtonWidth + textLength * averageWidthPerCharacter;
+  }
+
+  _isHoverButtons() {
+    return this._hoverRemove || this._hoverTP || this._hoverSL || this._hoverBE || this._hoverSplit;
+  }
   /**
    * We are calculating this here instead of within a view
    * because the data is identical for both Renderers so lets
@@ -270,7 +316,10 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
         text: text,
         hoverRemove: false,
         hoverLabel: false,
-        hoverSend: false,
+        hoverTP: false,
+        hoverSL: false,
+        hoverBE: false,
+        hoverSplit: false,
         pnl: pnl,
         line: l,
         showSend: !l.isLive && l.type === 'ENTRY',
@@ -282,32 +331,43 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
     if (!this._isDragging) {
       this._draggingID = null;
     }
-    this._hoverRemove = this._hoverSend = false;
+    this._hoverLabel = this._hoverRemove = this._hoverSL = this._hoverTP = this._hoverBE = this._hoverSplit = false;
     if (closestIndex >= 0 && closestDistance < showCentreLabelDistance) {
       const timescaleWidth = this._chart?.timeScale().width() ?? 0;
       const a = lines[closestIndex];
       const text = a.text;
+      const labelWidth = this._calculdateTextWidth(text.length);
 
-      this._hoverSend = a.showSend && this._isHoveringSendButton(mousePosition, timescaleWidth, a.y);
-      this._hoverRemove = this._isHoveringRemoveButton(mousePosition, timescaleWidth, a.y, text.length);
+      // this._hoverSend = a.showSend && this._isHoveringSendButton(mousePosition, timescaleWidth, a.y);
+      this._hoverRemove = this._isHoveringRemoveButton(mousePosition, timescaleWidth, a.y, labelWidth);
 
-      const hoverLabel = this._hoverSend
-        ? false
-        : a.line.draggable &&
-          (this._isHoveringLine(mousePosition, timescaleWidth, a.y) ||
-            this._isHoveringLabel(mousePosition, timescaleWidth, a.y, text.length));
+      if (a.line.type === 'ENTRY') {
+        this._hoverTP = this._isHoveringTP(mousePosition, timescaleWidth, a.y, labelWidth);
+        this._hoverSL = this._isHoveringSL(mousePosition, timescaleWidth, a.y, labelWidth);
+        this._hoverBE = this._isHoveringBE(mousePosition, timescaleWidth, a.y, labelWidth);
+      } else {
+        this._hoverSplit = this._isHoveringSL(mousePosition, timescaleWidth, a.y, labelWidth);
+      }
+
+      if (!this._isHoverButtons()) {
+        this._hoverLabel =
+          this._isHoveringLine(mousePosition, timescaleWidth, a.y) || this._isHoveringLabel(mousePosition, timescaleWidth, a.y, labelWidth);
+      }
 
       lines[closestIndex] = {
         ...lines[closestIndex],
         hoverRemove: this._hoverRemove,
-        hoverLabel: hoverLabel,
-        hoverSend: this._hoverSend,
+        hoverLabel: this._hoverLabel,
+        hoverTP: this._hoverTP,
+        hoverSL: this._hoverSL,
+        hoverBE: this._hoverBE,
+        hoverSplit: this._hoverSplit,
       };
-      if (this._hoverRemove || hoverLabel || this._hoverSend) {
+      if (this._hoverRemove || this._hoverLabel || this._hoverTP || this._hoverSL || this._hoverBE || this._hoverSplit) {
         this._hoveringID = a.line.id;
-        if (!this._isDragging) {
-          this._draggingID = a.line.id;
-        }
+      }
+      if (this._hoverLabel && a.line.draggable) {
+        this._draggingID = a.line.id;
       }
     }
     return {

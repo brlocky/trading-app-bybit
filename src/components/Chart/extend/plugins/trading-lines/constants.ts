@@ -1,3 +1,4 @@
+export const pnlWidth = 50;
 export const buttonWidth = 21;
 export const buttonHeight = 21;
 export const showButtonDistance = 50;
@@ -7,10 +8,8 @@ export const iconPadding = 4;
 export const iconSize = 9;
 
 export const showCentreLabelDistance = 50;
-export const averageWidthPerCharacter = 6; // doesn't need to be exact, just roughly correct. 12px sans-serif
+export const averageWidthPerCharacter = 6.5; // doesn't need to be exact, just roughly correct. 12px sans-serif
 export const removeButtonWidth = 26;
-export const sendButtonWidth = 40;
-export const sendButtonHeight = 20;
 export const centreLabelHeight = 20;
 export const centreLabelInlinePadding = 9;
 

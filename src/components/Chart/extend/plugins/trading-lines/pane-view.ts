@@ -8,15 +8,15 @@ export class TradingPricePaneView implements ISeriesPrimitivePaneView {
     this._renderer = new PaneRenderer();
   }
 
+  update(data: IRendererData | null) {
+    this._renderer.update(data);
+  }
+
   zOrder(): SeriesPrimitivePaneViewZOrder {
     return 'top';
   }
 
   renderer(): ISeriesPrimitivePaneRenderer {
     return this._renderer;
-  }
-
-  update(data: IRendererData | null) {
-    this._renderer.update(data);
   }
 }

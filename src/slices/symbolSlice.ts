@@ -3,11 +3,13 @@ import { AccountOrderV5, ExecutionV5, LinearInverseInstrumentInfoV5, PositionV5,
 import { RootState } from '../store';
 import { CandlestickDataWithVolume, ITicker } from '../types';
 
+export interface SubTicker {
+  ticker: ITicker | undefined;
+  tickerInfo: LinearInverseInstrumentInfoV5 | undefined;
+}
+
 interface ArrayTicker {
-  [name: string]: {
-    ticker: ITicker | undefined;
-    tickerInfo: LinearInverseInstrumentInfoV5 | undefined;
-  };
+  [name: string]: SubTicker;
 }
 
 interface ISymbolState {
@@ -158,9 +160,7 @@ export const selectCurrentOrders = (state: RootState) => state.symbol.orders.fil
 export const selectLastKline = (state: RootState) => state.symbol.kline;
 export const selectKlines = (state: RootState) => state.symbol.klines;
 export const selectTickers = (state: RootState) => state.symbol.tickers;
-export const selectTicker = (state: RootState) => (state.symbol.symbol ? state.symbol.tickers[state.symbol.symbol]?.ticker : undefined);
-export const selectTickerInfo = (state: RootState) =>
-  state.symbol.symbol ? state.symbol.tickers[state.symbol.symbol]?.tickerInfo : undefined;
+export const selectTicker = (state: RootState) => (state.symbol.symbol ? state.symbol.tickers[state.symbol.symbol] : undefined);
 export const selectPositions = (state: RootState) => state.symbol.positions;
 export const selectCurrentPosition = (state: RootState) => state.symbol.positions.find((p) => p.symbol === state.symbol.symbol);
 export const selectWallet = (state: RootState) => state.symbol.wallet;

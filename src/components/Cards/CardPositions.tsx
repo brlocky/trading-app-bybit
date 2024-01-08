@@ -1,11 +1,11 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { selectOrders, selectPositions, selectTickerInfo, selectTickers, updateSymbol } from '../../slices';
+import { selectOrders, selectPositions, selectTicker, selectTickers, updateSymbol } from '../../slices';
 import { calculatePositionPnL, formatCurrency, formatCurrencyValue } from '../../utils/tradeUtils';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
 
 export default function CardPositions() {
   const tickers = useSelector(selectTickers);
-  const tickerInfo = useSelector(selectTickerInfo);
+  const tickerInfo = useSelector(selectTicker)?.tickerInfo;
   const positions = useSelector(selectPositions);
   const orders = useSelector(selectOrders);
 

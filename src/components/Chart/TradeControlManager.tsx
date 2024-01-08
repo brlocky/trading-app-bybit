@@ -1,10 +1,25 @@
 import { IChartApi, ISeriesApi, SeriesType } from 'lightweight-charts';
 import React, { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { removeChartLine, selectLines, selectOrderSide, selectSymbol, setChartLines, setCreateOrder } from '../../slices';
+import {
+  SubTicker,
+  addChartLine,
+  removeChartLine,
+  selectCurrentOrders,
+  selectCurrentPosition,
+  selectLines,
+  selectOrderSettings,
+  selectSymbol,
+  selectTicker,
+  setChartLines,
+} from '../../slices';
 import { IChartLine } from '../../types';
 import { TradingLineInfo, TradingLinedDragInfo } from './extend/plugins/trading-lines/state';
 import { TradingLines } from './extend/plugins/trading-lines/trading-lines';
+import { AccountOrderV5, OrderSideV5, PositionV5 } from 'bybit-api';
+import { IOrderOptionsSettingsData, RiskManagementService, TradingService } from '../../services';
+import { isOrderTP, isOrderTPorSL } from '../../utils/tradeUtils';
+import { useApi } from '../../providers';
 
 interface LineControlManagerProps {
   chartInstance: IChartApi;
@@ -13,31 +28,58 @@ interface LineControlManagerProps {
 
 export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesInstance }) => {
   const chartLines = useSelector(selectLines);
-  const side = useSelector(selectOrderSide);
+  const currentPosition = useSelector(selectCurrentPosition);
+  const currentOrders = useSelector(selectCurrentOrders);
   const symbol = useSelector(selectSymbol);
+  const orderSettings = useSelector(selectOrderSettings);
+  const ticker = useSelector(selectTicker);
 
   const linePluginRef = useRef<TradingLines | undefined>(undefined);
   const chartLinesRef = useRef<IChartLine[]>(chartLines);
-
+  const currentPositionRef = useRef<PositionV5 | undefined>(currentPosition);
+  const currentOrdersRef = useRef<AccountOrderV5[]>(currentOrders);
+  const orderSettingsRef = useRef<IOrderOptionsSettingsData>(orderSettings);
+  const tickerRef = useRef<SubTicker | undefined>(ticker);
+  const riskManagementService = RiskManagementService();
   const dispatch = useDispatch();
+  const apiClient = useApi();
+  const tradingService = TradingService(apiClient);
 
   useEffect(() => {
     linePluginRef.current = new TradingLines();
     seriesInstance.attachPrimitive(linePluginRef.current);
 
-    linePluginRef.current.lineDragged().subscribe(dispatchChartLineUpdate);
-    linePluginRef.current.linesDragged().subscribe(dispatchChartLinesUpdate);
-    linePluginRef.current.lineRemoved().subscribe(dispatchChartLineRemoved);
-    linePluginRef.current.orderSent().subscribe(dispatchChartLinesOrder);
+    linePluginRef.current.lineDragged().subscribe(dispatchChartLineUpdate, this);
+    linePluginRef.current.linesDragged().subscribe(dispatchChartLinesUpdate, this);
+    linePluginRef.current.lineRemoved().subscribe(dispatchChartLineRemoved, this);
+    linePluginRef.current.tpAdded().subscribe(dispatchAddTP, this);
+    linePluginRef.current.slAdded().subscribe(dispatchAddSL, this);
+    linePluginRef.current.beAdded().subscribe(dispatchAddBE, this);
+    linePluginRef.current.splitAdded().subscribe(dispatchSplitOrder, this);
 
     setupChartLines();
     return () => {
       linePluginRef.current?.lineDragged().unsubscribe(dispatchChartLineUpdate);
       linePluginRef.current?.linesDragged().unsubscribe(dispatchChartLinesUpdate);
       linePluginRef.current?.lineRemoved().unsubscribe(dispatchChartLineRemoved);
-      linePluginRef.current?.orderSent().unsubscribe(dispatchChartLinesOrder);
+      linePluginRef.current?.tpAdded().unsubscribe(dispatchAddTP);
+      linePluginRef.current?.slAdded().unsubscribe(dispatchAddSL);
+      linePluginRef.current?.beAdded().unsubscribe(dispatchAddBE);
+      linePluginRef.current?.splitAdded().unsubscribe(dispatchSplitOrder);
     };
-  }, [symbol, side]);
+  }, []);
+
+  useEffect(() => {
+    chartLinesRef.current = [...chartLines];
+    setupChartLines();
+  }, [chartLines]);
+
+  useEffect(() => {
+    currentPositionRef.current = currentPosition;
+    currentOrdersRef.current = currentOrders;
+    orderSettingsRef.current = orderSettings;
+    tickerRef.current = ticker;
+  }, [currentPosition, currentOrders, orderSettings, ticker]);
 
   const dispatchChartLineUpdate = (lineDragInfo: TradingLinedDragInfo) => {
     const lineIndex = chartLinesRef.current.findIndex((l) => l.id === lineDragInfo.to.id);
@@ -65,17 +107,6 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
     dispatch(setChartLines(currentChartLines));
   };
 
-  const dispatchChartLinesOrder = () => {
-    if (!symbol) return;
-    dispatch(
-      setCreateOrder({
-        symbol,
-        side,
-        chartLines: [...chartLinesRef.current],
-      }),
-    );
-  };
-
   const dispatchChartLineRemoved = (line: TradingLineInfo) => {
     if (line.type === 'ENTRY' && line.isLive === false) {
       // Remove all chart lines when Limit entry is deleted
@@ -88,10 +119,62 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
     }
   };
 
-  useEffect(() => {
-    chartLinesRef.current = [...chartLines];
-    setupChartLines();
-  }, [chartLines]);
+  const dispatchAddTP = () => {
+    if (!symbol) return;
+    const position = currentPositionRef.current;
+    const orders = currentOrdersRef.current;
+    if (!position || !tickerRef.current || !tickerRef.current.ticker || !tickerRef.current.tickerInfo) return;
+    const chartLine = riskManagementService.getTPLine(position, orders, tickerRef.current);
+    if (!chartLine) {
+      return;
+    }
+
+    tradingService.addTakeProfit(position, chartLine.price.toString(), chartLine.qty.toString());
+  };
+
+  const dispatchAddSL = () => {
+    if (!symbol) return;
+    const position = currentPositionRef.current;
+    const orders = currentOrdersRef.current;
+    if (!position || !tickerRef.current || !tickerRef.current.ticker || !tickerRef.current.tickerInfo) return;
+    const chartLine = riskManagementService.getSLLine(position, orders, tickerRef.current);
+    if (!chartLine) {
+      return;
+    }
+
+    tradingService.addStopLoss(position, chartLine.price.toString(), chartLine.qty.toString());
+  };
+
+  const dispatchSplitOrder = (line: TradingLineInfo) => {
+    if (!symbol) return;
+    const position = currentPositionRef.current;
+    const orders = currentOrdersRef.current;
+    if (!position || !tickerRef.current || !tickerRef.current.ticker || !tickerRef.current.tickerInfo) return;
+    const chartLine = chartLinesRef.current.find((c) => c.id === line.id);
+    if (!chartLine || !chartLine.orderId) return;
+    const order = orders.find((o) => o.orderId === chartLine.orderId);
+    if (!order) return;
+
+    const chartLines = riskManagementService.splitOrder(position, order, tickerRef.current);
+    if (!chartLines.length) return;
+
+    tradingService.closeOrder(order).then(() => {
+      chartLines.forEach((l) => {
+        if (line.type === 'TP') {
+          tradingService.addTakeProfit(position, l.price.toString(), l.qty.toString());
+        }
+
+        if (line.type === 'SL') {
+          tradingService.addStopLoss(position, l.price.toString(), l.qty.toString());
+        }
+      });
+    });
+  };
+
+  const dispatchAddBE = () => {
+    if (!symbol) return;
+    console.log('add be');
+  };
 
   const removeChartLines = () => {
     linePluginRef.current?.truncate();

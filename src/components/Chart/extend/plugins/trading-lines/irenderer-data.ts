@@ -12,7 +12,10 @@ export interface LineRendererData {
   pnl: string;
   hoverRemove: boolean;
   hoverLabel: boolean;
-  hoverSend: boolean;
+  hoverTP: boolean;
+  hoverSL: boolean;
+  hoverBE: boolean;
+  hoverSplit: boolean;
   showSend: boolean;
 }
 

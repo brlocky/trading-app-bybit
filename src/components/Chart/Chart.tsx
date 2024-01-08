@@ -5,9 +5,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { mapKlineToCandleStickData } from '../../mappers';
 import { useApi } from '../../providers';
-import { selectInterval, selectKlines, selectLastKline, selectSymbol, selectTicker, selectTickerInfo } from '../../slices/symbolSlice';
+import { selectInterval, selectKlines, selectLastKline, selectSymbol, selectTicker } from '../../slices/symbolSlice';
 import { CandlestickDataWithVolume } from '../../types';
-import { ChartTools } from './ChartTools';
 import { ChartTimer } from './ChartTimer';
 import { TradeControlManager } from './TradeControlManager';
 
@@ -50,8 +49,8 @@ export const Chart: React.FC<Props> = (props) => {
 
   const kline = useSelector(selectLastKline);
   const klines = useSelector(selectKlines);
-  const ticker = useSelector(selectTicker);
-  const tickerInfo = useSelector(selectTickerInfo);
+  const ticker = useSelector(selectTicker)?.ticker;
+  const tickerInfo = useSelector(selectTicker)?.tickerInfo;
   const symbol = useSelector(selectSymbol);
   const interval = useSelector(selectInterval);
 
@@ -275,7 +274,6 @@ export const Chart: React.FC<Props> = (props) => {
       <div ref={chartContainerRef} className="relative">
         {!isLoading && chartInstanceRef.current && newSeries.current ? (
           <>
-            <ChartTools />
             <ChartTimer />
             {/* <IndicatorsChartControlManager chartInstance={chartInstanceRef.current} seriesInstance={newSeries.current} /> */}
             <TradeControlManager chartInstance={chartInstanceRef.current} seriesInstance={newSeries.current} />

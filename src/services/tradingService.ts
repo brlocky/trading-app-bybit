@@ -14,7 +14,7 @@ export interface ITradingService {
   addStopLoss: (position: PositionV5, price: string, size?: string) => Promise<boolean>;
   addTakeProfit: (position: PositionV5, price: string, size: string) => Promise<boolean>;
   closePosition: (position: PositionV5, qty?: string, price?: string) => Promise<void>;
-  closeOrder: (o: AccountOrderV5) => Promise<void>;
+  closeOrder: (o: AccountOrderV5) => Promise<boolean>;
   openPosition: (props: INewPosition) => Promise<PositionV5 | null>;
 }
 
@@ -112,8 +112,8 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
       });
   };
 
-  const closeOrder = async (order: AccountOrderV5) => {
-    apiClient
+  const closeOrder = async (order: AccountOrderV5): Promise<boolean> => {
+    return apiClient
       .cancelOrder({
         category: 'linear',
         symbol: order.symbol,
@@ -124,10 +124,9 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
           toast.error(r.retMsg);
         } else {
           toast.success('Order Cancelled ' + order.symbol);
+          return true;
         }
-      })
-      .catch((e) => {
-        console.log(e);
+        return false;
       });
   };
 
@@ -142,10 +141,6 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
           return r.result.list[0];
         }
 
-        return null;
-      })
-      .catch((e) => {
-        console.error(e);
         return null;
       });
   };

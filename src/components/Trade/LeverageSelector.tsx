@@ -3,14 +3,14 @@ import React, { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { useApi } from '../../providers';
-import { selectLeverage, selectTickerInfo, updateLeverage } from '../../slices';
+import { selectLeverage, selectTicker, updateLeverage } from '../../slices';
 import { SlidePicker } from '../Forms';
 
 export const LeverageSelector: React.FC = () => {
   const dispatch = useDispatch();
   const api = useApi();
   const leverage = useSelector(selectLeverage);
-  const tickerInfo = useSelector(selectTickerInfo);
+  const tickerInfo = useSelector(selectTicker)?.tickerInfo;
 
   const max = tickerInfo?.leverageFilter.maxLeverage || '100';
   const min = tickerInfo?.leverageFilter.minLeverage || '1';
