@@ -65,12 +65,24 @@ export const SettingsService = {
       percentageRisk: 1,
       armed: false,
       tp: {
-        number: 0,
-        options: [],
+        number: 1,
+        options: [
+          {
+            number: 1,
+            ticks: 50,
+            percentage: 100,
+          },
+        ],
       },
       sl: {
-        number: 0,
-        options: [],
+        number: 1,
+        options: [
+          {
+            number: 1,
+            ticks: -50,
+            percentage: 100,
+          },
+        ],
       },
     };
   },
