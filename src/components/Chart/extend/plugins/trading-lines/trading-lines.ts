@@ -366,7 +366,7 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
       if (this._hoverRemove || this._hoverLabel || this._hoverTP || this._hoverSL || this._hoverBE || this._hoverSplit) {
         this._hoveringID = a.line.id;
       }
-      if (this._hoverLabel && a.line.draggable) {
+      if (this._hoverLabel && a.line.draggable && !this._isDragging) {
         this._draggingID = a.line.id;
       }
     }
