@@ -46,7 +46,6 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
         if (r.retCode !== 0) {
           toast.error(r.retMsg);
         } else {
-          toast.success('SL added');
           return true;
         }
         return false;
@@ -78,7 +77,6 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
         if (r.retCode !== 0) {
           toast.error(r.retMsg);
         } else {
-          toast.success('TP added');
           return true;
         }
         return false;
@@ -123,7 +121,6 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
         if (r.retCode !== 0) {
           toast.error(r.retMsg);
         } else {
-          toast.success('Order Cancelled ' + order.symbol);
           return true;
         }
         return false;
