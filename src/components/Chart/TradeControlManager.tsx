@@ -194,6 +194,8 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
       };
       linePluginRef.current?.addLine(newLine);
     });
+
+    linePluginRef.current?.updateAllViews();
   };
 
   return null; // Since this component doesn't render anything, we return null

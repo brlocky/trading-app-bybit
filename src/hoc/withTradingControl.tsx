@@ -242,8 +242,6 @@ function withTradingControl<P extends WithTradingControlProps>(
      * Sync Chart Lines with Current Position and Orders
      */
     useEffect(() => {
-      dispatch(resetChartLines());
-
       if (currentPosition) {
         const newChartLines: IChartLine[] = [];
         newChartLines.push({
@@ -282,9 +280,33 @@ function withTradingControl<P extends WithTradingControlProps>(
           newChartLines.push(order);
         });
 
-        dispatch(setChartLines(newChartLines));
+        if (!checkLineDiffs(newChartLines, chartLines)) {
+          dispatch(setChartLines(newChartLines));
+        }
+      } else {
+        dispatch(resetChartLines());
       }
     }, [currentPosition]);
+
+    const checkLineDiffs = (arr1: IChartLine[], arr2: IChartLine[]): boolean => {
+      if (arr1.length !== arr2.length) {
+        return false;
+      }
+
+      for (const obj1 of arr1) {
+        const matchingObject = arr2.find((obj2) => obj1.orderId === obj2.orderId);
+
+        if (!matchingObject) {
+          return false;
+        }
+
+        if (obj1.price !== matchingObject.price || obj1.qty !== matchingObject.qty) {
+          return false;
+        }
+      }
+
+      return true;
+    };
 
     useEffect(() => {
       if (!createOrder) {
