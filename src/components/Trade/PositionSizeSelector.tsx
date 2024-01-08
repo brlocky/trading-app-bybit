@@ -147,10 +147,10 @@ export const PositionSizeSelector: React.FC = () => {
         )}
       </div>
       <div className="inline-flex w-full justify-start space-x-4 pt-3">
-        <Button onClick={() => setOrderSide('Buy')} className={orderSide === 'Buy' ? 'bg-green-400' : 'bg-red-400'}>
+        <Button onClick={() => setOrderSide('Buy')} className={orderSide === 'Buy' ? 'bg-green-400' : ''}>
           Long
         </Button>
-        <Button onClick={() => setOrderSide('Sell')} className={orderSide === 'Sell' ? 'bg-green-400' : 'bg-red-400'}>
+        <Button onClick={() => setOrderSide('Sell')} className={orderSide === 'Sell' ? 'bg-green-400' : ''}>
           Short
         </Button>
 
