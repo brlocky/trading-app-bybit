@@ -154,7 +154,8 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
     // You may need to calculate the new price based on the y-coordinate of newPosition
     if (!this._series) return;
     const price = this._series.coordinateToPrice(newPosition.y);
-    if (!price) return;
+
+    if (!price || Number(price) < 0) return;
 
     const formattedPrice = Number(this._series.priceFormatter().format(price));
 
@@ -163,23 +164,33 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
       this._draggingFromPrice = this.getLinePrice(lineID);
     }
 
-    const existingLine = this.lines().find((l) => l.id === lineID);
+    const line = this.lines().find((l) => l.id === lineID);
 
-    if (existingLine) {
-      const oldPrice = existingLine.price;
-      existingLine.price = formattedPrice;
-      if (existingLine.type === 'ENTRY' && existingLine.isLive === false) {
-        const priceDiff = existingLine.price - oldPrice;
+    if (line) {
+      let validMove = true;
+      const oldPrice = line.price;
+      const lines2Update: TradingLineInfo[] = [{ ...line, price: formattedPrice }];
+      if (line.type === 'ENTRY' && line.isLive === false) {
+        const priceDiff = formattedPrice - oldPrice;
 
         this.lines().forEach((l) => {
-          if (l.type !== 'ENTRY' && !l.isLive) {
-            const formattedPriceDiff = Number(this._series?.priceFormatter().format(l.price + priceDiff));
-            l.price = formattedPriceDiff;
-            this.updateLine(l.id, l);
+          if (l.parentId === line.id) {
+            const newPrice = l.price + priceDiff;
+            if (newPrice < 0) {
+              validMove = false;
+            } else {
+              const formattedPriceDiff = Number(this._series?.priceFormatter().format(l.price + priceDiff));
+              const newLine = { ...l, price: formattedPriceDiff };
+              lines2Update.push(newLine);
+            }
           }
         });
       }
-      this.updateLine(lineID, existingLine);
+      if (validMove) {
+        lines2Update.forEach((l) => {
+          this.updateLine(l.id, l);
+        });
+      }
     }
   }
 
