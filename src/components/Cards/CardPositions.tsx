@@ -2,14 +2,23 @@ import { useDispatch, useSelector } from 'react-redux';
 import { selectOrders, selectPositions, selectTicker, selectTickers, updateSymbol } from '../../slices';
 import { calculatePositionPnL, formatCurrency, formatCurrencyValue } from '../../utils/tradeUtils';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
+import Button from '../Button/Button';
+import { PositionV5 } from 'bybit-api';
+import { TradingService } from '../../services';
+import { useApi } from '../../providers';
 
 export default function CardPositions() {
   const tickers = useSelector(selectTickers);
   const tickerInfo = useSelector(selectTicker)?.tickerInfo;
   const positions = useSelector(selectPositions);
   const orders = useSelector(selectOrders);
+  const { closePosition } = TradingService(useApi());
 
   const dispatch = useDispatch();
+
+  const closePositionHandler = (p: PositionV5) => {
+    closePosition(p);
+  };
 
   const renderPositions = () => {
     const sortedPositions = [...positions].sort((a, b) => {
@@ -35,6 +44,7 @@ export default function CardPositions() {
       const currentTicker = tickers[p.symbol]?.ticker;
       const currentTickerInfo = tickers[p.symbol]?.tickerInfo;
       const pnl = currentTicker ? Number(calculatePositionPnL(p, currentTicker)) : 0;
+      const time = new Date(parseInt(p.createdTime, 10)).toTimeString().split(' ')[0];
       return (
         <Row key={index}>
           <Col onClick={() => dispatch(updateSymbol(p.symbol))}>
@@ -56,6 +66,16 @@ export default function CardPositions() {
               <span className="text-red-600">{formatCurrencyValue(pnl)}</span>
             )}
           </Col>
+          <Col>{time}</Col>
+          <Col>
+            <Button
+              onClick={() => {
+                closePositionHandler(p);
+              }}
+            >
+              <i className={'fas fa-close'}></i>
+            </Button>
+          </Col>
         </Row>
       );
     });
@@ -71,13 +91,15 @@ export default function CardPositions() {
           <HeaderCol>Value</HeaderCol>
           <HeaderCol>TP / SL</HeaderCol>
           <HeaderCol>PnL</HeaderCol>
+          <HeaderCol>Date</HeaderCol>
+          <HeaderCol>Close</HeaderCol>
         </HeaderRow>
         <tbody>
           {positions.length ? (
             renderPositions()
           ) : (
             <Row>
-              <Col colSpan={9}> ---</Col>
+              <Col colSpan={8}> ---</Col>
             </Row>
           )}
         </tbody>

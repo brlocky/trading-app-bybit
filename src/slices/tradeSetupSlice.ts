@@ -4,13 +4,23 @@ import { ICreateOrder, IOrderOptionsSettingsData, SettingsService } from '../ser
 import { RootState } from '../store';
 import { IChartLine } from '../types';
 
+interface IRestingOrder {
+  orderId: string;
+  symbol: string;
+  price: string;
+  qty: string;
+  chartLines: IChartLine[];
+}
+
 interface ITradeSetupState {
   orderSide: OrderSideV5;
   positionSize: number;
   chartLines: IChartLine[];
   leverage: number; // 1.. 100
   orderSettings: IOrderOptionsSettingsData;
-  createOrder: ICreateOrder | null;
+  createMarketOrder: ICreateOrder | null;
+  createLimitOrder: ICreateOrder | null;
+  restingOrders: IRestingOrder[];
 }
 
 const initialState: ITradeSetupState = {
@@ -19,7 +29,9 @@ const initialState: ITradeSetupState = {
   chartLines: [],
   leverage: 1,
   orderSettings: SettingsService.loadOrderOptionSettings(),
-  createOrder: null,
+  createMarketOrder: null,
+  createLimitOrder: null,
+  restingOrders: [],
 };
 
 const tradeSetupSlice = createSlice({
@@ -35,11 +47,14 @@ const tradeSetupSlice = createSlice({
     addChartLine(state, action: PayloadAction<IChartLine>) {
       state.chartLines = [...state.chartLines, { ...action.payload }];
     },
+    addChartLines(state, action: PayloadAction<IChartLine[]>) {
+      state.chartLines = [...state.chartLines, ...action.payload];
+    },
     setChartLines(state, action: PayloadAction<IChartLine[]>) {
       state.chartLines = [...action.payload];
     },
-    removeChartLine(state, action: PayloadAction<{ index: number }>) {
-      state.chartLines.splice(action.payload.index, 1);
+    removeChartLine(state, action: PayloadAction<string>) {
+      state.chartLines = state.chartLines.filter((l) => l.id !== action.payload);
     },
     // reset only when filled, to avoid rerender issues
     resetChartLines(state) {
@@ -54,8 +69,25 @@ const tradeSetupSlice = createSlice({
       // Persist in settings
       SettingsService.saveOrderOptionSettings(state.orderSettings);
     },
-    setCreateOrder(state, action: PayloadAction<ICreateOrder | null>) {
-      state.createOrder = action.payload;
+    setCreateMarketOrder(state, action: PayloadAction<ICreateOrder | null>) {
+      state.createMarketOrder = action.payload;
+    },
+    setCreateLimitOrder(state, action: PayloadAction<ICreateOrder | null>) {
+      state.createLimitOrder = action.payload;
+    },
+    addRestingOrder(state, action: PayloadAction<IRestingOrder>) {
+      state.restingOrders = [...state.restingOrders, action.payload];
+    },
+    removeRestingOrder(state, action: PayloadAction<string>) {
+      state.restingOrders = state.restingOrders.filter((o) => o.orderId !== action.payload);
+    },
+    updateRestingOrder(state, action: PayloadAction<IRestingOrder>) {
+      state.restingOrders = state.restingOrders.map((o) => {
+        if (o.orderId === action.payload.orderId) {
+          return action.payload;
+        }
+        return o;
+      });
     },
   },
 });
@@ -65,11 +97,16 @@ export const {
   updatePositionSize,
   resetChartLines,
   addChartLine,
+  addChartLines,
   setChartLines,
   removeChartLine,
   updateLeverage,
   updateOrderSettings,
-  setCreateOrder,
+  setCreateMarketOrder,
+  setCreateLimitOrder,
+  addRestingOrder,
+  removeRestingOrder,
+  updateRestingOrder,
 } = tradeSetupSlice.actions;
 
 export const tradeSetupReducer = tradeSetupSlice.reducer;
@@ -79,11 +116,13 @@ export const selectOrderSide = (state: RootState) => state.tradeSetup.orderSide;
 export const selectPositionSize = (state: RootState) => state.tradeSetup.positionSize;
 export const selectTakeProfits = (state: RootState) => state.tradeSetup.chartLines.filter((l) => l.type === 'TP');
 export const selectStopLosses = (state: RootState) => state.tradeSetup.chartLines.filter((l) => l.type === 'SL');
-export const selectLines = (state: RootState) => state.tradeSetup.chartLines;
+export const selectChartLines = (state: RootState) => state.tradeSetup.chartLines;
 export const selectLeverage = (state: RootState) => state.tradeSetup.leverage;
 export const selectEntryPrice = (state: RootState) =>
   state.tradeSetup.chartLines.find((l) => l.type === 'ENTRY' && l.draggable === false)?.price.toString() ||
   state.symbol.kline?.close ||
   '0';
 export const selectOrderSettings = (state: RootState) => state.tradeSetup.orderSettings;
-export const selectCreateOrder = (state: RootState) => state.tradeSetup.createOrder;
+export const selectCreateMarketOrder = (state: RootState) => state.tradeSetup.createMarketOrder;
+export const selectCreateLimitOrder = (state: RootState) => state.tradeSetup.createLimitOrder;
+export const selectRestingOrders = (state: RootState) => state.tradeSetup.restingOrders;

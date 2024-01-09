@@ -3,13 +3,16 @@ import React, { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RiskManagementService } from '../../services';
 import {
+  addChartLines,
+  selectChartLines,
   selectLeverage,
   selectOrderSettings,
   selectOrderSide,
   selectPositionSize,
   selectTicker,
   selectWallet,
-  setCreateOrder,
+  setChartLines,
+  setCreateMarketOrder,
   updateOrderSettings,
   updateOrderSide,
   updatePositionSize,
@@ -17,6 +20,7 @@ import {
 import Button from '../Button/Button';
 import { SlidePicker, ToggleInput } from '../Forms';
 import { RedText, SmallText } from '../Text';
+import { toast } from 'react-toastify';
 
 export const PositionSizeSelector: React.FC = () => {
   const dispatch = useDispatch();
@@ -26,6 +30,7 @@ export const PositionSizeSelector: React.FC = () => {
   const positionSize = useSelector(selectPositionSize);
   const wallet = useSelector(selectWallet);
   const orderSide = useSelector(selectOrderSide);
+  const chartLines = useSelector(selectChartLines);
   const orderSettings = useSelector(selectOrderSettings);
   const riskManagementService = RiskManagementService();
   const riskPercentageRef = useRef<number>(orderSettings.percentageRisk);
@@ -74,13 +79,17 @@ export const PositionSizeSelector: React.FC = () => {
     dispatch(updateOrderSide(side));
   };
 
+  const toggleArmed = () => {
+    dispatch(updateOrderSettings({ ...orderSettings, armed: !orderSettings.armed }));
+  };
+
   const openPosition = () => {
     if (!ticker || !tickerInfo || !wallet) return;
     const riskValue = riskPercentageRef.current;
 
     const coin = wallet.coin[0];
 
-    const chartLines = riskManagementService.getChartLines(
+    const newChartLines = riskManagementService.getChartLines(
       orderSide,
       orderSettings,
       ticker,
@@ -90,13 +99,24 @@ export const PositionSizeSelector: React.FC = () => {
       Number(coin.availableToWithdraw),
     );
 
-    dispatch(
-      setCreateOrder({
-        symbol: tickerInfo.symbol,
-        side: orderSide,
-        chartLines: chartLines,
-      }),
-    );
+    if (!orderSettings.armed) {
+      const limitOrders = chartLines.filter((l) => l.type === 'ENTRY' && !l.isLive);
+      if (limitOrders.length) {
+        toast.error('Cannot have multiple Limit Orders per Symbol');
+      } else {
+        // Limit Order
+        dispatch(addChartLines(newChartLines));
+      }
+    } else {
+      // Market Order
+      dispatch(
+        setCreateMarketOrder({
+          symbol: tickerInfo.symbol,
+          side: orderSide,
+          chartLines: newChartLines,
+        }),
+      );
+    }
   };
 
   if (!tickerInfo || !ticker) return <div className="rounded-md bg-gray-200 p-3">Select Symbol</div>;
@@ -146,7 +166,7 @@ export const PositionSizeSelector: React.FC = () => {
           </div>
         )}
       </div>
-      <div className="inline-flex w-full justify-start space-x-4 pt-3">
+      <div className="inline-flex h-12 w-full content-center gap-x-4 p-2">
         <Button onClick={() => setOrderSide('Buy')} className={orderSide === 'Buy' ? 'bg-green-400' : ''}>
           Long
         </Button>
@@ -156,6 +176,10 @@ export const PositionSizeSelector: React.FC = () => {
 
         <Button className="bg-blue-200" onClick={openPosition}>
           Open
+        </Button>
+
+        <Button className={orderSettings.armed === true ? 'ml-auto bg-green-400' : 'ml-auto bg-red-400'} onClick={toggleArmed}>
+          Armed
         </Button>
       </div>
       <SmallText className="self-end text-right">

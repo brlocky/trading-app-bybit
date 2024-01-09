@@ -33,7 +33,6 @@ export class MouseHandlers {
     const container = this._chart.chartElement();
     this._addMouseEventListener(container, 'mouseleave', this._mouseLeave);
     this._addMouseEventListener(container, 'mousemove', this._mouseMove);
-    this._addMouseEventListener(container, 'click', this._mouseClick);
     this._addMouseEventListener(container, 'mousedown', this._mouseDown);
     this._addMouseEventListener(container, 'mouseup', this._mouseUp);
   }
@@ -51,7 +50,7 @@ export class MouseHandlers {
   }
 
   public clicked(): ISubscription<MousePosition | null> {
-    return this._clicked;
+    return this._down;
   }
 
   public mouseMoved(): ISubscription<MousePosition | null> {
@@ -72,7 +71,7 @@ export class MouseHandlers {
 
   _addMouseEventListener(
     target: HTMLDivElement,
-    eventType: 'mouseleave' | 'mousemove' | 'click' | 'mousedown' | 'mouseup',
+    eventType: 'mouseleave' | 'mousemove' | 'mousedown' | 'mouseup',
     handler: (event: MouseEvent) => void,
   ): void {
     const boundMouseMoveHandler = handler.bind(this);
@@ -86,11 +85,9 @@ export class MouseHandlers {
   _mouseLeave() {
     this._mouseMoved.fire(null);
   }
+
   _mouseMove(event: MouseEvent) {
     this._mouseMoved.fire(this._determineMousePosition(event));
-  }
-  _mouseClick(event: MouseEvent) {
-    this._clicked.fire(this._determineMousePosition(event));
   }
 
   _mouseDown(event: MouseEvent) {

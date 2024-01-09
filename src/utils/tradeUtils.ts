@@ -1,6 +1,7 @@
-import { AccountOrderV5, LinearInverseInstrumentInfoV5, LinearPositionIdx, PositionV5 } from 'bybit-api';
+import { AccountOrderV5, LinearInverseInstrumentInfoV5, LinearPositionIdx, OrderTypeV5, PositionV5 } from 'bybit-api';
 import { ITicker } from '../types';
 import { isNumber } from 'lodash';
+import { TradingLineType } from '../components/Chart/extend/plugins/trading-lines/state';
 
 // Order types
 export const isOpenLong = (order: AccountOrderV5): boolean => order.positionIdx === LinearPositionIdx.BuySide && order.side === 'Buy';
@@ -11,6 +12,22 @@ export const isOrderTPorSL = (o: AccountOrderV5): boolean => isOrderTP(o) || isO
 export const isOrderTP = (o: AccountOrderV5): boolean =>
   (o.orderType === 'Limit' && o.reduceOnly) || o.stopOrderType === 'TakeProfit' || o.stopOrderType === 'PartialTakeProfit';
 export const isOrderSL = (o: AccountOrderV5): boolean => o.stopOrderType === 'StopLoss' || o.stopOrderType === 'PartialStopLoss';
+export const isEntry = (o: AccountOrderV5): boolean => o.orderType === 'Limit' && !o.reduceOnly;
+
+export const getOrderType = (o: AccountOrderV5): TradingLineType => {
+  if (isOrderSL(o)) return 'SL';
+  if (isOrderTP(o)) return 'TP';
+
+  return 'ENTRY';
+};
+
+export const getOrderPrice = (o: AccountOrderV5): number => {
+  if (isOrderSL(o)) {
+    return Number(o.triggerPrice);
+  }
+
+  return Number(o.price);
+};
 
 export const calculatePositionPnL = (position: PositionV5, price: ITicker): string => {
   let diff = 0;
@@ -28,8 +45,7 @@ export const calculatePositionPnL = (position: PositionV5, price: ITicker): stri
 
 export const calculateOrderPnL = (entryPrice: string, order: AccountOrderV5): string => {
   const startPrice = Number(entryPrice);
-  const isTPorSL = isOrderTPorSL(order);
-  const orderClosePrice = isTPorSL ? Number(order.triggerPrice) : Number(order.price);
+  const orderClosePrice = getOrderPrice(order);
   const orderCloseQty = Number(order.qty);
 
   let pnl = 0;

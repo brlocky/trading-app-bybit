@@ -32,6 +32,8 @@ export default function CardClosedPnLs() {
         <tbody>
           {list?.length ? (
             list?.map((l, index) => {
+              const time = new Date(parseInt(l.createdTime, 10)).toTimeString().split(' ')[0];
+
               return (
                 <Row key={index}>
                   <Col onClick={() => dispatch(updateSymbol(l.symbol))}>
@@ -45,7 +47,7 @@ export default function CardClosedPnLs() {
                       <span className="text-red-600">{formatCurrencyValue(l.closedPnl)}</span>
                     )}
                   </Col>
-                  <Col>{new Date(Number(l.updatedTime)).toLocaleTimeString()}</Col>
+                  <Col>{time}</Col>
                 </Row>
               );
             })

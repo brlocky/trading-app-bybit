@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '../../providers';
 import { TradingService } from '../../services';
 import { selectOrders, selectPositions, selectTicker, updateSymbol } from '../../slices';
-import { calculateOrderPnL, formatCurrencyValue, getPositionFromOrder, isOrderTPorSL } from '../../utils/tradeUtils';
+import { calculateOrderPnL, formatCurrencyValue, getOrderPrice, getOrderType, getPositionFromOrder } from '../../utils/tradeUtils';
 import Button from '../Button/Button';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
 
@@ -26,17 +26,21 @@ export default function CardOrders() {
 
   const renderOrders = () =>
     sortedOrders.map((o, index) => {
-      const isTrigger = isOrderTPorSL(o);
-
+      const orderType = getOrderType(o);
+      const orderPrice = getOrderPrice(o);
       const orderEntry = getPositionFromOrder(positions, o);
       const pnl = orderEntry ? calculateOrderPnL(orderEntry.avgPrice, o) : undefined;
+      const time = new Date(parseInt(o.createdTime, 10)).toTimeString().split(' ')[0];
+
       return (
         <Row key={index}>
-          <Col onClick={() => dispatch(updateSymbol(o.symbol))}>{o.symbol}</Col>
-          <Col>{isTrigger ? o.stopOrderType : o.side}</Col>
+          <Col onClick={() => dispatch(updateSymbol(o.symbol))}>
+            <i className={o.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {o.symbol}
+          </Col>
+          <Col>{o.side}</Col>
+          <Col>{orderType}</Col>
           <Col>{o.qty}</Col>
-
-          <Col>{isTrigger ? o.triggerPrice : o.price}</Col>
+          <Col>{orderPrice}</Col>
           <Col>
             {pnl ? (
               Number(pnl) >= 0 ? (
@@ -48,7 +52,7 @@ export default function CardOrders() {
               '-'
             )}
           </Col>
-          <Col>{new Date(Number(o.createdTime)).toLocaleTimeString()}</Col>
+          <Col>{time}</Col>
           <Col>
             <Button
               onClick={() => {
@@ -66,6 +70,7 @@ export default function CardOrders() {
     <Table>
       <HeaderRow>
         <HeaderCol>Ticker</HeaderCol>
+        <HeaderCol>Direction</HeaderCol>
         <HeaderCol>Type</HeaderCol>
         <HeaderCol>Qty</HeaderCol>
         <HeaderCol>Price</HeaderCol>
@@ -78,7 +83,7 @@ export default function CardOrders() {
           renderOrders()
         ) : (
           <Row>
-            <Col colSpan={7}> ---</Col>
+            <Col colSpan={8}> --- </Col>
           </Row>
         )}
       </tbody>

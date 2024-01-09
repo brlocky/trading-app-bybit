@@ -55,4 +55,6 @@ export interface IChartLine {
   draggable: boolean;
   orderId?: string;
   isServer: boolean;
+  isLive: boolean;
+  parentId: string;
 }

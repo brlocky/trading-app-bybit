@@ -113,6 +113,7 @@ export const SocketListener: React.FC = () => {
 
       switch (topic) {
         case 'position':
+          console.log('position Socket', data);
           dispatch(updatePositions(data.map(mapApiToWsPositionV5Response)));
           break;
 

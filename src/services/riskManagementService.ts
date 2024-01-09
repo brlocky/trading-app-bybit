@@ -1,6 +1,6 @@
 import { AccountOrderV5, LinearInverseInstrumentInfoV5, OrderSideV5, PositionV5 } from 'bybit-api';
 import { v4 as uuidv4 } from 'uuid';
-import { TradingLineType } from '../components/Chart/extend/plugins/trading-lines/state';
+import { TradingLineInfo, TradingLineSide, TradingLineType } from '../components/Chart/extend/plugins/trading-lines/state';
 import { SubTicker } from '../slices';
 import { IChartLine, ITicker } from '../types';
 import { isOrderSL, isOrderTP } from '../utils/tradeUtils';
@@ -25,7 +25,7 @@ export interface IRiskManagementService {
 
   getTPLine: (position: PositionV5, orders: AccountOrderV5[], ticker: SubTicker) => IChartLine | null;
   getSLLine: (position: PositionV5, orders: AccountOrderV5[], ticker: SubTicker) => IChartLine | null;
-  splitOrder: (position: PositionV5, orders: AccountOrderV5, ticker: SubTicker) => IChartLine[];
+  splitOrder: (line: TradingLineInfo, ticker: SubTicker) => IChartLine[];
 }
 
 export const RiskManagementService = (): IRiskManagementService => {
@@ -46,7 +46,7 @@ export const RiskManagementService = (): IRiskManagementService => {
 
     const units = Number(position.size) - coveredByOrders;
 
-    if (!units) return null;
+    if (units <= 0) return null;
     return {
       id: uuidv4(),
       type: 'TP',
@@ -55,6 +55,8 @@ export const RiskManagementService = (): IRiskManagementService => {
       qty: roundQty(units, qtyStep),
       draggable: true,
       isServer: false,
+      isLive: false,
+      parentId: 'shouldgenerate',
     };
   };
 
@@ -66,7 +68,6 @@ export const RiskManagementService = (): IRiskManagementService => {
     const entryPrice = position.side === 'Sell' ? Number(ticker.ticker.ask1Price) : Number(ticker.ticker.bid1Price);
 
     const slPrice = position.side === 'Buy' ? entryPrice - tickSize * 50 : entryPrice + tickSize * 50;
-
     const coveredByOrders: number = orders.reduce((total: number, o: AccountOrderV5) => {
       if (!isOrderSL(o)) {
         return total;
@@ -76,7 +77,7 @@ export const RiskManagementService = (): IRiskManagementService => {
 
     const units = Number(position.size) - coveredByOrders;
 
-    if (!units) return null;
+    if (units <= 0) return null;
     return {
       id: uuidv4(),
       type: 'SL',
@@ -85,38 +86,43 @@ export const RiskManagementService = (): IRiskManagementService => {
       qty: roundQty(units, qtyStep),
       draggable: true,
       isServer: false,
+      isLive: false,
+      parentId: 'shouldgenerate',
     };
   };
 
-  const splitOrder = (position: PositionV5, order: AccountOrderV5, ticker: SubTicker): IChartLine[] => {
+  const splitOrder = (line: TradingLineInfo, ticker: SubTicker): IChartLine[] => {
     if (!ticker.ticker || !ticker.tickerInfo) return [];
 
     const qtyStep = Number(ticker.tickerInfo.lotSizeFilter.qtyStep);
-    const entryPrice = Number(order.price) || Number(order.triggerPrice);
 
-    const units = Number(order.qty) / 2;
+    const units = Number(line.qty) / 2;
     const halfUnits = roundQty(units, qtyStep);
-    const halfUnits2 = roundQty(Number(order.qty) - halfUnits, qtyStep);
+    const halfUnits2 = roundQty(Number(line.qty) - halfUnits, qtyStep);
 
-    if (!units) return [];
+    if (!halfUnits || !halfUnits2) return [];
     return [
       {
         id: uuidv4(),
-        type: isOrderTP(order) ? 'TP' : 'SL',
-        side: position.side === 'Buy' ? 'Sell' : 'Buy',
-        price: entryPrice,
+        type: line.type,
+        side: line.side,
+        price: line.price,
         qty: halfUnits,
         draggable: true,
         isServer: false,
+        isLive: false,
+        parentId: line.parentId,
       },
       {
         id: uuidv4(),
-        type: isOrderTP(order) ? 'TP' : 'SL',
-        side: position.side === 'Buy' ? 'Sell' : 'Buy',
-        price: entryPrice,
+        type: line.type,
+        side: line.side,
+        price: line.price,
         qty: halfUnits2,
         draggable: true,
         isServer: false,
+        isLive: false,
+        parentId: line.parentId,
       },
     ];
   };
@@ -140,7 +146,14 @@ export const RiskManagementService = (): IRiskManagementService => {
     accountBalance: number,
   ): IChartLine[] => {
     const tickSize = Number(tickerInfo.priceFilter.tickSize);
-    const entryPrice = orderSide === 'Buy' ? ticker.ask1Price : ticker.bid1Price;
+
+    const entryPrice = settings.armed
+      ? orderSide === 'Buy'
+        ? ticker.ask1Price
+        : ticker.bid1Price
+      : orderSide === 'Buy'
+      ? ticker.bid1Price
+      : ticker.ask1Price;
 
     const { tp, sl } = settings;
 
@@ -154,19 +167,23 @@ export const RiskManagementService = (): IRiskManagementService => {
 
     const qty = roundQty(Math.min(maxUnits, units), Number(qtyStep));
 
+    const parentId = uuidv4();
     const lines: IChartLine[] = [
-      ..._convertLinePriceToChartLine(tpPrices, qty, 'TP', orderSide, Number(qtyStep)),
-      ..._convertLinePriceToChartLine(slPrices, qty, 'SL', orderSide, Number(qtyStep)),
+      ..._convertLinePriceToChartLine(tpPrices, qty, 'TP', orderSide, Number(qtyStep), parentId),
+      ..._convertLinePriceToChartLine(slPrices, qty, 'SL', orderSide, Number(qtyStep), parentId),
     ];
 
+    const isDraggable = !settings.armed;
     lines.push({
-      id: uuidv4(),
+      id: parentId,
       type: 'ENTRY',
       side: orderSide,
       price: Number(entryPrice),
       qty: qty,
-      draggable: false,
+      draggable: isDraggable,
       isServer: false,
+      isLive: false,
+      parentId: '',
     });
 
     return lines;
@@ -211,6 +228,7 @@ export const RiskManagementService = (): IRiskManagementService => {
     chartLineType: TradingLineType,
     orderSide: OrderSideV5,
     qtyStep: number,
+    parentId: string,
   ) => {
     const lines: IChartLine[] = [];
     const totalPercentage = entryPrices.reduce((total, entry) => total + (entry.percentage || 0), 0);
@@ -239,6 +257,8 @@ export const RiskManagementService = (): IRiskManagementService => {
           qty: roundedQty,
           draggable: true,
           isServer: false,
+          isLive: false,
+          parentId: parentId,
         });
       }
     }

@@ -1,4 +1,4 @@
-import { AccountOrderV5, PositionV5 } from 'bybit-api';
+import { AccountOrderV5, OrderSideV5, PositionV5 } from 'bybit-api';
 import { IChartApi, ISeriesApi, SeriesType } from 'lightweight-charts';
 import React, { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -6,14 +6,16 @@ import { useApi } from '../../providers';
 import { IOrderOptionsSettingsData, RiskManagementService, TradingService } from '../../services';
 import {
   SubTicker,
+  addChartLines,
   removeChartLine,
   selectCurrentOrders,
   selectCurrentPosition,
-  selectLines,
+  selectChartLines,
   selectOrderSettings,
   selectSymbol,
   selectTicker,
   setChartLines,
+  setCreateLimitOrder,
 } from '../../slices';
 import { IChartLine } from '../../types';
 import { TradingLineInfo, TradingLinedDragInfo } from './extend/plugins/trading-lines/state';
@@ -25,7 +27,7 @@ interface LineControlManagerProps {
 }
 
 export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesInstance }) => {
-  const chartLines = useSelector(selectLines);
+  const chartLines = useSelector(selectChartLines);
   const currentPosition = useSelector(selectCurrentPosition);
   const currentOrders = useSelector(selectCurrentOrders);
   const symbol = useSelector(selectSymbol);
@@ -54,6 +56,7 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
     linePluginRef.current.slAdded().subscribe(dispatchAddSL, this);
     linePluginRef.current.beAdded().subscribe(dispatchAddBE, this);
     linePluginRef.current.splitAdded().subscribe(dispatchSplitOrder, this);
+    linePluginRef.current.sendAdded().subscribe(dispatchAddSend, this);
 
     setupChartLines();
     return () => {
@@ -64,6 +67,7 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
       linePluginRef.current?.slAdded().unsubscribe(dispatchAddSL);
       linePluginRef.current?.beAdded().unsubscribe(dispatchAddBE);
       linePluginRef.current?.splitAdded().unsubscribe(dispatchSplitOrder);
+      linePluginRef.current?.sendAdded().unsubscribe(dispatchAddSend);
     };
   }, []);
 
@@ -109,14 +113,12 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
   };
 
   const dispatchChartLineRemoved = (line: TradingLineInfo) => {
-    if (line.type === 'ENTRY' && line.isLive === false) {
-      // Remove all chart lines when Limit entry is deleted
-      dispatch(setChartLines([]));
-    } else {
-      const lineIndex = chartLinesRef.current.findIndex((l) => l.id === line.id);
-      if (lineIndex !== -1) {
-        dispatch(removeChartLine({ index: lineIndex }));
-      }
+    dispatch(removeChartLine(line.id));
+    if (line.type === 'ENTRY') {
+      const lines2Delete = chartLinesRef.current.filter((l) => l.parentId === line.id);
+      lines2Delete.forEach((l) => {
+        dispatch(removeChartLine(l.id));
+      });
     }
   };
 
@@ -148,28 +150,45 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
 
   const dispatchSplitOrder = (line: TradingLineInfo) => {
     if (!symbol) return;
-    const position = currentPositionRef.current;
     const orders = currentOrdersRef.current;
-    if (!position || !tickerRef.current || !tickerRef.current.ticker || !tickerRef.current.tickerInfo) return;
+    if (!tickerRef.current || !tickerRef.current.ticker || !tickerRef.current.tickerInfo) return;
     const chartLine = chartLinesRef.current.find((c) => c.id === line.id);
-    if (!chartLine || !chartLine.orderId) return;
-    const order = orders.find((o) => o.orderId === chartLine.orderId);
-    if (!order) return;
+    if (!chartLine) return;
 
-    const chartLines = riskManagementService.splitOrder(position, order, tickerRef.current);
-    if (!chartLines.length) return;
+    const newLines = riskManagementService.splitOrder(line, tickerRef.current);
 
-    tradingService.closeOrder(order).then(() => {
-      chartLines.forEach((l) => {
-        if (line.type === 'TP') {
-          tradingService.addTakeProfit(position, l.price.toString(), l.qty.toString());
-        }
+    if (line.isLive) {
+      const position = currentPositionRef.current;
+      const order = orders.find((o) => o.orderId === chartLine.orderId);
 
-        if (line.type === 'SL') {
-          tradingService.addStopLoss(position, l.price.toString(), l.qty.toString());
-        }
+      if (!position || !order) return;
+
+      tradingService.closeOrder(order).then(() => {
+        newLines.forEach((l) => {
+          if (line.type === 'TP') {
+            tradingService.addTakeProfit(position, l.price.toString(), l.qty.toString());
+          }
+
+          if (line.type === 'SL') {
+            tradingService.addStopLoss(position, l.price.toString(), l.qty.toString());
+          }
+        });
       });
-    });
+    } else {
+      dispatch(removeChartLine(line.id));
+      dispatch(addChartLines(newLines));
+    }
+  };
+  const dispatchAddSend = (line: TradingLineInfo) => {
+    if (!symbol || !chartLinesRef.current) return;
+
+    dispatch(
+      setCreateLimitOrder({
+        side: line.side as OrderSideV5,
+        symbol: symbol,
+        chartLines: chartLinesRef.current.filter((c) => !c.isServer),
+      }),
+    );
   };
 
   const dispatchAddBE = () => {
@@ -193,7 +212,9 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
         type: line.type,
         side: line.side,
         draggable: line.draggable,
-        isLive: line.isServer,
+        isLive: line.isLive,
+        isServer: line.isServer,
+        parentId: line.parentId,
       };
       linePluginRef.current?.addLine(newLine);
     });

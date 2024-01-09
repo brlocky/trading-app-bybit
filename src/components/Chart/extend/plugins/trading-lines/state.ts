@@ -5,12 +5,14 @@ export type TradingLineSide = 'Buy' | 'Sell' | 'None';
 
 export interface TradingLineInfo {
   id: string;
+  parentId: string;
   price: number;
   qty: number;
   type: TradingLineType;
   side: TradingLineSide;
   draggable: boolean;
   isLive: boolean;
+  isServer: boolean;
 }
 
 export interface TradingLinedDragInfo {
@@ -25,6 +27,7 @@ export class TradingLinesState {
   private _addSL: Delegate<void> = new Delegate();
   private _addBE: Delegate<void> = new Delegate();
   private _addSplit: Delegate<TradingLineInfo> = new Delegate();
+  private _addSend: Delegate<TradingLineInfo> = new Delegate();
   private _lineChanged: Delegate<TradingLineInfo> = new Delegate();
   private _linesChanged: Delegate = new Delegate();
   private _lineDragged: Delegate<TradingLinedDragInfo> = new Delegate();
@@ -69,6 +72,14 @@ export class TradingLinesState {
     }
   }
 
+  addSend(id: string): void {
+    if (!this._lines.has(id)) return;
+    const line = this._lines.get(id);
+    if (line) {
+      this._addSend.fire(line);
+    }
+  }
+
   updateLine(id: string, line: TradingLineInfo): void {
     const existingLine = this._lines.get(id);
 
@@ -107,6 +118,10 @@ export class TradingLinesState {
 
   splitAdded(): Delegate<TradingLineInfo> {
     return this._addSplit;
+  }
+
+  sendAdded(): Delegate<TradingLineInfo> {
+    return this._addSend;
   }
 
   lineChanged(): Delegate<TradingLineInfo> {

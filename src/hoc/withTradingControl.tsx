@@ -6,18 +6,26 @@ import { toast } from 'react-toastify';
 import { mapKlineToCandleStickData } from '../mappers';
 import { useApi } from '../providers';
 import {
+  addRestingOrder,
   resetChartLines,
-  selectCreateOrder,
-  selectLines,
+  selectCreateLimitOrder,
+  selectCreateMarketOrder,
+  selectChartLines,
+  selectRestingOrders,
   setChartLines,
-  setCreateOrder,
+  setCreateLimitOrder,
+  setCreateMarketOrder,
   updateLeverage,
   updatePositionSize,
+  updateRestingOrder,
+  removeRestingOrder,
 } from '../slices';
 import {
   selectCurrentOrders,
   selectCurrentPosition,
+  selectFilledOrders,
   selectInterval,
+  selectPositions,
   selectSymbol,
   updateExecutions,
   updateKlines,
@@ -46,12 +54,17 @@ function withTradingControl<P extends WithTradingControlProps>(
     const symbol = useSelector(selectSymbol);
     const interval = useSelector(selectInterval);
     const currentOrders = useSelector(selectCurrentOrders);
+    const allPositions = useSelector(selectPositions);
     const currentPosition = useSelector(selectCurrentPosition);
-    const chartLines = useSelector(selectLines);
-    const createOrder = useSelector(selectCreateOrder);
+    const chartLines = useSelector(selectChartLines);
+    const createMarketOrder = useSelector(selectCreateMarketOrder);
+    const createLimitOrder = useSelector(selectCreateLimitOrder);
+    const restingOrders = useSelector(selectRestingOrders);
+    const filledOrders = useSelector(selectFilledOrders);
 
     const currentOrdersRef = useRef<AccountOrderV5[]>(currentOrders);
     const currentSymbolRef = useRef<string>(symbol || '');
+    const chartLinesRef = useRef<IChartLine[]>(chartLines);
     const apiClient = useApi(); // Use the useApi hook to access the API context
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
@@ -167,17 +180,84 @@ function withTradingControl<P extends WithTradingControlProps>(
     }, [symbol, interval]);
 
     useEffect(() => {
+      dispatch(resetChartLines());
+    }, [symbol]);
+
+    useEffect(() => {
       currentOrdersRef.current = currentOrders;
+
+      const missingOrders = currentOrders.filter((o) => {
+        return !chartLinesRef.current.find((l) => l.orderId === o.orderId);
+      });
+
+      const newLines: IChartLine[] = [];
+      missingOrders.forEach((o) => {
+        const restingOrder = restingOrders.find((r) => r.orderId === o.orderId);
+        restingOrder?.chartLines.forEach((c) => {
+          newLines.push(c);
+        });
+      });
+      if (newLines.length) {
+        const newChartLines = [...chartLinesRef.current.filter((l) => l.isServer), ...newLines];
+        dispatch(setChartLines(newChartLines));
+      }
     }, [currentOrders]);
+
+    useEffect(() => {
+      console.log('New filled orders', filledOrders);
+
+      const newRestingOrders = [...restingOrders];
+      filledOrders.filter((o) => {
+        const index = newRestingOrders.findIndex((r) => r.orderId === o.orderId);
+        if (index !== -1) {
+          const restingOrder = newRestingOrders[index];
+          newRestingOrders.splice(index, 1);
+
+          const position = allPositions.find((p) => p.symbol === restingOrder.symbol && p.size === restingOrder.qty);
+          if (position) {
+            const stoplosses = restingOrder.chartLines
+              .filter((l) => {
+                return l.type === 'SL' && !l.isLive;
+              })
+              .map((l) => {
+                return tradingService.addStopLoss(position, l.price.toString(), l.qty.toString());
+              });
+
+            const takeProfits = restingOrder.chartLines
+              .filter((l) => {
+                return l.type === 'TP' && !l.isLive;
+              })
+              .map((l) => {
+                return tradingService.addTakeProfit(position, l.price.toString(), l.qty.toString());
+              });
+
+            Promise.all([...stoplosses, ...takeProfits]).then((allOrders) => {
+              console.log('All Set', allOrders);
+            });
+
+            dispatch(removeRestingOrder(restingOrder.orderId));
+          }
+        }
+      });
+    }, [filledOrders, allPositions]);
 
     /**
      * Sync Position with chart line changes
      */
     useEffect(() => {
-      if (!symbol || !currentPosition) return;
+      chartLinesRef.current = chartLines;
+      if (!symbol) return;
+
+      // Update RestingOrder ChartLines
+      const liveLimitOrder = chartLines.find((l) => l.type === 'ENTRY' && l.isServer && !l.isLive);
+      const restingOrder = restingOrders.find((o) => o.orderId === liveLimitOrder?.orderId);
+      if (restingOrder) {
+        const newRestingOrders = { ...restingOrder, chartLines: [...chartLinesRef.current] };
+        dispatch(updateRestingOrder(newRestingOrders));
+      }
 
       // Close position
-      if (currentPosition && !chartLines.find((l) => l.type === 'ENTRY')) {
+      if (currentPosition && !chartLines.find((l) => l.type === 'ENTRY' && l.isLive)) {
         const promise = apiClient.submitOrder({
           category: 'linear',
           symbol: currentPosition.symbol,
@@ -195,7 +275,7 @@ function withTradingControl<P extends WithTradingControlProps>(
           if (o.orderId !== l.orderId) {
             return false;
           }
-          const orderPrice = l.type == 'TP' ? o.price : o.triggerPrice;
+          const orderPrice = l.type == 'SL' ? o.triggerPrice : o.price;
           return o.orderId === l.orderId && (Number(orderPrice) !== l.price || Number(o.qty) !== l.qty);
         });
         return index !== -1 ? currentOrdersRef.current[index] : false;
@@ -203,7 +283,7 @@ function withTradingControl<P extends WithTradingControlProps>(
 
       // Update Orders
       const ammendOrders = changedLines.map((l) => {
-        if (l.type === 'TP') {
+        if (l.type !== 'SL') {
           return apiClient.amendOrder({
             category: 'linear',
             symbol: symbol,
@@ -220,7 +300,7 @@ function withTradingControl<P extends WithTradingControlProps>(
           triggerPrice: l.price.toString(),
         });
       });
-      Promise.all(ammendOrders);
+      ammendOrders.length && Promise.all(ammendOrders);
 
       // Remove Orders
       const removedOrder = currentOrdersRef.current.filter((o) => {
@@ -235,7 +315,10 @@ function withTradingControl<P extends WithTradingControlProps>(
           orderId: l.orderId,
         });
       });
-      Promise.all(removeOrders);
+      removeOrders.length &&
+        Promise.all(removeOrders).then((r) => {
+          console.log('All orders removed', removeOrders, r);
+        });
     }, [chartLines]);
 
     /**
@@ -244,14 +327,17 @@ function withTradingControl<P extends WithTradingControlProps>(
     useEffect(() => {
       if (currentPosition) {
         const newChartLines: IChartLine[] = [];
+        const parentId = uuidv4();
         newChartLines.push({
-          id: uuidv4(),
+          id: parentId,
           type: 'ENTRY',
           side: currentPosition.side,
           price: Number(currentPosition.avgPrice),
           qty: Number(currentPosition.size),
           draggable: false,
           isServer: true,
+          isLive: true,
+          parentId: '',
         });
 
         const isLong = currentPosition.side === 'Buy';
@@ -275,32 +361,32 @@ function withTradingControl<P extends WithTradingControlProps>(
             draggable: true,
             orderId: o.orderId,
             isServer: true,
+            isLive: true,
+            parentId: parentId,
           };
 
           newChartLines.push(order);
         });
 
-        if (!checkLineDiffs(newChartLines, chartLines)) {
-          dispatch(setChartLines(newChartLines));
+        if (!checkLineDiffs(newChartLines, chartLinesRef.current)) {
+          const keepNotArmedLines = chartLinesRef.current.filter((l) => !l.isServer);
+          dispatch(setChartLines([...newChartLines, ...keepNotArmedLines]));
         }
       } else {
-        dispatch(resetChartLines());
+        const notLiveChartLines = chartLinesRef.current.filter((l) => !l.isLive);
+        dispatch(setChartLines([...notLiveChartLines]));
       }
     }, [currentPosition]);
 
     const checkLineDiffs = (arr1: IChartLine[], arr2: IChartLine[]): boolean => {
-      if (arr1.length !== arr2.length) {
-        return false;
-      }
-
       for (const obj1 of arr1) {
-        const matchingObject = arr2.find((obj2) => obj1.orderId === obj2.orderId);
+        const obj2 = arr2.find((obj2) => obj1.orderId === obj2.orderId);
 
-        if (!matchingObject) {
+        if (!obj2) {
           return false;
         }
 
-        if (obj1.price !== matchingObject.price || obj1.qty !== matchingObject.qty) {
+        if (obj1.price !== obj2.price || obj1.qty !== obj2.qty || obj1.isServer !== obj2.isServer || obj1.isLive !== obj2.isLive) {
           return false;
         }
       }
@@ -309,36 +395,35 @@ function withTradingControl<P extends WithTradingControlProps>(
     };
 
     useEffect(() => {
-      if (!createOrder) {
+      if (!createMarketOrder) {
         return;
       }
 
-      const entry = createOrder.chartLines.find((c) => c.type === 'ENTRY');
+      const entry = createMarketOrder.chartLines.find((c) => c.type === 'ENTRY' && !c.isServer);
       if (!entry) {
         return;
       }
 
       tradingService
         .openPosition({
-          symbol: createOrder.symbol,
+          symbol: createMarketOrder.symbol,
           qty: entry.qty.toString(),
-          side: createOrder.side,
-          type: 'Limit',
-          price: entry.price.toString(),
+          side: createMarketOrder.side,
+          type: 'Market',
         })
         .then((position) => {
           if (position) {
-            const stoplosses = createOrder.chartLines
+            const stoplosses = createMarketOrder.chartLines
               .filter((l) => {
-                return l.type === 'SL';
+                return l.type === 'SL' && !l.isServer;
               })
               .map((l) => {
                 return tradingService.addStopLoss(position, l.price.toString(), l.qty.toString());
               });
 
-            const takeProfits = createOrder.chartLines
+            const takeProfits = createMarketOrder.chartLines
               .filter((l) => {
-                return l.type === 'TP';
+                return l.type === 'TP' && !l.isServer;
               })
               .map((l) => {
                 return tradingService.addTakeProfit(position, l.price.toString(), l.qty.toString());
@@ -354,8 +439,64 @@ function withTradingControl<P extends WithTradingControlProps>(
         .catch((e) => {
           console.log('Error', e);
         });
-      dispatch(setCreateOrder(null));
-    }, [createOrder]);
+      dispatch(setCreateMarketOrder(null));
+    }, [createMarketOrder]);
+
+    useEffect(() => {
+      if (!createLimitOrder) {
+        return;
+      }
+
+      const entry = createLimitOrder.chartLines.find((c) => c.type === 'ENTRY' && !c.isLive);
+      if (!entry) {
+        console.error('could not find limit order');
+        return;
+      }
+
+      tradingService
+        .openPosition({
+          symbol: createLimitOrder.symbol,
+          qty: entry.qty.toString(),
+          side: createLimitOrder.side,
+          type: 'Limit',
+          price: entry.price.toString(),
+        })
+        .then((position) => {
+          if (position) {
+            // Find created position
+            const order = currentOrdersRef.current.find(
+              (o) =>
+                o.symbol === createLimitOrder.symbol &&
+                o.orderStatus === 'New' &&
+                o.orderType === 'Limit' &&
+                o.side === createLimitOrder.side &&
+                o.qty === entry.qty.toString(),
+            );
+
+            if (!order) {
+              console.error('Could not find Order');
+              return;
+            }
+            const newEntry = { ...entry, orderId: order.orderId, isServer: true };
+            const updatedChartLines = createLimitOrder.chartLines.map((l) => (l.type === 'ENTRY' ? newEntry : l));
+            dispatch(
+              addRestingOrder({
+                orderId: newEntry.orderId,
+                symbol: createLimitOrder.symbol,
+                price: entry.price.toString(),
+                qty: entry.qty.toString(),
+                chartLines: updatedChartLines,
+              }),
+            );
+          } else {
+            console.log('Fail to create order', position);
+          }
+        })
+        .catch((e) => {
+          console.log('Error', e);
+        });
+      dispatch(setCreateLimitOrder(null));
+    }, [createLimitOrder]);
 
     return <WrappedComponent {...(props as P)} isLoading={isLoading} />;
   };

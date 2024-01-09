@@ -10,6 +10,7 @@ import {
 } from 'lightweight-charts';
 import {
   averageWidthPerCharacter,
+  buttonHeight,
   buttonWidth,
   centreLabelHeight,
   centreLabelInlinePadding,
@@ -38,9 +39,11 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
   private _hoverTP = false;
   private _hoverSL = false;
   private _hoverBE = false;
+  private _hoverSend = false;
   private _hoverSplit = false;
   private _draggingFromPrice: number | null = null;
   private _isDragging = false;
+  private _hoveringID = '';
 
   constructor() {
     super();
@@ -58,12 +61,11 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
     }, this);
     this._mouseHandlers.clicked().subscribe((mousePosition: MousePosition | null) => {
       if (mousePosition && this._series) {
-        if (this._isDragging || !this._hoveringID) {
+        if (this._isDragging || this._draggingID) {
           return;
         }
         if (this._hoverRemove) {
           this.removeLine(this._hoveringID);
-          requestUpdate();
         } else if (this._hoverTP) {
           this.addTP();
         } else if (this._hoverSL) {
@@ -72,7 +74,10 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
           this.addBE();
         } else if (this._hoverSplit) {
           this.addSplit(this._hoveringID);
+        } else if (this._hoverSend) {
+          this.addSend(this._hoveringID);
         }
+        requestUpdate();
       }
     }, this);
 
@@ -97,12 +102,13 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
       if (this._isDragging && this._draggingID) {
         this.lineDragEnded(this._draggingID, this._draggingFromPrice as number);
         this._isDragging = false;
+        this._draggingID = null;
+        this._hoveringID = '';
         this._draggingFromPrice = null;
         this._chart?.applyOptions({
           handleScroll: true,
           handleScale: true,
         });
-        requestUpdate(); // Trigger an update to reflect the changes
       }
     }, this);
   }
@@ -125,7 +131,7 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
     const lines = this.lines();
     const rendererData = this._calculateRendererData(lines, this._lastMouseUpdate);
     this._currentCursor = null;
-    if (rendererData?.lines.some((l) => l.hoverRemove || l.hoverTP || l.hoverSL || l.hoverBE || l.hoverSplit)) {
+    if (rendererData?.lines.some((l) => l.hoverRemove || l.hoverTP || l.hoverSL || l.hoverBE || l.hoverSplit || l.hoverSend)) {
       this._currentCursor = 'pointer';
     } else if (rendererData?.lines.some((l) => l.hoverLabel)) {
       this._currentCursor = 'move';
@@ -166,7 +172,7 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
         const priceDiff = existingLine.price - oldPrice;
 
         this.lines().forEach((l) => {
-          if (l.type !== 'ENTRY') {
+          if (l.type !== 'ENTRY' && !l.isLive) {
             const formattedPriceDiff = Number(this._series?.priceFormatter().format(l.price + priceDiff));
             l.price = formattedPriceDiff;
             this.updateLine(l.id, l);
@@ -245,25 +251,24 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
     return Math.abs(mousePosition.x - buttonCentreX) < buttonWidth / 2;
   }
 
-  /*   _isHoveringSendButton(mousePosition: MousePosition | null, timescaleWidth: number, y: number): boolean {
+  _isHoveringSendButton(mousePosition: MousePosition | null, timescaleWidth: number, y: number): boolean {
     if (!mousePosition || !timescaleWidth) return false;
 
     const distanceY = Math.abs(mousePosition.y - y);
-    if (distanceY > centreLabelHeight / 2) return false;
+    if (distanceY > buttonHeight / 2) return false;
+    const labelWidth = centreLabelInlinePadding * 2 + 'Send'.length * averageWidthPerCharacter;
 
-    const buttonCentreX = timescaleWidth - iconPadding - sendButtonWidth / 2;
+    const buttonCentreX = timescaleWidth - labelWidth / 2;
 
-    return Math.abs(mousePosition.x - buttonCentreX) < sendButtonWidth / 2;
-  } */
-
-  private _hoveringID = '';
+    return Math.abs(mousePosition.x - buttonCentreX) < labelWidth / 2;
+  }
 
   _calculdateTextWidth(textLength: number) {
-    return centreLabelInlinePadding * 2 + removeButtonWidth + textLength * averageWidthPerCharacter;
+    return centreLabelInlinePadding * 2 + removeButtonWidth + removeButtonWidth + textLength * averageWidthPerCharacter;
   }
 
   _isHoverButtons() {
-    return this._hoverRemove || this._hoverTP || this._hoverSL || this._hoverBE || this._hoverSplit;
+    return this._hoverRemove || this._hoverTP || this._hoverSL || this._hoverBE || this._hoverSplit || this._hoverSend;
   }
   /**
    * We are calculating this here instead of within a view
@@ -282,7 +287,6 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
     let closestDistance = Infinity;
     let closestIndex = -1;
 
-    const entry = tradingLines.find((l) => l.type === 'ENTRY');
     const calculatePnl = (entry: TradingLineInfo, line: TradingLineInfo): string => {
       // Determine the direction of the trade
       const isLongTrade = entry.side === 'Buy';
@@ -290,7 +294,7 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
       let pnl = 0;
       if (line.type === 'ENTRY') {
         const price = this.getMarketPrice();
-        if (price > 0) pnl = isLongTrade ? entry.qty * (price - entry.price) : entry.qty * (entry.price - price);
+        if (price > 0 && entry.isLive) pnl = isLongTrade ? entry.qty * (price - entry.price) : entry.qty * (entry.price - price);
       } else {
         pnl = isLongTrade ? line.qty * (line.price - entry.price) : line.qty * (entry.price - line.price);
       }
@@ -309,9 +313,9 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
         }
       }
 
-      const text = `${l.type} ${l.price}@${l.qty} `;
+      const entry = tradingLines.find((tl) => tl.type === 'ENTRY' && tl.isLive === l.isLive);
+      const text = ` ${l.qty}@${l.price} `;
       const pnl = entry ? calculatePnl(entry, l) : '';
-
       return {
         y,
         text: text,
@@ -320,6 +324,7 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
         hoverTP: false,
         hoverSL: false,
         hoverBE: false,
+        hoverSend: false,
         hoverSplit: false,
         pnl: pnl,
         line: l,
@@ -328,47 +333,59 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
       };
     });
 
-    this._hoveringID = '';
     if (!this._isDragging) {
-      this._draggingID = null;
-    }
-    this._hoverLabel = this._hoverRemove = this._hoverSL = this._hoverTP = this._hoverBE = this._hoverSplit = false;
-    if (closestIndex >= 0 && closestDistance < showCentreLabelDistance) {
-      const timescaleWidth = this._chart?.timeScale().width() ?? 0;
-      const a = lines[closestIndex];
-      const text = a.text;
-      const labelWidth = this._calculdateTextWidth(text.length);
+      this._hoverLabel = this._hoverRemove = this._hoverSL = this._hoverTP = this._hoverBE = this._hoverSplit = this._hoverSend = false;
+      if (closestIndex >= 0 && closestDistance < showCentreLabelDistance) {
+        const timescaleWidth = this._chart?.timeScale().width() ?? 0;
+        const a = lines[closestIndex];
+        const text = a.text;
+        const labelWidth = this._calculdateTextWidth(text.length);
 
-      // this._hoverSend = a.showSend && this._isHoveringSendButton(mousePosition, timescaleWidth, a.y);
-      this._hoverRemove = this._isHoveringRemoveButton(mousePosition, timescaleWidth, a.y, labelWidth);
+        this._hoverRemove = this._isHoveringRemoveButton(mousePosition, timescaleWidth, a.y, labelWidth);
 
-      if (a.line.type === 'ENTRY') {
-        this._hoverTP = this._isHoveringTP(mousePosition, timescaleWidth, a.y, labelWidth);
-        this._hoverSL = this._isHoveringSL(mousePosition, timescaleWidth, a.y, labelWidth);
-        this._hoverBE = this._isHoveringBE(mousePosition, timescaleWidth, a.y, labelWidth);
-      } else {
-        this._hoverSplit = this._isHoveringSL(mousePosition, timescaleWidth, a.y, labelWidth);
-      }
+        if (a.line.type === 'ENTRY') {
+          this._hoverTP = this._isHoveringTP(mousePosition, timescaleWidth, a.y, labelWidth);
+          this._hoverSL = this._isHoveringSL(mousePosition, timescaleWidth, a.y, labelWidth);
+          this._hoverBE = this._isHoveringBE(mousePosition, timescaleWidth, a.y, labelWidth);
+          this._hoverSend = this._isHoveringSendButton(mousePosition, timescaleWidth, a.y);
+        } else {
+          this._hoverSplit = this._isHoveringSL(mousePosition, timescaleWidth, a.y, labelWidth);
+        }
 
-      if (!this._isHoverButtons()) {
-        this._hoverLabel =
-          this._isHoveringLine(mousePosition, timescaleWidth, a.y) || this._isHoveringLabel(mousePosition, timescaleWidth, a.y, labelWidth);
-      }
+        if (!this._isHoverButtons()) {
+          this._hoverLabel =
+            this._isHoveringLine(mousePosition, timescaleWidth, a.y) ||
+            this._isHoveringLabel(mousePosition, timescaleWidth, a.y, labelWidth);
+        }
 
-      lines[closestIndex] = {
-        ...lines[closestIndex],
-        hoverRemove: this._hoverRemove,
-        hoverLabel: this._hoverLabel,
-        hoverTP: this._hoverTP,
-        hoverSL: this._hoverSL,
-        hoverBE: this._hoverBE,
-        hoverSplit: this._hoverSplit,
-      };
-      if (this._hoverRemove || this._hoverLabel || this._hoverTP || this._hoverSL || this._hoverBE || this._hoverSplit) {
-        this._hoveringID = a.line.id;
-      }
-      if (this._hoverLabel && a.line.draggable && !this._isDragging) {
-        this._draggingID = a.line.id;
+        lines[closestIndex] = {
+          ...lines[closestIndex],
+          hoverRemove: this._hoverRemove,
+          hoverLabel: this._hoverLabel,
+          hoverTP: this._hoverTP,
+          hoverSL: this._hoverSL,
+          hoverBE: this._hoverBE,
+          hoverSend: this._hoverSend,
+          hoverSplit: this._hoverSplit,
+        };
+        if (
+          this._hoverRemove ||
+          this._hoverLabel ||
+          this._hoverTP ||
+          this._hoverSL ||
+          this._hoverBE ||
+          this._hoverSplit ||
+          this._hoverSend
+        ) {
+          this._hoveringID = a.line.id;
+        } else {
+          this._hoveringID = '';
+        }
+        if (this._hoverLabel && a.line.draggable && !this._isDragging) {
+          this._draggingID = a.line.id;
+        } else {
+          this._draggingID = null;
+        }
       }
     }
     return {

@@ -15,6 +15,7 @@ export interface LineRendererData {
   hoverTP: boolean;
   hoverSL: boolean;
   hoverBE: boolean;
+  hoverSend: boolean;
   hoverSplit: boolean;
   showSend: boolean;
 }

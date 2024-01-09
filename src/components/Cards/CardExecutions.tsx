@@ -15,11 +15,13 @@ export default function CardExecutions() {
         <HeaderCol>Price</HeaderCol>
         <HeaderCol>Qty</HeaderCol>
         <HeaderCol>PnL</HeaderCol>
-        {/* <HeaderCol>Date</HeaderCol> */}
+        <HeaderCol>Date</HeaderCol>
       </HeaderRow>
       <tbody>
         {executions.length ? (
           executions.map((e, index) => {
+            const time = new Date(parseInt(e.execTime, 10)).toTimeString().split(' ')[0];
+
             return (
               <Row key={index}>
                 <Col onClick={() => dispatch(updateSymbol(e.symbol))}>{e.symbol}</Col>
@@ -29,7 +31,7 @@ export default function CardExecutions() {
                 <Col>
                   <span className="text-red-600">{formatCurrencyValue(e.execFee)}</span>
                 </Col>
-                {/* <Col>{new Date(Number(e.execTime)).toISOString()}</Col> */}
+                <Col>{time}</Col>
               </Row>
             );
           })

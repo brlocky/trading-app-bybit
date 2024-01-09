@@ -23,6 +23,7 @@ interface ISymbolState {
   kline: CandlestickDataWithVolume | undefined;
   klines: CandlestickDataWithVolume[];
   lastTrades: PublicTradeV5[];
+  filledOrders: AccountOrderV5[];
 }
 
 const initialState: ISymbolState = {
@@ -36,6 +37,7 @@ const initialState: ISymbolState = {
   kline: undefined,
   klines: [],
   lastTrades: [],
+  filledOrders: [],
 };
 
 const symbolSlice = createSlice({
@@ -78,8 +80,13 @@ const symbolSlice = createSlice({
         return;
       }
 
+      const newFilledOrders: AccountOrderV5[] = [];
       newOrders.forEach((newOrder) => {
         const index = currentOrders.findIndex((o) => o.orderId === newOrder.orderId);
+
+        if (newOrder.orderStatus === 'Filled') {
+          newFilledOrders.push(newOrder);
+        }
 
         if (['Rejected', 'Filled', 'Cancelled', 'Triggered', 'Deactivated'].includes(newOrder.orderStatus)) {
           // Remove Order
@@ -97,6 +104,9 @@ const symbolSlice = createSlice({
       });
 
       state.orders = currentOrders;
+      if (newFilledOrders.length) {
+        state.filledOrders = [...newFilledOrders, ...state.filledOrders];
+      }
     },
     updateExecutions(state, action: PayloadAction<ExecutionV5[]>) {
       const newExecutions = action.payload.filter((e) => !state.executions.find((s) => s.execId === e.execId));
@@ -166,3 +176,4 @@ export const selectCurrentPosition = (state: RootState) => state.symbol.position
 export const selectWallet = (state: RootState) => state.symbol.wallet;
 export const selectExecutions = (state: RootState) => state.symbol.executions;
 export const selectLastTrades = (state: RootState) => state.symbol.lastTrades;
+export const selectFilledOrders = (state: RootState) => state.symbol.filledOrders;
