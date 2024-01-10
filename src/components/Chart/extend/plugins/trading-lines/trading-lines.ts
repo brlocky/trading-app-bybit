@@ -88,10 +88,6 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
 
         this._draggingFromPrice = this.getLinePrice(this._draggingID);
 
-        if (this._hoverLabel && !line.draggable) {
-          this._draggingID = null;
-        }
-
         if (this._hoverTP || this._hoverSL) {
           this._draggingID = null;
           const parentEntry = this.getLine(line.id);
@@ -354,7 +350,7 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
       let pnl = 0;
       if (line.type === 'ENTRY') {
         const price = this.getMarketPrice();
-        if (price > 0 && entry.isLive) pnl = isLongTrade ? entry.qty * (price - entry.price) : entry.qty * (entry.price - price);
+        if (entry.isLive) pnl = isLongTrade ? entry.qty * (price - entry.price) : entry.qty * (entry.price - price);
       } else {
         pnl = isLongTrade ? line.qty * (line.price - entry.price) : line.qty * (entry.price - line.price);
       }
@@ -373,7 +369,7 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
         }
       }
 
-      const entry = tradingLines.find((tl) => tl.type === 'ENTRY' && tl.id === l.parentId);
+      const entry = tradingLines.find((tl) => tl.type === 'ENTRY' && (tl.id === l.parentId || tl.id === l.id));
       const text = ` ${l.qty}@${l.price} `;
       const pnl = entry ? calculatePnl(entry, l) : '';
       const movingLine = tradingLines.find((tl) => tl.id === 'moving-line');
@@ -420,15 +416,16 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
           this._hoverTP = closestLine.canTP && this._isHoveringTP(mousePosition, timescaleWidth, closestLine.y, labelWidth);
           this._hoverSL = closestLine.canSL && this._isHoveringSL(mousePosition, timescaleWidth, closestLine.y, labelWidth);
           this._hoverBE = this._isHoveringBE(mousePosition, timescaleWidth, closestLine.y, labelWidth);
-          this._hoverSend = this._isHoveringSendButton(mousePosition, timescaleWidth, closestLine.y);
+          this._hoverSend = !closestLine.line.isServer && this._isHoveringSendButton(mousePosition, timescaleWidth, closestLine.y);
         } else {
           this._hoverSplit = this._isHoveringBE(mousePosition, timescaleWidth, closestLine.y, labelWidth);
         }
 
         if (!this._isHoverButtons()) {
           this._hoverLabel =
-            this._isHoveringLine(mousePosition, timescaleWidth, closestLine.y) ||
-            this._isHoveringLabel(mousePosition, timescaleWidth, closestLine.y, labelWidth);
+            closestLine.line.draggable &&
+            (this._isHoveringLine(mousePosition, timescaleWidth, closestLine.y) ||
+              this._isHoveringLabel(mousePosition, timescaleWidth, closestLine.y, labelWidth));
         }
 
         lines[closestIndex] = {

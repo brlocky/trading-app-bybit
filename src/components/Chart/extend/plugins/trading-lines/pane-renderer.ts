@@ -275,6 +275,7 @@ export class PaneRenderer extends PaneRendererBase {
 
     const pnl = Number(activeLabel.pnl);
 
+    
     const positivePnl = pnl >= 0;
     const isEntry = activeLabel.line.type === 'ENTRY';
 
