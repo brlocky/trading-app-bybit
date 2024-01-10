@@ -207,6 +207,7 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
       const parentEntry = this.lines().find((l) => l.id === line.parentId && l.type === 'ENTRY');
       if (
         parentEntry &&
+        (lineId === 'moving-line' || !parentEntry.isLive) &&
         ((parentEntry.side === 'Buy' && line.type === 'TP' && price <= parentEntry.price) ||
           (parentEntry.side === 'Buy' && line.type === 'SL' && price >= parentEntry.price) ||
           (parentEntry.side === 'Sell' && line.type === 'TP' && price >= parentEntry.price) ||
