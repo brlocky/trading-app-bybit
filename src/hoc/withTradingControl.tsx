@@ -38,7 +38,7 @@ import { AppDispatch } from '../store';
 import { IChartLine } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { TradingService } from '../services';
-import { TradingLineType } from '../components/Chart/extend/plugins/trading-lines/state';
+import { getOrderPrice, getOrderType, isEntry } from '../utils/tradeUtils';
 
 const accountType = 'CONTRACT';
 
@@ -326,9 +326,29 @@ function withTradingControl<P extends WithTradingControlProps>(
      */
     useEffect(() => {
       if (currentPosition) {
-        const newChartLines: IChartLine[] = [];
         const parentId = uuidv4();
-        newChartLines.push({
+
+        // Create ChartLines from Orders
+        const newChartLines: IChartLine[] = currentOrdersRef.current
+          .filter((o) => !isEntry(o))
+          .map((o) => {
+            const orderType = getOrderType(o);
+            const price = getOrderPrice(o);
+            return {
+              id: uuidv4(),
+              type: orderType,
+              side: currentPosition.side,
+              price: price,
+              qty: Number(o.qty),
+              draggable: true,
+              orderId: o.orderId,
+              isServer: true,
+              isLive: true,
+              parentId: parentId,
+            };
+          });
+
+        const newEntry: IChartLine = {
           id: parentId,
           type: 'ENTRY',
           side: currentPosition.side,
@@ -337,40 +357,26 @@ function withTradingControl<P extends WithTradingControlProps>(
           draggable: false,
           isServer: true,
           isLive: true,
-          parentId: '',
-        });
-
-        const isLong = currentPosition.side === 'Buy';
-
-        // Create ChartLines from Orders
-        currentOrdersRef.current.forEach((o) => {
-          let orderType: TradingLineType = 'TP';
-          if (isLong) {
-            orderType = o.triggerDirection === 0 ? 'TP' : 'SL';
-          } else {
-            orderType = o.triggerDirection === 0 ? 'TP' : 'SL';
-          }
-          const price = orderType === 'SL' ? Number(o.triggerPrice) : Number(o.price);
-
-          const order: IChartLine = {
-            id: uuidv4(),
-            type: orderType,
-            side: currentPosition.side,
-            price: price,
-            qty: Number(o.qty),
-            draggable: true,
-            orderId: o.orderId,
-            isServer: true,
-            isLive: true,
-            parentId: parentId,
-          };
-
-          newChartLines.push(order);
-        });
+          parentId: 'ENTRY',
+        };
+        newChartLines.push(newEntry);
 
         if (!checkLineDiffs(newChartLines, chartLinesRef.current)) {
-          const keepNotArmedLines = chartLinesRef.current.filter((l) => !l.isServer);
-          dispatch(setChartLines([...newChartLines, ...keepNotArmedLines]));
+          const chartLineEntry = chartLinesRef.current.find(
+            (e) => e.type === 'ENTRY' && e.side === newEntry.side && e.price === newEntry.price && e.qty === newEntry.qty,
+          );
+
+          if (!chartLineEntry) {
+            console.error('Market order');
+            dispatch(setChartLines([...newChartLines, ...chartLinesRef.current]));
+            return;
+          }
+
+          const finalChartLines = [
+            ...chartLinesRef.current.filter((c) => c.id !== chartLineEntry.id && c.parentId !== chartLineEntry.id),
+            ...newChartLines,
+          ];
+          dispatch(setChartLines(finalChartLines));
         }
       } else {
         const notLiveChartLines = chartLinesRef.current.filter((l) => !l.isLive);
@@ -399,7 +405,7 @@ function withTradingControl<P extends WithTradingControlProps>(
         return;
       }
 
-      const entry = createMarketOrder.chartLines.find((c) => c.type === 'ENTRY' && !c.isServer);
+      const entry = createMarketOrder.chartLines.find((c) => c.type === 'ENTRY');
       if (!entry) {
         return;
       }
@@ -414,17 +420,13 @@ function withTradingControl<P extends WithTradingControlProps>(
         .then((position) => {
           if (position) {
             const stoplosses = createMarketOrder.chartLines
-              .filter((l) => {
-                return l.type === 'SL' && !l.isServer;
-              })
+              .filter((l) => l.type === 'SL')
               .map((l) => {
                 return tradingService.addStopLoss(position, l.price.toString(), l.qty.toString());
               });
 
             const takeProfits = createMarketOrder.chartLines
-              .filter((l) => {
-                return l.type === 'TP' && !l.isServer;
-              })
+              .filter((l) => l.type === 'TP')
               .map((l) => {
                 return tradingService.addTakeProfit(position, l.price.toString(), l.qty.toString());
               });
@@ -433,7 +435,7 @@ function withTradingControl<P extends WithTradingControlProps>(
               console.log('All Set', allOrders);
             });
           } else {
-            console.log('Fail to create oreder', position);
+            toast.error('Fail to Open Market Order');
           }
         })
         .catch((e) => {
@@ -447,7 +449,7 @@ function withTradingControl<P extends WithTradingControlProps>(
         return;
       }
 
-      const entry = createLimitOrder.chartLines.find((c) => c.type === 'ENTRY' && !c.isLive);
+      const entry = createLimitOrder.chartLines.find((c) => c.type === 'ENTRY');
       if (!entry) {
         console.error('could not find limit order');
         return;
@@ -477,8 +479,17 @@ function withTradingControl<P extends WithTradingControlProps>(
               console.error('Could not find Order');
               return;
             }
-            const newEntry = { ...entry, orderId: order.orderId, isServer: true };
+
+            const newEntry = { ...entry, orderId: order.orderId, isServer: true, isLive: false };
             const updatedChartLines = createLimitOrder.chartLines.map((l) => (l.type === 'ENTRY' ? newEntry : l));
+
+            const newChartLines = [
+              ...chartLinesRef.current.filter((c) => c.id !== entry.id && c.parentId !== entry.id),
+              ...updatedChartLines,
+            ];
+
+            dispatch(setChartLines(newChartLines));
+
             dispatch(
               addRestingOrder({
                 orderId: newEntry.orderId,
@@ -489,7 +500,7 @@ function withTradingControl<P extends WithTradingControlProps>(
               }),
             );
           } else {
-            console.log('Fail to create order', position);
+            toast.error('Fail to Create Limit Order');
           }
         })
         .catch((e) => {

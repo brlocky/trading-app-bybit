@@ -18,6 +18,8 @@ export interface LineRendererData {
   hoverSend: boolean;
   hoverSplit: boolean;
   showSend: boolean;
+  canTP: boolean;
+  canSL: boolean;
 }
 
 export interface IRendererData {

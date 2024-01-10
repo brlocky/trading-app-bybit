@@ -16,10 +16,12 @@ import {
   selectTicker,
   setChartLines,
   setCreateLimitOrder,
+  addChartLine,
 } from '../../slices';
 import { IChartLine } from '../../types';
 import { TradingLineInfo, TradingLinedDragInfo } from './extend/plugins/trading-lines/state';
 import { TradingLines } from './extend/plugins/trading-lines/trading-lines';
+import { toast } from 'react-toastify';
 
 interface LineControlManagerProps {
   chartInstance: IChartApi;
@@ -52,8 +54,8 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
     linePluginRef.current.lineDragged().subscribe(dispatchChartLineUpdate, this);
     linePluginRef.current.linesDragged().subscribe(dispatchChartLinesUpdate, this);
     linePluginRef.current.lineRemoved().subscribe(dispatchChartLineRemoved, this);
-    linePluginRef.current.tpAdded().subscribe(dispatchAddTP, this);
-    linePluginRef.current.slAdded().subscribe(dispatchAddSL, this);
+    linePluginRef.current.tpAdded().subscribe(dispatchAddTPSL, this);
+    linePluginRef.current.slAdded().subscribe(dispatchAddTPSL, this);
     linePluginRef.current.beAdded().subscribe(dispatchAddBE, this);
     linePluginRef.current.splitAdded().subscribe(dispatchSplitOrder, this);
     linePluginRef.current.sendAdded().subscribe(dispatchAddSend, this);
@@ -63,8 +65,8 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
       linePluginRef.current?.lineDragged().unsubscribe(dispatchChartLineUpdate);
       linePluginRef.current?.linesDragged().unsubscribe(dispatchChartLinesUpdate);
       linePluginRef.current?.lineRemoved().unsubscribe(dispatchChartLineRemoved);
-      linePluginRef.current?.tpAdded().unsubscribe(dispatchAddTP);
-      linePluginRef.current?.slAdded().unsubscribe(dispatchAddSL);
+      linePluginRef.current?.tpAdded().unsubscribe(dispatchAddTPSL);
+      linePluginRef.current?.slAdded().unsubscribe(dispatchAddTPSL);
       linePluginRef.current?.beAdded().unsubscribe(dispatchAddBE);
       linePluginRef.current?.splitAdded().unsubscribe(dispatchSplitOrder);
       linePluginRef.current?.sendAdded().unsubscribe(dispatchAddSend);
@@ -122,33 +124,27 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
     }
   };
 
-  const dispatchAddTP = () => {
+  const dispatchAddTPSL = (line: TradingLineInfo) => {
     if (!symbol) return;
-    const position = currentPositionRef.current;
-    const orders = currentOrdersRef.current;
-    if (!position || !tickerRef.current || !tickerRef.current.ticker || !tickerRef.current.tickerInfo) return;
-    const chartLine = riskManagementService.getTPLine(position, orders, tickerRef.current);
-    if (!chartLine) {
-      return;
-    }
+    if (!tickerRef.current || !tickerRef.current.ticker || !tickerRef.current.tickerInfo) return;
 
-    tradingService.addTakeProfit(position, chartLine.price.toString(), chartLine.qty.toString());
+    const entry = chartLinesRef.current.find((c) => c.id === line.parentId && c.type === 'ENTRY');
+    if (!entry) return;
+
+    const chartLine = riskManagementService.getTPSLLine(entry, line, tickerRef.current);
+    if (!chartLine) return;
+
+    const position = currentPositionRef.current;
+    if (position) {
+      line.type === 'TP' && tradingService.addTakeProfit(position, chartLine.price.toString(), chartLine.qty.toString());
+      line.type === 'SL' && tradingService.addStopLoss(position, chartLine.price.toString(), chartLine.qty.toString());
+    } else {
+      dispatch(addChartLine(chartLine));
+    }
   };
 
-  const dispatchAddSL = () => {
-    if (!symbol) return;
-    const position = currentPositionRef.current;
-    const orders = currentOrdersRef.current;
-    if (!position || !tickerRef.current || !tickerRef.current.ticker || !tickerRef.current.tickerInfo) return;
-    const chartLine = riskManagementService.getSLLine(position, orders, tickerRef.current);
-    if (!chartLine) {
-      return;
-    }
-
-    tradingService.addStopLoss(position, chartLine.price.toString(), chartLine.qty.toString());
-  };
-
-  const dispatchSplitOrder = (line: TradingLineInfo) => {
+  // TODO move to service or action
+  const dispatchSplitOrder = async (line: TradingLineInfo) => {
     if (!symbol) return;
     const orders = currentOrdersRef.current;
     if (!tickerRef.current || !tickerRef.current.ticker || !tickerRef.current.tickerInfo) return;
@@ -156,37 +152,42 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
     if (!chartLine) return;
 
     const newLines = riskManagementService.splitOrder(line, tickerRef.current);
-
+    if (newLines.length !== 2) {
+      toast.error('Cannot Split order probably already using lowest size');
+      return;
+    }
     if (line.isLive) {
       const position = currentPositionRef.current;
       const order = orders.find((o) => o.orderId === chartLine.orderId);
 
       if (!position || !order) return;
 
-      tradingService.closeOrder(order).then(() => {
-        newLines.forEach((l) => {
-          if (line.type === 'TP') {
-            tradingService.addTakeProfit(position, l.price.toString(), l.qty.toString());
-          }
+      await tradingService.closeOrder(order);
+      const promises = newLines.map(async (l) => {
+        if (line.type === 'TP') {
+          return tradingService.addTakeProfit(position, l.price.toString(), l.qty.toString());
+        }
 
-          if (line.type === 'SL') {
-            tradingService.addStopLoss(position, l.price.toString(), l.qty.toString());
-          }
-        });
+        if (line.type === 'SL') {
+          return tradingService.addStopLoss(position, l.price.toString(), l.qty.toString());
+        }
       });
+
+      await Promise.all(promises);
     } else {
-      dispatch(removeChartLine(line.id));
-      dispatch(addChartLines(newLines));
+      const newChartLines = chartLinesRef.current.filter((c) => c.id !== line.id).concat(newLines);
+      dispatch(setChartLines(newChartLines));
     }
   };
   const dispatchAddSend = (line: TradingLineInfo) => {
     if (!symbol || !chartLinesRef.current) return;
 
+    const tradeChartLines = chartLinesRef.current.filter((c) => c.id === line.id || c.parentId === line.id);
     dispatch(
       setCreateLimitOrder({
         side: line.side as OrderSideV5,
         symbol: symbol,
-        chartLines: chartLinesRef.current.filter((c) => !c.isServer),
+        chartLines: tradeChartLines,
       }),
     );
   };

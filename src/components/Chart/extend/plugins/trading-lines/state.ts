@@ -13,6 +13,7 @@ export interface TradingLineInfo {
   draggable: boolean;
   isLive: boolean;
   isServer: boolean;
+  isPreview?: boolean;
 }
 
 export interface TradingLinedDragInfo {
@@ -23,8 +24,8 @@ export interface TradingLinedDragInfo {
 export class TradingLinesState {
   private _lineAdded: Delegate<TradingLineInfo> = new Delegate();
   private _lineRemoved: Delegate<TradingLineInfo> = new Delegate();
-  private _addTP: Delegate<void> = new Delegate();
-  private _addSL: Delegate<void> = new Delegate();
+  private _addTP: Delegate<TradingLineInfo> = new Delegate();
+  private _addSL: Delegate<TradingLineInfo> = new Delegate();
   private _addBE: Delegate<void> = new Delegate();
   private _addSplit: Delegate<TradingLineInfo> = new Delegate();
   private _addSend: Delegate<TradingLineInfo> = new Delegate();
@@ -52,12 +53,18 @@ export class TradingLinesState {
     this._marketPrice = price;
   }
 
-  addTP(): void {
-    this._addTP.fire();
+  addTP(id: string): void {
+    const line = this._lines.get(id);
+    if (line) {
+      this._addTP.fire(line);
+    }
   }
 
-  addSL(): void {
-    this._addSL.fire();
+  addSL(id: string): void {
+    const line = this._lines.get(id);
+    if (line) {
+      this._addSL.fire(line);
+    }
   }
 
   addBE(): void {
@@ -104,11 +111,11 @@ export class TradingLinesState {
     return this._lineRemoved;
   }
 
-  tpAdded(): Delegate<void> {
+  tpAdded(): Delegate<TradingLineInfo> {
     return this._addTP;
   }
 
-  slAdded(): Delegate<void> {
+  slAdded(): Delegate<TradingLineInfo> {
     return this._addSL;
   }
 
@@ -166,6 +173,10 @@ export class TradingLinesState {
     });
 
     this._linesChanged.fire();
+  }
+
+  getLine(id: string): TradingLineInfo | null {
+    return this._lines.get(id) || null;
   }
 
   getLinePrice(id: string): number {

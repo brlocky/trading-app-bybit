@@ -53,8 +53,8 @@ export interface IChartLine {
   price: number;
   qty: number;
   draggable: boolean;
-  orderId?: string;
   isServer: boolean;
   isLive: boolean;
   parentId: string;
+  orderId?: string;
 }

@@ -17,6 +17,7 @@ import {
   pnlWidth,
   profitIcon,
   removeButtonWidth,
+  statusIcon,
 } from './constants';
 import { LineRendererData } from './irenderer-data';
 import { PaneRendererBase } from './renderer-base';
@@ -32,14 +33,16 @@ export class PaneRenderer extends PaneRendererBase {
   _drawTradingLines(scope: BitmapCoordinatesRenderingScope) {
     if (!this._data?.lines) return;
     const color = this._data.color;
-    this._data.lines.forEach((line) => {
+
+    this._data.lines.forEach((label) => {
+      const lineColor = label.line.type === 'TP' ? 'darkgreen' : label.line.type === 'SL' ? 'red' : color;
       this._drawHorizontalLine(scope, {
         width: scope.mediaSize.width,
         lineWidth: 1,
-        color,
-        y: line.y,
+        color: label.line.isPreview ? 'blue' : lineColor,
+        y: label.y,
       });
-      this._drawTradingLineLabels(scope, line);
+      this._drawTradingLineLabels(scope, label);
     });
   }
 
@@ -59,9 +62,9 @@ export class PaneRenderer extends PaneRendererBase {
 
       ctx.save();
       ctx.beginPath();
-      ctx.lineWidth = data.lineWidth;
+      ctx.lineWidth = data.lineWidth * scope.verticalPixelRatio;
       ctx.strokeStyle = data.color;
-      const dash = 4 * scope.horizontalPixelRatio;
+      const dash = 3 * scope.horizontalPixelRatio;
       ctx.setLineDash([dash, dash]);
       ctx.moveTo(0, yCentre);
       ctx.lineTo(data.width * scope.horizontalPixelRatio, yCentre);
@@ -72,7 +75,7 @@ export class PaneRenderer extends PaneRendererBase {
   }
 
   _calculateLabelWidth(textLength: number) {
-    return centreLabelInlinePadding * 2 + removeButtonWidth + removeButtonWidth + textLength * averageWidthPerCharacter;
+    return centreLabelInlinePadding * 2 + 3 * removeButtonWidth + textLength * averageWidthPerCharacter;
   }
 
   _drawTradingLineLabels(scope: BitmapCoordinatesRenderingScope, activeLabel: LineRendererData) {
@@ -111,11 +114,28 @@ export class PaneRenderer extends PaneRendererBase {
       ctx.resetTransform();
 
       // draw button divider
-      const directionEndX = labelXDimensions.position + removeButtonWidth * scope.horizontalPixelRatio;
+      const endArrowIcon = labelXDimensions.position + removeButtonWidth * scope.horizontalPixelRatio;
       ctx.beginPath();
-      const directionDividerDimensions = positionsLine(directionEndX / scope.horizontalPixelRatio, scope.horizontalPixelRatio, 1);
+      const directionDividerDimensions = positionsLine(endArrowIcon / scope.horizontalPixelRatio, scope.horizontalPixelRatio, 1);
       ctx.fillStyle = '#000000';
       ctx.fillRect(directionDividerDimensions.position, yDimensions.position, directionDividerDimensions.length, yDimensions.length);
+      ctx.resetTransform();
+
+      // draw Status Indicator
+      const startStatusIcon = directionDividerDimensions.position + directionDividerDimensions.length + iconPadding;
+      ctx.beginPath();
+      ctx.translate(startStatusIcon, (activeLabel.y - 6) * scope.verticalPixelRatio);
+      ctx.scale(scalingArrow, scalingArrow);
+      ctx.fillStyle = activeLabel.line.isLive ? 'green' : activeLabel.line.isServer ? 'yellow' : 'gray';
+      ctx.fill(statusIcon, 'evenodd');
+      ctx.resetTransform();
+
+      // draw button divider
+      const statusIconEndX = startStatusIcon + (removeButtonWidth / 2) * scope.horizontalPixelRatio;
+      ctx.beginPath();
+      const statusIconDividerDimensions = positionsLine(statusIconEndX / scope.horizontalPixelRatio, scope.horizontalPixelRatio, 1);
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(statusIconDividerDimensions.position, yDimensions.position, statusIconDividerDimensions.length, yDimensions.length);
 
       // write text
       ctx.beginPath();
@@ -125,7 +145,7 @@ export class PaneRenderer extends PaneRendererBase {
       ctx.font = `${Math.round(12 * scope.verticalPixelRatio)}px sans-serif`;
       ctx.fillText(
         activeLabel.text,
-        labelXDimensions.position + buttonWidth + centreLabelInlinePadding + labelWidth / 2,
+        labelXDimensions.position + 2 * removeButtonWidth + centreLabelInlinePadding + labelWidth / 2,
         activeLabel.y * scope.verticalPixelRatio,
       );
 
@@ -202,7 +222,7 @@ export class PaneRenderer extends PaneRendererBase {
     ctx.beginPath();
     ctx.roundRect(xDimensions.position, yDimensions.position, xDimensions.length, yDimensions.length, [radius, 0, 0, radius]);
     ctx.strokeStyle = '#131722';
-    ctx.fillStyle = activeLabel.hoverSend ? 'lightgreen' : 'lightblue';
+    ctx.fillStyle = activeLabel.hoverSend ? 'white' : 'lightblue';
     ctx.lineWidth = 1 * scope.horizontalPixelRatio;
     ctx.stroke();
     ctx.fill();
@@ -219,14 +239,22 @@ export class PaneRenderer extends PaneRendererBase {
 
   _drawEntryButtons(scope: BitmapCoordinatesRenderingScope, activeLabel: LineRendererData, labelWidth: number) {
     const startX = scope.mediaSize.width / 2 - labelWidth / 2 - buttonWidth / 2 - iconPadding;
-    const xBE = positionsLine(startX - buttonWidth - iconPadding - buttonWidth - iconPadding, scope.horizontalPixelRatio, buttonWidth);
-    const xTP = positionsLine(startX - buttonWidth - iconPadding, scope.horizontalPixelRatio, buttonWidth);
-    const xSL = positionsLine(startX, scope.horizontalPixelRatio, buttonWidth);
     const yDimensions = positionsLine(activeLabel.y, scope.verticalPixelRatio, buttonHeight);
 
-    this._drawButton(scope, 'BE', activeLabel.hoverBE ? 'lightgreen' : 'yellow', xBE, yDimensions);
-    this._drawButton(scope, 'TP', activeLabel.hoverTP ? 'lightgreen' : 'green', xTP, yDimensions);
-    this._drawButton(scope, 'SL', activeLabel.hoverSL ? 'lightgreen' : 'red', xSL, yDimensions);
+    if (activeLabel.canTP) {
+      const tpColor = activeLabel.hoverTP ? 'white' : 'green';
+      const xTP = positionsLine(startX - buttonWidth - iconPadding - buttonWidth - iconPadding, scope.horizontalPixelRatio, buttonWidth);
+      this._drawButton(scope, 'TP', tpColor, xTP, yDimensions);
+    }
+
+    if (activeLabel.canSL) {
+      const slColor = activeLabel.hoverSL ? 'white' : 'red';
+      const xSL = positionsLine(startX - buttonWidth - iconPadding, scope.horizontalPixelRatio, buttonWidth);
+      this._drawButton(scope, 'SL', slColor, xSL, yDimensions);
+    }
+
+    const xBE = positionsLine(startX, scope.horizontalPixelRatio, buttonWidth);
+    this._drawButton(scope, 'BE', activeLabel.hoverBE ? 'white' : 'yellow', xBE, yDimensions);
   }
 
   _drawSplitButton(scope: BitmapCoordinatesRenderingScope, activeLabel: LineRendererData, labelWidth: number) {
@@ -234,7 +262,7 @@ export class PaneRenderer extends PaneRendererBase {
     const xSplit = positionsLine(startX, scope.horizontalPixelRatio, buttonWidth);
     const yDimensions = positionsLine(activeLabel.y, scope.verticalPixelRatio, buttonHeight);
 
-    this._drawButton(scope, 'S', activeLabel.hoverSplit ? 'lightgreen' : 'green', xSplit, yDimensions);
+    this._drawButton(scope, 'S', activeLabel.hoverSplit ? 'white' : 'green', xSplit, yDimensions);
   }
 
   _drawPnlLabel(scope: BitmapCoordinatesRenderingScope, activeLabel: LineRendererData) {

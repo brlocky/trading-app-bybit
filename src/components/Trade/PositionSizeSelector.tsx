@@ -15,12 +15,11 @@ import {
   setCreateMarketOrder,
   updateOrderSettings,
   updateOrderSide,
-  updatePositionSize,
+  updatePositionSize
 } from '../../slices';
 import Button from '../Button/Button';
 import { SlidePicker, ToggleInput } from '../Forms';
 import { RedText, SmallText } from '../Text';
-import { toast } from 'react-toastify';
 
 export const PositionSizeSelector: React.FC = () => {
   const dispatch = useDispatch();
@@ -100,13 +99,8 @@ export const PositionSizeSelector: React.FC = () => {
     );
 
     if (!orderSettings.armed) {
-      const limitOrders = chartLines.filter((l) => l.type === 'ENTRY' && !l.isLive);
-      if (limitOrders.length) {
-        toast.error('Cannot have multiple Limit Orders per Symbol');
-      } else {
-        // Limit Order
-        dispatch(addChartLines(newChartLines));
-      }
+      // Limit Order
+      dispatch(addChartLines(newChartLines));
     } else {
       // Market Order
       dispatch(
@@ -181,6 +175,20 @@ export const PositionSizeSelector: React.FC = () => {
         <Button className={orderSettings.armed === true ? 'ml-auto bg-green-400' : 'ml-auto bg-red-400'} onClick={toggleArmed}>
           Armed
         </Button>
+      </div>
+      <div className="inline-flex h-12 w-full content-center gap-x-4 p-2">
+        <Button
+          onClick={() => {
+            const liveLines = chartLines.filter((c) => c.isLive);
+            dispatch(setChartLines(liveLines));
+          }}
+          className={orderSide === 'Buy' ? 'bg-red-300' : ''}
+        >
+          Clear Chart Lines
+        </Button>
+        <p>Live - {chartLines.filter((c) => c.isLive && c.isServer).length}</p>
+        <p>Limit - {chartLines.filter((c) => !c.isLive && c.isServer).length}</p>
+        <p>Chart - {chartLines.filter((c) => !c.isLive && !c.isServer).length}</p>
       </div>
       <SmallText className="self-end text-right">
         <RedText>-{((positionSize * Number(ticker.lastPrice) * 0.06) / 100).toFixed(2)} USDT</RedText>

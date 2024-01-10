@@ -33,7 +33,6 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
   private _lastMouseUpdate: MousePosition | null = null;
   private _currentCursor: string | null = null;
 
-  private _draggingID: string | null = null;
   private _hoverLabel = false;
   private _hoverRemove = false;
   private _hoverTP = false;
@@ -44,6 +43,7 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
   private _draggingFromPrice: number | null = null;
   private _isDragging = false;
   private _hoveringID = '';
+  private _draggingID: string | null = null;
 
   constructor() {
     super();
@@ -60,16 +60,9 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
       requestUpdate();
     }, this);
     this._mouseHandlers.clicked().subscribe((mousePosition: MousePosition | null) => {
-      if (mousePosition && this._series) {
-        if (this._isDragging || this._draggingID) {
-          return;
-        }
+      if (mousePosition && this._series && this._hoveringID) {
         if (this._hoverRemove) {
           this.removeLine(this._hoveringID);
-        } else if (this._hoverTP) {
-          this.addTP();
-        } else if (this._hoverSL) {
-          this.addSL();
         } else if (this._hoverBE) {
           this.addBE();
         } else if (this._hoverSplit) {
@@ -82,28 +75,79 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
     }, this);
 
     this._mouseHandlers.dragStarted().subscribe((mousePosition: MousePosition | null) => {
-      if (mousePosition && this._draggingID && this._hoverLabel) {
+      if (!this._hoverLabel && !this._hoverTP && !this._hoverSL) return;
+
+      const line = this.getLine(this._hoveringID);
+      if (line && mousePosition && this._hoveringID) {
         this._isDragging = true;
+        this._draggingID = this._hoveringID;
         this._chart?.applyOptions({
           handleScroll: false,
           handleScale: false,
         });
+
+        this._draggingFromPrice = this.getLinePrice(this._draggingID);
+
+        if (this._hoverLabel && !line.draggable) {
+          this._draggingID = null;
+        }
+
+        if (this._hoverTP || this._hoverSL) {
+          this._draggingID = null;
+          const parentEntry = this.getLine(line.id);
+          if (parentEntry) {
+            const lineType = this._hoverTP ? 'TP' : 'SL';
+            const totalFilled = this.lines().reduce(
+              (total, l) => (l.parentId === parentEntry.id && l.type === lineType ? total + l.qty : total),
+              0,
+            );
+            const newQty = line.qty - totalFilled;
+            if (newQty > 0) {
+              const newMovingLine: TradingLineInfo = {
+                ...line,
+                id: 'moving-line',
+                parentId: line.id,
+                qty: newQty,
+                type: this._hoverTP ? 'TP' : 'SL',
+                side: line.side === 'Buy' ? 'Sell' : 'Buy',
+                draggable: true,
+                isLive: false,
+                isServer: false,
+                isPreview: true,
+              };
+              this.addLine(newMovingLine);
+              this._draggingID = newMovingLine.id;
+            }
+          }
+        }
+
+        requestUpdate(); // Trigger an update to reflect the changes
       }
     }, this);
 
     this._mouseHandlers.dragging().subscribe((mousePosition: MousePosition | null) => {
-      if (mousePosition && this._draggingID && this._isDragging) {
+      if (mousePosition && this._isDragging && this._draggingID) {
         this.updateLinePosition(this._draggingID, mousePosition);
         requestUpdate(); // Trigger an update to reflect the changes
       }
     }, this);
 
     this._mouseHandlers.dragEnded().subscribe(() => {
-      if (this._isDragging && this._draggingID) {
-        this.lineDragEnded(this._draggingID, this._draggingFromPrice as number);
+      if (this._isDragging) {
+        if (this._draggingID) {
+          if (this._hoverLabel) {
+            this.lineDragEnded(this._draggingID, this._draggingFromPrice as number);
+          }
+
+          if (this._hoverTP || this._hoverSL) {
+            this._hoverTP && this.addTP(this._draggingID);
+            this._hoverSL && this.addSL(this._draggingID);
+            this.removeLine(this._draggingID);
+          }
+        }
+
         this._isDragging = false;
         this._draggingID = null;
-        this._hoveringID = '';
         this._draggingFromPrice = null;
         this._chart?.applyOptions({
           handleScroll: true,
@@ -133,7 +177,7 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
     this._currentCursor = null;
     if (rendererData?.lines.some((l) => l.hoverRemove || l.hoverTP || l.hoverSL || l.hoverBE || l.hoverSplit || l.hoverSend)) {
       this._currentCursor = 'pointer';
-    } else if (rendererData?.lines.some((l) => l.hoverLabel)) {
+    } else if (rendererData?.lines.some((l) => l.hoverLabel && l.line.draggable)) {
       this._currentCursor = 'move';
     }
     this._paneViews.forEach((pv) => pv.update(rendererData));
@@ -148,49 +192,54 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
     };
   }
 
-  // Add a method to update the position of the line
-  private updateLinePosition(lineID: string, newPosition: MousePosition): void {
-    // Find the line with the given ID and update its position based on the newPosition
-    // You may need to calculate the new price based on the y-coordinate of newPosition
+  private updateLinePosition(lineId: string, newPosition: MousePosition): void {
     if (!this._series) return;
-    const price = this._series.coordinateToPrice(newPosition.y);
 
+    const line = this.lines().find((l) => l.id === lineId);
+    if (!line) return;
+
+    const price = this._series.coordinateToPrice(newPosition.y);
     if (!price || Number(price) < 0) return;
 
+    let validMove = true;
+    const oldPrice = line.price;
     const formattedPrice = Number(this._series.priceFormatter().format(price));
+    const lines2Update: TradingLineInfo[] = [{ ...line, price: formattedPrice }];
 
-    // Save old price before move
-    if (this._isDragging && !this._draggingFromPrice) {
-      this._draggingFromPrice = this.getLinePrice(lineID);
+    // Dont allow TP or SL price to move across entry
+    if (line.type === 'SL' || line.type === 'TP') {
+      const parentEntry = this.lines().find((l) => l.id === line.parentId && l.type === 'ENTRY');
+      if (
+        parentEntry &&
+        ((parentEntry.side === 'Buy' && line.type === 'TP' && price <= parentEntry.price) ||
+          (parentEntry.side === 'Buy' && line.type === 'SL' && price >= parentEntry.price) ||
+          (parentEntry.side === 'Sell' && line.type === 'TP' && price >= parentEntry.price) ||
+          (parentEntry.side === 'Sell' && line.type === 'SL' && price <= parentEntry.price))
+      ) {
+        validMove = false;
+      }
     }
 
-    const line = this.lines().find((l) => l.id === lineID);
+    // Update related lines
+    if (validMove && line.type === 'ENTRY' && line.isLive === false) {
+      const priceDiff = formattedPrice - oldPrice;
 
-    if (line) {
-      let validMove = true;
-      const oldPrice = line.price;
-      const lines2Update: TradingLineInfo[] = [{ ...line, price: formattedPrice }];
-      if (line.type === 'ENTRY' && line.isLive === false) {
-        const priceDiff = formattedPrice - oldPrice;
-
-        this.lines().forEach((l) => {
-          if (l.parentId === line.id) {
-            const newPrice = l.price + priceDiff;
-            if (newPrice < 0) {
-              validMove = false;
-            } else {
-              const formattedPriceDiff = Number(this._series?.priceFormatter().format(l.price + priceDiff));
-              const newLine = { ...l, price: formattedPriceDiff };
-              lines2Update.push(newLine);
-            }
+      this.lines().forEach((l) => {
+        if (l.parentId === line.id) {
+          const newPrice = l.price + priceDiff;
+          if (newPrice < 0) {
+            validMove = false;
+          } else {
+            const newLine = { ...l, price: Number(this._series?.priceFormatter().format(newPrice)) };
+            lines2Update.push(newLine);
           }
-        });
-      }
-      if (validMove) {
-        lines2Update.forEach((l) => {
-          this.updateLine(l.id, l);
-        });
-      }
+        }
+      });
+    }
+    if (validMove) {
+      lines2Update.forEach((l) => {
+        this.updateLine(l.id, l);
+      });
     }
   }
 
@@ -230,13 +279,25 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
     return Math.abs(mousePosition.x - buttonCentreX) < removeButtonWidth / 2;
   }
 
+  _isHoveringBE(mousePosition: MousePosition | null, timescaleWidth: number, y: number, labelWidth: number): boolean {
+    if (!mousePosition || !timescaleWidth) return false;
+
+    const distanceY = Math.abs(mousePosition.y - y);
+    if (distanceY > buttonHeight / 2) return false;
+
+    const buttonCentreX = timescaleWidth / 2 - labelWidth / 2 - buttonWidth / 2 - iconPadding;
+    return Math.abs(mousePosition.x - buttonCentreX) < buttonWidth / 2;
+  }
+
   _isHoveringTP(mousePosition: MousePosition | null, timescaleWidth: number, y: number, labelWidth: number): boolean {
     if (!mousePosition || !timescaleWidth) return false;
 
     const distanceY = Math.abs(mousePosition.y - y);
-    if (distanceY > centreLabelHeight / 2) return false;
+    if (distanceY > buttonHeight / 2) return false;
 
-    const buttonCentreX = timescaleWidth / 2 - labelWidth / 2 - buttonWidth / 2 - iconPadding - buttonWidth - iconPadding;
+    const buttonCentreX =
+      timescaleWidth / 2 - labelWidth / 2 - buttonWidth / 2 - iconPadding - buttonWidth - iconPadding - buttonWidth - iconPadding;
+
     return Math.abs(mousePosition.x - buttonCentreX) < buttonWidth / 2;
   }
 
@@ -244,21 +305,9 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
     if (!mousePosition || !timescaleWidth) return false;
 
     const distanceY = Math.abs(mousePosition.y - y);
-    if (distanceY > centreLabelHeight / 2) return false;
+    if (distanceY > buttonHeight / 2) return false;
+    const buttonCentreX = timescaleWidth / 2 - labelWidth / 2 - buttonWidth / 2 - iconPadding - buttonWidth - iconPadding;
 
-    const buttonCentreX = timescaleWidth / 2 - labelWidth / 2 - buttonWidth / 2 - iconPadding;
-
-    return Math.abs(mousePosition.x - buttonCentreX) < buttonWidth / 2;
-  }
-
-  _isHoveringBE(mousePosition: MousePosition | null, timescaleWidth: number, y: number, labelWidth: number): boolean {
-    if (!mousePosition || !timescaleWidth) return false;
-
-    const distanceY = Math.abs(mousePosition.y - y);
-    if (distanceY > centreLabelHeight / 2) return false;
-
-    const buttonCentreX =
-      timescaleWidth / 2 - labelWidth / 2 - buttonWidth / 2 - iconPadding - buttonWidth - iconPadding - buttonWidth - iconPadding;
     return Math.abs(mousePosition.x - buttonCentreX) < buttonWidth / 2;
   }
 
@@ -275,7 +324,7 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
   }
 
   _calculdateTextWidth(textLength: number) {
-    return centreLabelInlinePadding * 2 + removeButtonWidth + removeButtonWidth + textLength * averageWidthPerCharacter;
+    return centreLabelInlinePadding * 2 + 3 * removeButtonWidth + textLength * averageWidthPerCharacter;
   }
 
   _isHoverButtons() {
@@ -324,16 +373,27 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
         }
       }
 
-      const entry = tradingLines.find((tl) => tl.type === 'ENTRY' && tl.isLive === l.isLive);
+      const entry = tradingLines.find((tl) => tl.type === 'ENTRY' && tl.id === l.parentId);
       const text = ` ${l.qty}@${l.price} `;
       const pnl = entry ? calculatePnl(entry, l) : '';
+      const movingLine = tradingLines.find((tl) => tl.id === 'moving-line');
+      const isDraggedLine = this._draggingID === 'moving-line' && movingLine && l.id === movingLine.parentId ? true : false;
+
+      const isEntry = l.type === 'ENTRY';
+
+      const childrenOrders = isEntry ? tradingLines.filter((t) => t.parentId === l.id) : [];
+      const sumTPS = childrenOrders.reduce((total, l) => (l.id !== 'moving-line' && l.type === 'TP' ? total + l.qty : total), 0);
+      const sumSLS = childrenOrders.reduce((total, l) => (l.id !== 'moving-line' && l.type === 'SL' ? total + l.qty : total), 0);
+
+      const canTP = sumTPS < l.qty;
+      const canSL = sumSLS < l.qty;
       return {
         y,
         text: text,
         hoverRemove: false,
         hoverLabel: false,
-        hoverTP: false,
-        hoverSL: false,
+        hoverTP: isDraggedLine ? this._hoverTP : false,
+        hoverSL: isDraggedLine ? this._hoverSL : false,
         hoverBE: false,
         hoverSend: false,
         hoverSplit: false,
@@ -341,6 +401,8 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
         line: l,
         showSend: !l.isLive && l.type === 'ENTRY',
         price: price,
+        canTP: canTP,
+        canSL: canSL,
       };
     });
 
@@ -348,25 +410,25 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
       this._hoverLabel = this._hoverRemove = this._hoverSL = this._hoverTP = this._hoverBE = this._hoverSplit = this._hoverSend = false;
       if (closestIndex >= 0 && closestDistance < showCentreLabelDistance) {
         const timescaleWidth = this._chart?.timeScale().width() ?? 0;
-        const a = lines[closestIndex];
-        const text = a.text;
+        const closestLine = lines[closestIndex];
+        const text = closestLine.text;
         const labelWidth = this._calculdateTextWidth(text.length);
 
-        this._hoverRemove = this._isHoveringRemoveButton(mousePosition, timescaleWidth, a.y, labelWidth);
+        this._hoverRemove = this._isHoveringRemoveButton(mousePosition, timescaleWidth, closestLine.y, labelWidth);
 
-        if (a.line.type === 'ENTRY') {
-          this._hoverTP = this._isHoveringTP(mousePosition, timescaleWidth, a.y, labelWidth);
-          this._hoverSL = this._isHoveringSL(mousePosition, timescaleWidth, a.y, labelWidth);
-          this._hoverBE = this._isHoveringBE(mousePosition, timescaleWidth, a.y, labelWidth);
-          this._hoverSend = this._isHoveringSendButton(mousePosition, timescaleWidth, a.y);
+        if (closestLine.line.type === 'ENTRY') {
+          this._hoverTP = closestLine.canTP && this._isHoveringTP(mousePosition, timescaleWidth, closestLine.y, labelWidth);
+          this._hoverSL = closestLine.canSL && this._isHoveringSL(mousePosition, timescaleWidth, closestLine.y, labelWidth);
+          this._hoverBE = this._isHoveringBE(mousePosition, timescaleWidth, closestLine.y, labelWidth);
+          this._hoverSend = this._isHoveringSendButton(mousePosition, timescaleWidth, closestLine.y);
         } else {
-          this._hoverSplit = this._isHoveringSL(mousePosition, timescaleWidth, a.y, labelWidth);
+          this._hoverSplit = this._isHoveringBE(mousePosition, timescaleWidth, closestLine.y, labelWidth);
         }
 
         if (!this._isHoverButtons()) {
           this._hoverLabel =
-            this._isHoveringLine(mousePosition, timescaleWidth, a.y) ||
-            this._isHoveringLabel(mousePosition, timescaleWidth, a.y, labelWidth);
+            this._isHoveringLine(mousePosition, timescaleWidth, closestLine.y) ||
+            this._isHoveringLabel(mousePosition, timescaleWidth, closestLine.y, labelWidth);
         }
 
         lines[closestIndex] = {
@@ -388,14 +450,9 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
           this._hoverSplit ||
           this._hoverSend
         ) {
-          this._hoveringID = a.line.id;
+          this._hoveringID = closestLine.line.id;
         } else {
           this._hoveringID = '';
-        }
-        if (this._hoverLabel && a.line.draggable && !this._isDragging) {
-          this._draggingID = a.line.id;
-        } else {
-          this._draggingID = null;
         }
       }
     }

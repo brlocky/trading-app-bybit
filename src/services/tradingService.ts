@@ -27,7 +27,7 @@ interface INewPosition {
 }
 
 export const TradingService = (apiClient: RestClientV5): ITradingService => {
-  const addStopLoss = async (p: PositionV5, price: string, size?: string) => {
+  const addStopLoss = async (p: PositionV5, price: string, size?: string): Promise<boolean> => {
     const order: SetTradingStopParamsV5 = {
       positionIdx: p.positionIdx,
       category: 'linear',
@@ -56,7 +56,7 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
       });
   };
 
-  const addTakeProfit = async (p: PositionV5, price: string, size: string) => {
+  const addTakeProfit = async (p: PositionV5, price: string, size: string): Promise<boolean> => {
     const order: OrderParamsV5 = {
       positionIdx: p.positionIdx,
       category: 'linear',
@@ -127,7 +127,7 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
       });
   };
 
-  const loadPositionBySymbol = async (symbol: string) => {
+  const loadPositionBySymbol = async (symbol: string): Promise<PositionV5 | null> => {
     return apiClient
       .getPositionInfo({
         category: 'linear',
@@ -142,7 +142,7 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
       });
   };
 
-  const openPosition = async (props: INewPosition) => {
+  const openPosition = async (props: INewPosition): Promise<PositionV5 | null> => {
     const order = await apiClient.submitOrder({
       positionIdx: LinearPositionIdx.OneWayMode,
       category: 'linear',

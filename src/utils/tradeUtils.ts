@@ -12,7 +12,7 @@ export const isOrderTPorSL = (o: AccountOrderV5): boolean => isOrderTP(o) || isO
 export const isOrderTP = (o: AccountOrderV5): boolean =>
   (o.orderType === 'Limit' && o.reduceOnly) || o.stopOrderType === 'TakeProfit' || o.stopOrderType === 'PartialTakeProfit';
 export const isOrderSL = (o: AccountOrderV5): boolean => o.stopOrderType === 'StopLoss' || o.stopOrderType === 'PartialStopLoss';
-export const isEntry = (o: AccountOrderV5): boolean => o.orderType === 'Limit' && !o.reduceOnly;
+export const isEntry = (o: AccountOrderV5): boolean => o.orderStatus === 'New' && o.orderType === 'Limit' && !o.reduceOnly;
 
 export const getOrderType = (o: AccountOrderV5): TradingLineType => {
   if (isOrderSL(o)) return 'SL';
