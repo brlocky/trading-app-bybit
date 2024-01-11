@@ -73,22 +73,23 @@ export const CardLastTrades: React.FC = () => {
           <div className="col-span-1">Time</div>
         </div>
       </div>
+      <div className="h-52 overflow-y-scroll">
+        {lastTrades.slice(0, 20).map((trade, index) => {
+          const { colorClass, time } = getColorBasedOnTrade(trade, averageSize);
+          const formattedSize = parseFloat(trade.size).toLocaleString();
 
-      {lastTrades.slice(0, 20).map((trade, index) => {
-        const { colorClass, time } = getColorBasedOnTrade(trade, averageSize);
-        const formattedSize = parseFloat(trade.size).toLocaleString();
-
-        return (
-          <div className={`border-b border-gray-200 p-1 ${colorClass}`} key={index}>
-            <div className="grid grid-cols-3 gap-1 text-center text-xs">
-              <div className="col-span-1">{trade.price}</div>
-              <div className="col-span-1">{formattedSize}</div>
-              <div className="col-span-1">{time}</div>
+          return (
+            <div className={`border-b border-gray-200 p-1 ${colorClass}`} key={index}>
+              <div className="grid grid-cols-3 gap-1 text-center text-xs">
+                <div className="col-span-1">{trade.price}</div>
+                <div className="col-span-1">{formattedSize}</div>
+                <div className="col-span-1">{time}</div>
+              </div>
             </div>
-          </div>
-        );
-      })}
-      <div className="border-b border-gray-200 p-2"></div>
+          );
+        })}
+      </div>
+      <div className="border-b border-gray-200 p-2" />
     </div>
   );
 };

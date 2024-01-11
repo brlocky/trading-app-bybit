@@ -18,6 +18,7 @@ import {
 import Button from '../Button/Button';
 import { SlidePicker } from '../Forms';
 import { RedText, SmallText } from '../Text';
+import { formatCurrencyValue } from '../../utils/tradeUtils';
 
 export const PositionSizeSelector: React.FC = () => {
   const dispatch = useDispatch();
@@ -77,6 +78,12 @@ export const PositionSizeSelector: React.FC = () => {
     lotSizeFilter: { minOrderQty, qtyStep },
   } = tickerInfo;
 
+  <SmallText className="self-end text-right">
+    <RedText>Fee {((positionSize * Number(ticker.lastPrice) * 0.055) / 100).toFixed(2)} USDT</RedText>
+  </SmallText>;
+  const feeValue = orderSettings.armed ? 0.06 : 0.01;
+  const orderFeeValue = ((positionSize * Number(ticker.lastPrice) * feeValue) / 100).toFixed(2);
+
   return (
     <div className="w-full rounded-md bg-gray-200 p-3">
       <div className="inline-flex h-12 w-full content-center gap-x-4 p-2">
@@ -87,7 +94,7 @@ export const PositionSizeSelector: React.FC = () => {
           Short
         </Button>
 
-        <Button className={orderSettings.armed === true ? 'ml-auto bg-green-400' : 'ml-auto bg-red-400'} onClick={toggleArmed}>
+        <Button className={orderSettings.armed ? 'ml-auto bg-green-400' : 'ml-auto bg-red-400'} onClick={toggleArmed}>
           Armed
         </Button>
       </div>
@@ -97,7 +104,9 @@ export const PositionSizeSelector: React.FC = () => {
             <SmallText>
               Size {positionSize} {tickerInfo.baseCoin}
             </SmallText>
-            <SmallText>{(positionSize * Number(ticker.lastPrice)).toFixed(2)} USDT</SmallText>
+            <SmallText>
+              {formatCurrencyValue(positionSize * Number(ticker.lastPrice))} | fee: {formatCurrencyValue(orderFeeValue)}
+            </SmallText>
           </div>
           <SlidePicker
             min={Number(minOrderQty)}
@@ -123,9 +132,6 @@ export const PositionSizeSelector: React.FC = () => {
         <p>Limit - {chartLines.filter((c) => !c.isLive && c.isServer).length}</p>
         <p>Chart - {chartLines.filter((c) => !c.isLive && !c.isServer).length}</p>
       </div> */}
-      <SmallText className="self-end text-right">
-        <RedText>Fee {((positionSize * Number(ticker.lastPrice) * 0.055) / 100).toFixed(2)} USDT</RedText>
-      </SmallText>
     </div>
   );
 };

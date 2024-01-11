@@ -66,11 +66,8 @@ export const Chart: React.FC<Props> = (props) => {
 
   const initChart = () => {
     if (!chartContainerRef.current) {
-      console.error('Chart Container not defined');
       return;
     }
-
-    console.log('initChart chart');
 
     chartInstanceRef.current = createChart(chartContainerRef.current, {
       timeScale: {

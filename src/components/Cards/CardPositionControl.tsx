@@ -14,7 +14,7 @@ export const CardPositionControl: React.FC = () => {
   const closePrice = currentPosition?.side === 'Buy' ? ticker.ticker.ask1Price : ticker.ticker.bid1Price;
   return (
     <>
-      <div className="flex w-full justify-end gap-x-2 overflow-x-scroll">
+      <div className="flex w-full justify-end gap-x-2">
         <Button
           disabled={!currentPosition}
           onClick={() => {
