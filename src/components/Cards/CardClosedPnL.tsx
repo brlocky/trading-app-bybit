@@ -37,7 +37,7 @@ export default function CardClosedPnLs() {
               return (
                 <Row key={index}>
                   <Col onClick={() => dispatch(updateSymbol(l.symbol))}>
-                    <i className={l.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {l.symbol} (
+                    <i className={l.side === 'Sell' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {l.symbol} (
                     {l.leverage}x)
                   </Col>
                   <Col>
