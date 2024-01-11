@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import tw from 'twin.macro';
 
 interface IToggle {
@@ -18,6 +18,10 @@ const ToggleLabel = tw.label` px-2 py-2 rounded-md w-full text-center text-xs`;
 
 export const ToggleInput: React.FC<Props> = ({ toggles, defaultToggle, onChange }) => {
   const [selectedToggle, setSelectedToggle] = useState(defaultToggle);
+
+  useEffect(() => {
+    setSelectedToggle(defaultToggle);
+  }, [defaultToggle]);
 
   const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const toggleName = event.target.value;

@@ -108,6 +108,15 @@ export default function CardOrderSettings() {
     }
 
     setTakeProfits(n);
+    dispatch(
+      updateOrderSettings({
+        ...orderSettings,
+        tp: {
+          number: n,
+          options: options,
+        },
+      }),
+    );
   };
 
   const renderSLLevels = (n: number) => {
@@ -151,6 +160,15 @@ export default function CardOrderSettings() {
     }
 
     setStopLosses(n);
+    dispatch(
+      updateOrderSettings({
+        ...orderSettings,
+        sl: {
+          number: n,
+          options: options,
+        },
+      }),
+    );
   };
 
   const orderSettings = useSelector(selectOrderSettings);

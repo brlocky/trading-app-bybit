@@ -49,6 +49,25 @@ export class TradingLinesState {
     this._linesChanged.fire();
   }
 
+  setLines(lines: TradingLineInfo[]): void {
+    lines.forEach((l) => {
+      this._lines.set(l.id, l);
+      this._lineAdded.fire(l);
+    });
+    this._linesChanged.fire();
+  }
+
+  updateLine(id: string, line: TradingLineInfo): void {
+    const existingLine = this._lines.get(id);
+
+    if (existingLine) {
+      const newLine = { ...existingLine, ...line };
+      this._lines.set(id, newLine);
+      this._lineChanged.fire(existingLine);
+      this._linesChanged.fire();
+    }
+  }
+
   setMarketPrice(price: number): void {
     this._marketPrice = price;
   }
@@ -84,17 +103,6 @@ export class TradingLinesState {
     const line = this._lines.get(id);
     if (line) {
       this._addSend.fire(line);
-    }
-  }
-
-  updateLine(id: string, line: TradingLineInfo): void {
-    const existingLine = this._lines.get(id);
-
-    if (existingLine) {
-      const newLine = { ...existingLine, ...line };
-      this._lines.set(id, newLine);
-      this._lineChanged.fire(existingLine);
-      this._linesChanged.fire();
     }
   }
 

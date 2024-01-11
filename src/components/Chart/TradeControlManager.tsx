@@ -6,7 +6,6 @@ import { useApi } from '../../providers';
 import { IOrderOptionsSettingsData, RiskManagementService, TradingService } from '../../services';
 import {
   SubTicker,
-  addChartLines,
   removeChartLine,
   selectCurrentOrders,
   selectCurrentPosition,
@@ -17,11 +16,13 @@ import {
   setChartLines,
   setCreateLimitOrder,
   addChartLine,
+  selectPositionSize,
 } from '../../slices';
 import { IChartLine } from '../../types';
 import { TradingLineInfo, TradingLinedDragInfo } from './extend/plugins/trading-lines/state';
 import { TradingLines } from './extend/plugins/trading-lines/trading-lines';
 import { toast } from 'react-toastify';
+import { getOrderPrice } from '../../utils/tradeUtils';
 
 interface LineControlManagerProps {
   chartInstance: IChartApi;
@@ -35,6 +36,7 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
   const symbol = useSelector(selectSymbol);
   const orderSettings = useSelector(selectOrderSettings);
   const ticker = useSelector(selectTicker);
+  const positionSize = useSelector(selectPositionSize);
 
   const linePluginRef = useRef<TradingLines | undefined>(undefined);
   const chartLinesRef = useRef<IChartLine[]>(chartLines);
@@ -87,6 +89,27 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
     }
     tickerRef.current = ticker;
   }, [currentPosition, currentOrders, orderSettings, ticker]);
+
+  useEffect(() => {
+    if (!ticker || !ticker.tickerInfo) return;
+    const entries = chartLinesRef.current.filter((c) => c.type === 'ENTRY' && !c.isServer);
+    if (entries.length === 1) {
+      const entry = entries[0];
+      const entryTPChildren = chartLinesRef.current.filter((c) => c.parentId === entry.id && c.type === 'TP');
+      const entrySLChildren = chartLinesRef.current.filter((c) => c.parentId === entry.id && c.type === 'SL');
+      const allOtherLines = chartLinesRef.current.filter((c) => c.parentId !== entry.id && c.id !== entry.id);
+
+      const updatedChartlines = riskManagementService.convertToPositionSize(
+        entry,
+        entryTPChildren,
+        entrySLChildren,
+        positionSize,
+        ticker.tickerInfo.lotSizeFilter.qtyStep,
+      );
+
+      dispatch(setChartLines([...allOtherLines, ...updatedChartlines]));
+    }
+  }, [positionSize]);
 
   const dispatchChartLineUpdate = (lineDragInfo: TradingLinedDragInfo) => {
     const lineIndex = chartLinesRef.current.findIndex((l) => l.id === lineDragInfo.to.id);
@@ -179,10 +202,12 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
       dispatch(setChartLines(newChartLines));
     }
   };
+
   const dispatchAddSend = (line: TradingLineInfo) => {
     if (!symbol || !chartLinesRef.current) return;
 
     const tradeChartLines = chartLinesRef.current.filter((c) => c.id === line.id || c.parentId === line.id);
+    if (!tradeChartLines.length) return;
     dispatch(
       setCreateLimitOrder({
         side: line.side as OrderSideV5,
@@ -197,30 +222,41 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
     console.log('add be');
   };
 
-  const removeChartLines = () => {
-    linePluginRef.current?.truncate();
+  let lastCallTime: number | null = null;
+
+  const updateAllViewsThrottled = () => {
+    const now = Date.now();
+
+    // If there's no last call time or if 100ms have passed since the last call
+    if (!lastCallTime || now - lastCallTime >= 100) {
+      linePluginRef.current?.updateAllViews();
+      lastCallTime = now;
+    }
   };
 
   const setupChartLines = () => {
-    // Remove Lines
-    removeChartLines();
+    if (!linePluginRef.current) return;
 
-    chartLinesRef.current.forEach((line) => {
-      const newLine: TradingLineInfo = {
-        id: line.id,
-        price: line.price,
-        qty: line.qty,
-        type: line.type,
-        side: line.side,
-        draggable: line.draggable,
-        isLive: line.isLive,
-        isServer: line.isServer,
-        parentId: line.parentId,
-      };
-      linePluginRef.current?.addLine(newLine);
+    const currentPluginLines = linePluginRef.current.lines();
+
+    const lines2Delete = currentPluginLines.filter((l) => {
+      return !chartLinesRef.current.find((c) => c.id === l.id);
     });
 
-    linePluginRef.current?.updateAllViews();
+    const lines2Add = chartLinesRef.current.filter((l) => {
+      return !currentPluginLines.find((c) => c.id === l.id);
+    });
+
+    const lines2Update = chartLinesRef.current.filter((l) => {
+      return !lines2Delete.find((c) => c.id === l.id) && !lines2Add.find((c) => c.id === l.id);
+    });
+
+    // Delete Lines
+    lines2Delete.forEach((l) => linePluginRef.current?.removeLine(l.id));
+    lines2Add.length && linePluginRef.current.setLines(lines2Add);
+    lines2Update.length && lines2Update.forEach((l) => linePluginRef.current?.updateLine(l.id, l));
+
+    updateAllViewsThrottled();
   };
 
   return null; // Since this component doesn't render anything, we return null

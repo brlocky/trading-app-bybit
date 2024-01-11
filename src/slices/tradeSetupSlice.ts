@@ -13,7 +13,6 @@ interface IRestingOrder {
 }
 
 interface ITradeSetupState {
-  orderSide: OrderSideV5;
   positionSize: number;
   chartLines: IChartLine[];
   leverage: number; // 1.. 100
@@ -24,7 +23,6 @@ interface ITradeSetupState {
 }
 
 const initialState: ITradeSetupState = {
-  orderSide: 'Buy',
   positionSize: 0,
   chartLines: [],
   leverage: 1,
@@ -38,9 +36,6 @@ const tradeSetupSlice = createSlice({
   name: 'tradeSetup',
   initialState,
   reducers: {
-    updateOrderSide(state, action: PayloadAction<OrderSideV5>) {
-      state.orderSide = action.payload;
-    },
     updatePositionSize(state, action: PayloadAction<number>) {
       state.positionSize = action.payload;
     },
@@ -93,7 +88,6 @@ const tradeSetupSlice = createSlice({
 });
 
 export const {
-  updateOrderSide,
   updatePositionSize,
   resetChartLines,
   addChartLine,
@@ -112,7 +106,6 @@ export const {
 export const tradeSetupReducer = tradeSetupSlice.reducer;
 
 // Other code such as selectors can use the imported `RootState` type
-export const selectOrderSide = (state: RootState) => state.tradeSetup.orderSide;
 export const selectPositionSize = (state: RootState) => state.tradeSetup.positionSize;
 export const selectTakeProfits = (state: RootState) => state.tradeSetup.chartLines.filter((l) => l.type === 'TP');
 export const selectStopLosses = (state: RootState) => state.tradeSetup.chartLines.filter((l) => l.type === 'SL');

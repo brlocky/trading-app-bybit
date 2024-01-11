@@ -17,11 +17,9 @@ export interface IRiskManagementService {
     settings: IOrderOptionsSettingsData,
     ticker: ITicker,
     tickerInfo: LinearInverseInstrumentInfoV5,
-    riskAmount: number,
     positionSize: number,
-    accountBalance: number,
   ) => IChartLine[];
-
+  convertToPositionSize: (entry: IChartLine, tpLines: IChartLine[], slLines: IChartLine[], qty: number, qtyStep: string) => IChartLine[];
   getTPSLLine: (parentLine: IChartLine, line: TradingLineInfo, ticker: SubTicker) => IChartLine | null;
   splitOrder: (line: TradingLineInfo, ticker: SubTicker) => IChartLine[];
 }
@@ -32,9 +30,7 @@ export const RiskManagementService = (): IRiskManagementService => {
     settings: IOrderOptionsSettingsData,
     ticker: ITicker,
     tickerInfo: LinearInverseInstrumentInfoV5,
-    riskAmount: number,
     positionSize: number,
-    accountBalance: number,
   ): IChartLine[] => {
     const tickSize = Number(tickerInfo.priceFilter.tickSize);
 
@@ -51,17 +47,12 @@ export const RiskManagementService = (): IRiskManagementService => {
     const tpPrices = _calculateLinePrices(entryPrice, tickSize, orderSide, tp.options);
     const slPrices = _calculateLinePrices(entryPrice, tickSize, orderSide, sl.options);
 
-    const { minOrderQty, maxOrderQty, qtyStep } = tickerInfo.lotSizeFilter;
-    const units =
-      riskAmount === 0 ? positionSize : _calculatePositionSize(riskAmount, Number(entryPrice), slPrices, minOrderQty, maxOrderQty, qtyStep);
-    const maxUnits = (accountBalance - accountBalance * 0.1) / Number(entryPrice);
-
-    const qty = roundQty(Math.min(maxUnits, units), Number(qtyStep));
+    const { qtyStep } = tickerInfo.lotSizeFilter;
 
     const parentId = uuidv4();
     const lines: IChartLine[] = [
-      ..._convertLinePriceToChartLine(tpPrices, qty, 'TP', orderSide, Number(qtyStep), parentId),
-      ..._convertLinePriceToChartLine(slPrices, qty, 'SL', orderSide, Number(qtyStep), parentId),
+      ..._convertLinePriceToChartLine(tpPrices, positionSize, 'TP', orderSide, Number(qtyStep), parentId),
+      ..._convertLinePriceToChartLine(slPrices, positionSize, 'SL', orderSide, Number(qtyStep), parentId),
     ];
 
     const isDraggable = !settings.armed;
@@ -70,7 +61,7 @@ export const RiskManagementService = (): IRiskManagementService => {
       type: 'ENTRY',
       side: orderSide,
       price: Number(entryPrice),
-      qty: qty,
+      qty: positionSize,
       draggable: isDraggable,
       isServer: false,
       isLive: false,
@@ -78,6 +69,70 @@ export const RiskManagementService = (): IRiskManagementService => {
     });
 
     return lines;
+  };
+
+  const convertToPositionSize = (
+    entry: IChartLine,
+    tpLines: IChartLine[],
+    slLines: IChartLine[],
+    qty: number,
+    qtyStep: string,
+  ): IChartLine[] => {
+    const newEntry = { ...entry, qty };
+    const ratio = entry.qty / qty;
+
+    const newTPLines = tpLines
+      .map((l) => {
+        return {
+          ...l,
+          qty: roundQty(l.qty / ratio, Number(qtyStep)),
+        };
+      })
+      .filter((l) => l.qty > 0);
+
+    const newSLLines = slLines
+      .map((l) => {
+        return {
+          ...l,
+          qty: roundQty(l.qty / ratio, Number(qtyStep)),
+        };
+      })
+      .filter((l) => l.qty > 0);
+
+    return [newEntry, ...newTPLines, ...newSLLines];
+  };
+
+  const _calculatePositionSizeBasedOnRisk = (
+    riskAmount: number,
+    entryPrice: number,
+    stopLosses: PriceLine[],
+    minOrderQty: string,
+    maxOrderQty: string,
+    qtyStep: string,
+  ): number => {
+    const totalPercentage = stopLosses.reduce((total, sl) => total + (sl.percentage || 0), 0);
+
+    const normalizedStopLosses = stopLosses.map((sl) => ({
+      ...sl,
+      percentage: (sl.percentage / totalPercentage) * 100,
+    }));
+
+    const totalRiskPerShare = normalizedStopLosses.reduce((total, sl) => {
+      const priceDifference = Math.abs(entryPrice - sl.price);
+      return total + (priceDifference * sl.percentage) / 100;
+    }, 0);
+
+    const positionSize = riskAmount / totalRiskPerShare;
+
+    // Apply quantity constraints
+    const minQty = Number(minOrderQty);
+    const maxQty = Number(maxOrderQty);
+
+    let finalPositionSize = Math.max(minQty, Math.min(maxQty, positionSize));
+    finalPositionSize = Number(
+      (Math.round(finalPositionSize / Number(qtyStep)) * Number(qtyStep)).toFixed(qtyStep.toString().split('.')[1]?.length || 0),
+    );
+    return finalPositionSize;
   };
 
   const getTPSLLine = (parentLine: IChartLine, line: TradingLineInfo, ticker: SubTicker): IChartLine | null => {
@@ -141,39 +196,6 @@ export const RiskManagementService = (): IRiskManagementService => {
   const roundPrice = (price: number, roundedPrice: number): number => {
     const precision = getDecimalPrecision(roundedPrice);
     return Number(price.toFixed(precision));
-  };
-
-  const _calculatePositionSize = (
-    riskAmount: number,
-    entryPrice: number,
-    stopLosses: PriceLine[],
-    minOrderQty: string,
-    maxOrderQty: string,
-    qtyStep: string,
-  ): number => {
-    const totalPercentage = stopLosses.reduce((total, sl) => total + (sl.percentage || 0), 0);
-
-    const normalizedStopLosses = stopLosses.map((sl) => ({
-      ...sl,
-      percentage: (sl.percentage / totalPercentage) * 100,
-    }));
-
-    const totalRiskPerShare = normalizedStopLosses.reduce((total, sl) => {
-      const priceDifference = Math.abs(entryPrice - sl.price);
-      return total + (priceDifference * sl.percentage) / 100;
-    }, 0);
-
-    const positionSize = riskAmount / totalRiskPerShare;
-
-    // Apply quantity constraints
-    const minQty = Number(minOrderQty);
-    const maxQty = Number(maxOrderQty);
-
-    let finalPositionSize = Math.max(minQty, Math.min(maxQty, positionSize));
-    finalPositionSize = Number(
-      (Math.round(finalPositionSize / Number(qtyStep)) * Number(qtyStep)).toFixed(qtyStep.toString().split('.')[1]?.length || 0),
-    );
-    return finalPositionSize;
   };
 
   const _convertLinePriceToChartLine = (
@@ -249,6 +271,7 @@ export const RiskManagementService = (): IRiskManagementService => {
 
   return {
     getChartLines,
+    convertToPositionSize,
     getTPSLLine,
     splitOrder,
   };

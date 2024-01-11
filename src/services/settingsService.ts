@@ -15,7 +15,6 @@ interface ISettingsData {
 
 export interface IOrderOptionsSettingsData {
   armed: boolean;
-  percentageRisk: number;
   tp: IOrderOptionSettingsData;
   sl: IOrderOptionSettingsData;
 }

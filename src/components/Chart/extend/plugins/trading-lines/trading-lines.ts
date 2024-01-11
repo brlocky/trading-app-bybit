@@ -97,7 +97,7 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
               (total, l) => (l.parentId === parentEntry.id && l.type === lineType ? total + l.qty : total),
               0,
             );
-            const newQty = line.qty - totalFilled;
+            const newQty = Math.round(((line.qty - totalFilled) / parentEntry.qty) * parentEntry.qty * 100) / 100;
             if (newQty > 0) {
               const newMovingLine: TradingLineInfo = {
                 ...line,
