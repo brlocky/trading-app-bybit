@@ -186,7 +186,15 @@ function withTradingControl<P extends WithTradingControlProps>(
     useEffect(() => {
       currentOrdersRef.current = currentOrders;
 
-      const missingOrders = currentOrders.filter((o) => {
+      const lines2Remove = chartLinesRef.current.filter(
+        (c) => c.isLive && c.type !== 'ENTRY' && !currentOrders.find((o) => o.orderId === c.orderId),
+      );
+      if (lines2Remove.length) {
+        const newChartLines = [...chartLinesRef.current.filter((l) => !lines2Remove.find((r) => r.id === l.id))];
+        dispatch(setChartLines(newChartLines));
+      }
+
+      /*       const missingOrders = currentOrders.filter((o) => {
         return !chartLinesRef.current.find((l) => l.orderId === o.orderId);
       });
 
@@ -200,12 +208,11 @@ function withTradingControl<P extends WithTradingControlProps>(
       if (newLines.length) {
         const newChartLines = [...chartLinesRef.current.filter((l) => l.isServer), ...newLines];
         dispatch(setChartLines(newChartLines));
-      }
+      } */
     }, [currentOrders]);
 
-    useEffect(() => {
-      console.log('New filled orders', filledOrders);
-
+    // Resting Orders Update and Trigger
+    /* useEffect(() => {
       const newRestingOrders = [...restingOrders];
       filledOrders.filter((o) => {
         const index = newRestingOrders.findIndex((r) => r.orderId === o.orderId);
@@ -239,7 +246,7 @@ function withTradingControl<P extends WithTradingControlProps>(
           }
         }
       });
-    }, [filledOrders, allPositions]);
+    }, [filledOrders, allPositions]); */
 
     /**
      * Sync Position with chart line changes
@@ -249,12 +256,12 @@ function withTradingControl<P extends WithTradingControlProps>(
       if (!symbol) return;
 
       // Update RestingOrder ChartLines
-      const liveLimitOrder = chartLines.find((l) => l.type === 'ENTRY' && l.isServer && !l.isLive);
+      /*       const liveLimitOrder = chartLines.find((l) => l.type === 'ENTRY' && l.isServer && !l.isLive);
       const restingOrder = restingOrders.find((o) => o.orderId === liveLimitOrder?.orderId);
       if (restingOrder) {
         const newRestingOrders = { ...restingOrder, chartLines: [...chartLinesRef.current] };
         dispatch(updateRestingOrder(newRestingOrders));
-      }
+      } */
 
       // Close position
       if (currentPosition && !chartLines.find((l) => l.type === 'ENTRY' && l.isLive)) {
@@ -366,17 +373,24 @@ function withTradingControl<P extends WithTradingControlProps>(
             (e) => e.type === 'ENTRY' && e.side === newEntry.side && e.price === newEntry.price && e.qty === newEntry.qty,
           );
 
-          if (!chartLineEntry) {
-            console.error('Market order');
-            dispatch(setChartLines([...newChartLines, ...chartLinesRef.current]));
-            return;
+          if (chartLineEntry) {
+            // Replace chartlines with new Opened position lines
+            const finalChartLines = [
+              ...chartLinesRef.current.filter((c) => c.id !== chartLineEntry.id && c.parentId !== chartLineEntry.id),
+              ...newChartLines,
+            ];
+            dispatch(setChartLines(finalChartLines));
+          } else {
+            const existentEntry = chartLinesRef.current.find((e) => e.type === 'ENTRY' && e.side === newEntry.side && e.isLive);
+            if (existentEntry) {
+              // Replace Existent Entry with new one
+              const finalChartLines = [...chartLinesRef.current.filter((c) => c.id !== existentEntry.id), ...newChartLines];
+              dispatch(setChartLines(finalChartLines));
+            } else {
+              // Add Order new entry
+              dispatch(setChartLines([...newChartLines, ...chartLinesRef.current]));
+            }
           }
-
-          const finalChartLines = [
-            ...chartLinesRef.current.filter((c) => c.id !== chartLineEntry.id && c.parentId !== chartLineEntry.id),
-            ...newChartLines,
-          ];
-          dispatch(setChartLines(finalChartLines));
         }
       } else {
         const notLiveChartLines = chartLinesRef.current.filter((l) => !l.isLive);

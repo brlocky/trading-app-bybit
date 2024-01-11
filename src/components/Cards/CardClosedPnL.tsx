@@ -1,8 +1,8 @@
 import { ClosedPnLV5 } from 'bybit-api';
 import { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '../../providers';
-import { updateSymbol } from '../../slices';
+import { selectCurrentOrders, updateSymbol } from '../../slices';
 import { formatCurrencyValue } from '../../utils/tradeUtils';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
 
@@ -10,8 +10,23 @@ export default function CardClosedPnLs() {
   const [list, setList] = useState<ClosedPnLV5[] | undefined>();
   const apiClient = useApi();
   const dispatch = useDispatch();
+  const currentOrders = useSelector(selectCurrentOrders);
+
+  const [ordersLength, setOrdersLength] = useState(currentOrders.length);
 
   useEffect(() => {
+    reloadList();
+  }, []);
+
+  useEffect(() => {
+    if (ordersLength !== currentOrders.length) {
+      setOrdersLength(currentOrders.length);
+      reloadList();
+      console.log('Order lenght changed');
+    }
+  }, [currentOrders]);
+
+  const reloadList = () => {
     apiClient
       .getClosedPnL({
         category: 'linear',
@@ -19,13 +34,15 @@ export default function CardClosedPnLs() {
       .then((r) => {
         setList(r.result.list.splice(0, 50));
       });
-  }, []);
+  };
 
   return (
     <>
       <Table>
         <HeaderRow>
           <HeaderCol>Symbol</HeaderCol>
+          <HeaderCol>Qty</HeaderCol>
+          <HeaderCol>Price</HeaderCol>
           <HeaderCol>PnL</HeaderCol>
           <HeaderCol>Date</HeaderCol>
         </HeaderRow>
@@ -33,13 +50,14 @@ export default function CardClosedPnLs() {
           {list?.length ? (
             list?.map((l, index) => {
               const time = new Date(parseInt(l.createdTime, 10)).toTimeString().split(' ')[0];
-
               return (
                 <Row key={index}>
                   <Col onClick={() => dispatch(updateSymbol(l.symbol))}>
                     <i className={l.side === 'Sell' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {l.symbol} (
                     {l.leverage}x)
                   </Col>
+                  <Col>{l.closedSize}</Col>
+                  <Col>{formatCurrencyValue(l.avgExitPrice)}</Col>
                   <Col>
                     {Number(l.closedPnl) >= 0 ? (
                       <span className="text-green-600">{formatCurrencyValue(l.closedPnl)}</span>
@@ -53,7 +71,7 @@ export default function CardClosedPnLs() {
             })
           ) : (
             <Row>
-              <Col colSpan={3}> ---</Col>
+              <Col colSpan={6}> ---</Col>
             </Row>
           )}
         </tbody>

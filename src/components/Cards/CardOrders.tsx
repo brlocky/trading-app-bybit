@@ -30,14 +30,13 @@ export default function CardOrders() {
       const orderPrice = getOrderPrice(o);
       const orderEntry = getPositionFromOrder(positions, o);
       const pnl = orderEntry ? calculateOrderPnL(orderEntry.avgPrice, o) : undefined;
-      const time = new Date(parseInt(o.createdTime, 10)).toTimeString().split(' ')[0];
 
+      const tradeDirection = orderType === 'ENTRY' ? o.side : o.side === 'Buy' ? 'Sell' : 'Buy';
       return (
         <Row key={index}>
           <Col onClick={() => dispatch(updateSymbol(o.symbol))}>
-            <i className={o.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {o.symbol}
+            <i className={tradeDirection === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {o.symbol}
           </Col>
-          <Col>{o.side}</Col>
           <Col>{orderType}</Col>
           <Col>{o.qty}</Col>
           <Col>{orderPrice}</Col>
@@ -52,7 +51,6 @@ export default function CardOrders() {
               '-'
             )}
           </Col>
-          <Col>{time}</Col>
           <Col>
             <Button
               onClick={() => {
@@ -70,12 +68,10 @@ export default function CardOrders() {
     <Table>
       <HeaderRow>
         <HeaderCol>Ticker</HeaderCol>
-        <HeaderCol>Direction</HeaderCol>
         <HeaderCol>Type</HeaderCol>
         <HeaderCol>Qty</HeaderCol>
         <HeaderCol>Price</HeaderCol>
         <HeaderCol>Profit</HeaderCol>
-        <HeaderCol>Date</HeaderCol>
         <HeaderCol>Actions</HeaderCol>
       </HeaderRow>
       <tbody>
