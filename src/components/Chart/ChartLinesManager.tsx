@@ -8,6 +8,7 @@ import { IOrderOptionsSettingsData, RiskManagementService, TradingService } from
 import { AppDispatch } from '../../store';
 import { createLimitOrder } from '../../store/actions';
 import {
+  IRestingOrder,
   SubTicker,
   addChartLine,
   removeChartLine,
@@ -17,9 +18,11 @@ import {
   selectCurrentPosition,
   selectOrderSettings,
   selectPositionSize,
+  selectRestingOrders,
   selectSymbol,
   selectTicker,
   setChartLines,
+  updateRestingOrder,
 } from '../../store/slices';
 import { IChartLine } from '../../types';
 import { TradingLineInfo, TradingLinedDragInfo } from './extend/plugins/trading-lines/state';
@@ -38,12 +41,13 @@ export const ChartLinesManager: React.FC<Props> = ({ seriesInstance }) => {
   const orderSettings = useSelector(selectOrderSettings);
   const ticker = useSelector(selectTicker);
   const positionSize = useSelector(selectPositionSize);
-
+  const restingOrders = useSelector(selectRestingOrders);
   const linePluginRef = useRef<TradingLines>(new TradingLines());
   const chartLinesRef = useRef<IChartLine[]>(chartLines);
   const currentPositionRef = useRef<PositionV5 | undefined>(currentPosition);
   const currentOrdersRef = useRef<AccountOrderV5[]>(currentOrders);
   const orderSettingsRef = useRef<IOrderOptionsSettingsData>(orderSettings);
+  const restingOrdersRef = useRef<IRestingOrder[]>(restingOrders);
   const tickerRef = useRef<SubTicker | undefined>(ticker);
   const dispatch = useDispatch<AppDispatch>();
   const apiClient = useApi();
@@ -84,11 +88,12 @@ export const ChartLinesManager: React.FC<Props> = ({ seriesInstance }) => {
     currentPositionRef.current = currentPosition;
     currentOrdersRef.current = currentOrders;
     orderSettingsRef.current = orderSettings;
+    restingOrdersRef.current = restingOrders;
     if (ticker && ticker.ticker && ticker !== tickerRef.current && ticker.ticker.lastPrice) {
       linePluginRef.current?.setMarketPrice(Number(ticker.ticker.lastPrice));
     }
     tickerRef.current = ticker;
-  }, [currentPosition, currentOrders, orderSettings, ticker]);
+  }, [currentPosition, currentOrders, orderSettings, ticker, restingOrders]);
 
   useEffect(() => {
     if (!ticker || !ticker.tickerInfo) return;
@@ -169,30 +174,66 @@ export const ChartLinesManager: React.FC<Props> = ({ seriesInstance }) => {
       return;
     }
 
+    // Update TP and SL of Live Limit Orders
+    const restingOrder = restingOrdersRef.current.find((o) => o.chartLines.find((l) => l.id === lineToUpdate.id));
+    if (restingOrder) {
+      dispatch(
+        updateRestingOrder({
+          ...restingOrder,
+          chartLines: restingOrder.chartLines.map((l) => {
+            if (l.id === lineToUpdate.id) return { ...l, price: lineDragInfo.to.price };
+            return l;
+          }),
+        }),
+      );
+    }
+
     const updatedLines = chartLinesRef.current.map((l) => (l.id === lineDragInfo.to.id ? { ...l, price: lineDragInfo.to.price } : l));
 
     dispatch(setChartLines(updatedLines));
   };
 
-
-  
   // Use for limit order when moving several lines at the same time
-  const dispatchChartLinesUpdate = (lineDragsInfo: TradingLinedDragInfo[]) => {
+  const dispatchChartLinesUpdate = async (lineDragsInfo: TradingLinedDragInfo[]) => {
     const currentChartLines = [...chartLinesRef.current];
+    const changedLines: IChartLine[] = [];
     lineDragsInfo.forEach((dragInfo) => {
       const lineIndex = chartLinesRef.current.findIndex((l) => l.id === dragInfo.to.id);
       if (lineIndex !== -1) {
-        const changedLine = { ...chartLinesRef.current[lineIndex] };
-        changedLine.price = dragInfo.to.price;
+        const changedLine = { ...chartLinesRef.current[lineIndex], price: dragInfo.to.price };
         currentChartLines[lineIndex] = changedLine;
+        changedLines.push(changedLine);
       } else {
         console.error('could not find it');
       }
     });
+
+    // Resting Orders Update
+    if (changedLines.length) {
+      const limitOrderEntry = changedLines.find((l) => l.type === 'ENTRY' && !l.isLive);
+      if (limitOrderEntry) {
+        const restingOrder = restingOrdersRef.current.find((o) => o.orderId === limitOrderEntry.orderId);
+        if (restingOrder) {
+          await tradingService.amendOrder({
+            symbol,
+            type: limitOrderEntry.type,
+            orderId: limitOrderEntry.orderId as string,
+            qty: limitOrderEntry.qty.toString(),
+            price: limitOrderEntry.price.toString(),
+          });
+
+          dispatch(
+            updateRestingOrder({
+              ...restingOrder,
+              chartLines: changedLines,
+            }),
+          );
+        }
+      }
+    }
+
     dispatch(setChartLines(currentChartLines));
   };
-
-
 
   // Remove Chart Line
   const dispatchChartLineRemoved = async (line: TradingLineInfo) => {

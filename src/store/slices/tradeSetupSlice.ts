@@ -17,7 +17,7 @@ const initialState: ITradeSetupState = {
   restingOrders: [],
 };
 
-interface IRestingOrder {
+export interface IRestingOrder {
   orderId: string;
   symbol: string;
   price: string;

@@ -371,9 +371,9 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
         }
       }
 
-      const entry = tradingLines.find((tl) => tl.type === 'ENTRY' && (tl.id === l.parentId || tl.id === l.id));
+      const thisLineEntry = tradingLines.find((tl) => tl.type === 'ENTRY' && (tl.id === l.parentId || tl.id === l.id));
       const text = ` ${l.qty}@${l.price} `;
-      const pnl = entry ? calculatePnl(entry, l) : '0';
+      const pnl = thisLineEntry ? calculatePnl(thisLineEntry, l) : '0';
       const movingLine = tradingLines.find((tl) => tl.id === 'moving-line');
       const isDraggedLine = this._draggingID === 'moving-line' && movingLine && l.id === movingLine.parentId ? true : false;
 
@@ -385,6 +385,8 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
 
       const canTP = sumTPS < l.qty;
       const canSL = sumSLS < l.qty;
+      const isChildOfLimitEntry = thisLineEntry && !thisLineEntry.isLive && thisLineEntry.isServer;
+      const canSplit = !isEntry && !isChildOfLimitEntry;
       return {
         y,
         text: text,
@@ -400,6 +402,7 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
         line: l,
         showSend: !l.isLive && l.type === 'ENTRY',
         price: price,
+        canSplit: canSplit,
         canTP: canTP,
         canSL: canSL,
       };
@@ -421,7 +424,7 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
           this._hoverBE = this._isHoveringBE(mousePosition, timescaleWidth, closestLine.y, labelWidth);
           this._hoverSend = !closestLine.line.isServer && this._isHoveringSendButton(mousePosition, timescaleWidth, closestLine.y);
         } else {
-          this._hoverSplit = this._isHoveringBE(mousePosition, timescaleWidth, closestLine.y, labelWidth);
+          this._hoverSplit = closestLine.canSplit && this._isHoveringBE(mousePosition, timescaleWidth, closestLine.y, labelWidth);
         }
 
         if (!this._isHoverButtons()) {

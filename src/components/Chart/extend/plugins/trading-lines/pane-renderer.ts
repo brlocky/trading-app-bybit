@@ -258,6 +258,7 @@ export class PaneRenderer extends PaneRendererBase {
   }
 
   _drawSplitButton(scope: BitmapCoordinatesRenderingScope, activeLabel: LineRendererData, labelWidth: number) {
+    if (!activeLabel.canSplit) return;
     const startX = scope.mediaSize.width / 2 - labelWidth / 2 - buttonWidth / 2 - iconPadding;
     const xSplit = positionsLine(startX, scope.horizontalPixelRatio, buttonWidth);
     const yDimensions = positionsLine(activeLabel.y, scope.verticalPixelRatio, buttonHeight);
