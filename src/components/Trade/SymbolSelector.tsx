@@ -8,7 +8,6 @@ import { selectInterval, selectPositions, selectSymbol } from '../../store/slice
 import { SmallText } from '../Text';
 import { loadSymbol } from '../../store/actions';
 import { AppDispatch } from '../../store';
-import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
 const SymbolCol = tw.div`
@@ -52,7 +51,6 @@ export const SymbolSelector: React.FunctionComponent = () => {
   const apiClient = useApi();
   const selectedSymbol = useSelector(selectSymbol);
   const dispatch = useDispatch<AppDispatch>();
-  const navigate = useNavigate();
 
   useEffect(() => {
     loadTicker();
@@ -90,7 +88,7 @@ export const SymbolSelector: React.FunctionComponent = () => {
   const setSymbol = (s: string) => {
     if (s !== selectedSymbol) {
       // Update URL
-      dispatch(loadSymbol(apiClient, navigate, s));
+      dispatch(loadSymbol(apiClient, s));
     }
 
     setIsDropdownOpen(false);

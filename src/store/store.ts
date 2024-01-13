@@ -19,7 +19,7 @@ const persistedTradeReducer = persistReducer(
   {
     key: 'tradeSetup',
     storage,
-    whitelist: [], // Specify the slices to persist
+    whitelist: ['restingOrders'], // Specify the slices to persist
   },
   tradeSetupReducer,
 );

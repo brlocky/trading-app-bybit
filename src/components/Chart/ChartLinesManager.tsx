@@ -241,9 +241,15 @@ export const ChartLinesManager: React.FC<Props> = ({ seriesInstance }) => {
     if (!chartLine || !symbol) return;
 
     dispatch(removeChartLine(line.id));
+    // Remove childrens when type is Entry
+    if (line.type === 'ENTRY') {
+      const lines2Delete = chartLinesRef.current.filter((l) => l.parentId === line.id);
+      lines2Delete.forEach((l) => {
+        dispatch(removeChartLine(l.id));
+      });
+    }
 
     // Close Server Trades
-
     if (chartLine.type === 'ENTRY') {
       if (chartLine.isLive) {
         // Close Live Position
@@ -254,13 +260,14 @@ export const ChartLinesManager: React.FC<Props> = ({ seriesInstance }) => {
         });
       }
 
+      // Remove RestingOrder
       if (!chartLine.isLive && chartLine.isServer && chartLine.orderId) {
+        // Remove resting order
+        dispatch(removeRestingOrder(chartLine.orderId));
         await tradingService.closeOrder({
           symbol,
           orderId: chartLine.orderId,
         });
-        // Remove resting order
-        chartLine.orderId && dispatch(removeRestingOrder(chartLine.orderId));
       }
     }
 
@@ -268,14 +275,6 @@ export const ChartLinesManager: React.FC<Props> = ({ seriesInstance }) => {
       await tradingService.closeOrder({
         symbol,
         orderId: chartLine.orderId,
-      });
-    }
-
-    // Remove childrens when type is Entry
-    if (line.type === 'ENTRY') {
-      const lines2Delete = chartLinesRef.current.filter((l) => l.parentId === line.id);
-      lines2Delete.forEach((l) => {
-        dispatch(removeChartLine(l.id));
       });
     }
   };

@@ -5,6 +5,7 @@ import { mapKlineToCandleStickData } from '../../mappers';
 import {
   addRestingOrder,
   setAppStarted,
+  setRestingOrders,
   setSymbol,
   updateExecutions,
   updateInterval,
@@ -12,31 +13,31 @@ import {
   updateLoading,
   updateOrders,
   updatePositions,
+  updateRestingOrder,
   updateTickerInfo,
   updateWallet,
 } from '../slices';
 import { ICreateOrder, TradingService } from '../../services';
-import { NavigateFunction, Params } from 'react-router-dom';
+import { Params } from 'react-router-dom';
 
 export interface IAppParams {
   symbol: string;
   interval: string;
 }
 
-export const initApp = (apiClient: RestClientV5, navigate: NavigateFunction, params: Readonly<Params<string>>): AppThunk => {
+export const initApp = (apiClient: RestClientV5, params: Readonly<Params<string>>): AppThunk => {
   return async (dispatch, getState) => {
     try {
       const { symbol, interval } = params;
       if (symbol) {
-        dispatch(setSymbol(symbol));
-        dispatch(loadSymbol(apiClient, navigate, symbol, interval));
+        dispatch(loadSymbol(apiClient, symbol, interval));
       }
 
       if (interval) {
         dispatch(updateInterval(interval));
       }
 
-      const [walletBalance, activeOrders, positionInfo, executionList] = await Promise.all([
+      const [resultWallet, resultOrders, resultPositions, resultExecutions] = await Promise.all([
         apiClient.getWalletBalance({
           accountType: 'CONTRACT',
           coin: 'USDT',
@@ -54,29 +55,38 @@ export const initApp = (apiClient: RestClientV5, navigate: NavigateFunction, par
         }),
       ]);
 
-      const usdtWallet = walletBalance.result?.list?.[0] ?? null;
+      const usdtWallet = resultWallet.result?.list?.[0] ?? null;
       if (!usdtWallet) {
         throw Error('Could not find USDT wallet');
       }
       dispatch(updateWallet(usdtWallet));
 
-      if (positionInfo.retCode === 0) {
-        dispatch(updatePositions(positionInfo.result.list));
-      } else {
-        throw Error('Error loading positions');
+      const positions = resultPositions.retCode === 0 ? resultPositions.result.list : [];
+      if (positions.length) {
+        dispatch(updatePositions(positions));
       }
 
-      if (activeOrders.retCode === 0) {
-        dispatch(updateOrders(activeOrders.result.list));
-      } else {
-        throw Error('Error loading orders');
+      const orders = resultOrders.retCode === 0 ? resultOrders.result.list : [];
+      if (orders.length) {
+        dispatch(updateOrders(resultOrders.result.list));
       }
 
-      if (executionList.retCode === 0) {
-        dispatch(updateExecutions(executionList.result.list.sort((a, b) => Number(b.execTime) - Number(a.execTime))));
+      if (resultExecutions.retCode === 0) {
+        dispatch(updateExecutions(resultExecutions.result.list.sort((a, b) => Number(b.execTime) - Number(a.execTime))));
       } else {
         throw Error('Error loading executions');
       }
+
+      // Force One Way Mode
+      await apiClient.switchPositionMode({
+        category: 'linear',
+        symbol: symbol,
+        mode: 0,
+      });
+
+      // Resting Orders
+      const restingOrders = getState().tradeSetup.restingOrders.filter((r) => orders.find((o) => o.orderId === r.orderId));
+      dispatch(setRestingOrders([...restingOrders]));
 
       dispatch(setAppStarted(true));
       return true;
@@ -89,7 +99,7 @@ export const initApp = (apiClient: RestClientV5, navigate: NavigateFunction, par
   };
 };
 
-export const loadSymbol = (apiClient: RestClientV5, navigate: NavigateFunction, symbol: string, interval = ''): AppThunk => {
+export const loadSymbol = (apiClient: RestClientV5, symbol: string, interval = ''): AppThunk => {
   return async (dispatch, getState) => {
     try {
       const stateInterval = getState().ui.interval;
@@ -104,8 +114,7 @@ export const loadSymbol = (apiClient: RestClientV5, navigate: NavigateFunction, 
       }
       const newInterval = isIntervalChanged ? interval : stateInterval;
 
-      // Update URL
-      // navigate(`/${symbol}/${newInterval}`);
+      dispatch(setSymbol(symbol));
 
       // Get cancle sticks
       const kLine = await apiClient.getKline({
@@ -117,26 +126,11 @@ export const loadSymbol = (apiClient: RestClientV5, navigate: NavigateFunction, 
       const candleStickData = kLine.result.list.map(mapKlineToCandleStickData).sort((a, b) => (a.time as number) - (b.time as number));
       dispatch(updateKlines(candleStickData));
 
-      // Force One Way Mode
-      await apiClient.switchPositionMode({
-        category: 'linear',
-        symbol: symbol,
-        mode: 0,
-      });
-
       // Force Cross Mode
-      await apiClient.switchIsolatedMargin({
+      apiClient.switchIsolatedMargin({
         category: 'linear',
         symbol: symbol,
         tradeMode: 0,
-        buyLeverage: '1',
-        sellLeverage: '1',
-      });
-
-      // Force Leverage
-      await apiClient.setLeverage({
-        category: 'linear',
-        symbol: symbol,
         buyLeverage: '1',
         sellLeverage: '1',
       });
@@ -147,8 +141,6 @@ export const loadSymbol = (apiClient: RestClientV5, navigate: NavigateFunction, 
       });
       const tickerInfo = instrumentsResult.result.list[0] as LinearInverseInstrumentInfoV5;
       dispatch(updateTickerInfo(tickerInfo));
-
-      dispatch(setSymbol(symbol));
     } catch (e) {
       console.error('Something went wrong', e);
     }

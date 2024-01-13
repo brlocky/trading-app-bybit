@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { v4 as uuidv4 } from 'uuid';
 import { TradingLineSide } from '../components/Chart/extend/plugins/trading-lines/state';
 import { AppDispatch } from '../store';
-import { removeRestingOrder, selectChartLines, selectRestingOrders, setChartLines } from '../store/slices';
+import { IRestingOrder, removeRestingOrder, selectChartLines, selectRestingOrders, setChartLines } from '../store/slices';
 import { selectCurrentOrders, selectCurrentPosition, selectFilledOrders, selectPositions } from '../store/slices/uiSlice';
 import { IChartLine } from '../types';
 import { getOrderPrice, getOrderType, isEntryLimitOrder } from '../utils/tradeUtils';
@@ -30,6 +30,7 @@ function withTradingControl<P extends WithTradingControlProps>(
 
     const currentOrdersRef = useRef<AccountOrderV5[]>(currentOrders);
     const allPositionsRef = useRef<PositionV5[]>(allPositions);
+    const restingOrdersRef = useRef<IRestingOrder[]>(restingOrders);
     const chartLinesRef = useRef<IChartLine[]>(chartLines);
     const dispatch = useDispatch<AppDispatch>();
     const apiClient = useApi();
@@ -80,17 +81,18 @@ function withTradingControl<P extends WithTradingControlProps>(
     useEffect(() => {
       chartLinesRef.current = [...chartLines];
       allPositionsRef.current = [...allPositions];
-    }, [chartLines, allPositions]);
+      restingOrdersRef.current = [...restingOrders];
+    }, [chartLines, allPositions, restingOrders]);
 
     // Resting Orders Update and Trigger
     useEffect(() => {
-      if (!restingOrders.length) return;
+      if (!restingOrdersRef.current.length) return;
 
       for (const o of filledOrders) {
-        const index = restingOrders.findIndex((r) => r.orderId === o.orderId);
+        const index = restingOrdersRef.current.findIndex((r) => r.orderId === o.orderId);
         if (index === -1) continue;
 
-        const restingOrder = restingOrders[index];
+        const restingOrder = restingOrdersRef.current[index];
         const position = allPositionsRef.current.find((p) => p.symbol === o.symbol && p.side === o.side);
         if (!position) {
           continue;

@@ -30,7 +30,7 @@ const HomePageComponent: React.FC<WithTradingControlProps> = () => {
   const params = useParams();
 
   useEffect(() => {
-    dispatch(initApp(apiClient, navigate, params))
+    dispatch(initApp(apiClient, params))
       .then((isLoaded) => {
         if (!isLoaded) {
           navigate('/settings');

@@ -1,14 +1,14 @@
 import { AccountOrderV5 } from 'bybit-api';
 import { useDispatch, useSelector } from 'react-redux';
+import { Link, useNavigate } from 'react-router-dom';
 import { useApi } from '../../providers';
 import { TradingService } from '../../services';
+import { AppDispatch } from '../../store';
+import { loadSymbol } from '../../store/actions';
 import { selectInterval, selectOrders, selectPositions, selectTicker } from '../../store/slices';
 import { calculateOrderPnL, formatCurrencyValue, getOrderPrice, getOrderType, getPositionFromOrder } from '../../utils/tradeUtils';
 import Button from '../Button/Button';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
-import { AppDispatch } from '../../store';
-import { loadSymbol } from '../../store/actions';
-import { Link, useNavigate } from 'react-router-dom';
 
 export default function CardOrders() {
   const apiClient = useApi();
@@ -35,12 +35,12 @@ export default function CardOrders() {
       const orderType = getOrderType(o);
       const orderPrice = getOrderPrice(o);
       const orderEntry = getPositionFromOrder(positions, o);
-      const pnl = orderEntry ? calculateOrderPnL(orderEntry.avgPrice, o) : undefined;
+      const pnl = orderType !== 'ENTRY' && orderEntry ? calculateOrderPnL(orderEntry.avgPrice, o) : undefined;
 
       const tradeDirection = orderType === 'ENTRY' ? o.side : o.side === 'Buy' ? 'Sell' : 'Buy';
       return (
         <Row key={index}>
-          <Col onClick={() => dispatch(loadSymbol(apiClient, navigate, o.symbol))}>
+          <Col onClick={() => dispatch(loadSymbol(apiClient, o.symbol))}>
             <Link to={`/${o.symbol}/${interval}`}>
               <i className={tradeDirection === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {o.symbol}
             </Link>

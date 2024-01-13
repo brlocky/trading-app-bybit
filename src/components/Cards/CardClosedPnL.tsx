@@ -7,7 +7,7 @@ import { formatCurrencyValue } from '../../utils/tradeUtils';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
 import { AppDispatch } from '../../store';
 import { loadSymbol } from '../../store/actions';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 export default function CardClosedPnLs() {
   const [list, setList] = useState<ClosedPnLV5[] | undefined>();
@@ -15,7 +15,6 @@ export default function CardClosedPnLs() {
   const dispatch = useDispatch<AppDispatch>();
   const currentOrders = useSelector(selectCurrentOrders);
   const interval = useSelector(selectInterval);
-  const navigate = useNavigate();
 
   const [ordersLength, setOrdersLength] = useState(currentOrders.length);
 
@@ -57,7 +56,7 @@ export default function CardClosedPnLs() {
               const time = new Date(parseInt(l.createdTime, 10)).toTimeString().split(' ')[0];
               return (
                 <Row key={index}>
-                  <Col onClick={() => dispatch(loadSymbol(apiClient, navigate, l.symbol))}>
+                  <Col onClick={() => dispatch(loadSymbol(apiClient, l.symbol))}>
                     <Link to={`/${l.symbol}/${interval}`}>
                       <i className={l.side === 'Sell' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {l.symbol}{' '}
                       ({l.leverage}x)

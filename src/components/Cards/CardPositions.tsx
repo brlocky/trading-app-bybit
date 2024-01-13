@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useApi } from '../../providers';
 import { IClosePosition, IPositionSide, TradingService } from '../../services';
 import { AppDispatch } from '../../store';
@@ -8,7 +8,6 @@ import { selectInterval, selectOrders, selectPositions, selectTicker, selectTick
 import { calculatePositionPnL, formatCurrency, formatCurrencyValue } from '../../utils/tradeUtils';
 import Button from '../Button/Button';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
-import { Link } from 'react-router-dom';
 
 export default function CardPositions() {
   const apiClient = useApi();
@@ -18,7 +17,6 @@ export default function CardPositions() {
   const orders = useSelector(selectOrders);
   const interval = useSelector(selectInterval);
   const { closePosition } = TradingService(useApi());
-  const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
 
   const closePositionHandler = (p: IClosePosition) => {
@@ -52,7 +50,7 @@ export default function CardPositions() {
       const time = new Date(parseInt(p.createdTime, 10)).toTimeString().split(' ')[0];
       return (
         <Row key={index}>
-          <Col onClick={() => dispatch(loadSymbol(apiClient, navigate, p.symbol))}>
+          <Col onClick={() => dispatch(loadSymbol(apiClient, p.symbol))}>
             <Link to={`/${p.symbol}/${interval}`}>
               <i className={p.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {p.symbol} (
               {p.leverage}x)

@@ -1,18 +1,17 @@
 import { useDispatch, useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
+import { useApi } from '../../providers';
+import { AppDispatch } from '../../store';
+import { loadSymbol } from '../../store/actions';
 import { selectExecutions, selectInterval } from '../../store/slices';
 import { formatCurrencyValue } from '../../utils/tradeUtils';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
-import { AppDispatch } from '../../store';
-import { loadSymbol } from '../../store/actions';
-import { useApi } from '../../providers';
-import { Link, useNavigate } from 'react-router-dom';
 
 export default function CardExecutions() {
   const apiClient = useApi();
   const executions = useSelector(selectExecutions);
   const interval = useSelector(selectInterval);
   const dispatch = useDispatch<AppDispatch>();
-  const navigate = useNavigate();
   return (
     <Table>
       <HeaderRow>
@@ -35,7 +34,7 @@ export default function CardExecutions() {
             /* const closedPnl = 0; */
             return (
               <Row key={index}>
-                <Col onClick={() => dispatch(loadSymbol(apiClient, navigate, e.symbol))}>
+                <Col onClick={() => dispatch(loadSymbol(apiClient, e.symbol))}>
                   <Link to={`/${e.symbol}/${interval}`}>
                     <i
                       className={tradeOpenCloseDirection === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}

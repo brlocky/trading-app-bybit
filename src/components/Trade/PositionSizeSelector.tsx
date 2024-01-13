@@ -12,6 +12,7 @@ import {
   selectLeverage,
   selectOrderSettings,
   selectPositionSize,
+  selectRestingOrders,
   selectTicker,
   selectWallet,
   updateOrderSettings,
@@ -29,6 +30,7 @@ export const PositionSizeSelector: React.FC = () => {
   const tickerInfo = useSelector(selectTicker)?.tickerInfo;
   const leverage = useSelector(selectLeverage);
   const positionSize = useSelector(selectPositionSize);
+  const restingOrders = useSelector(selectRestingOrders);
   const wallet = useSelector(selectWallet);
   const chartLines = useSelector(selectChartLines);
   const orderSettings = useSelector(selectOrderSettings);
@@ -126,11 +128,12 @@ export const PositionSizeSelector: React.FC = () => {
         </div>
       </div>
 
-      <div className="inline-flex h-12 w-full content-center gap-x-4 p-2">
+      {/*  <div className="inline-flex h-12 w-full content-center gap-x-4 p-2">
         <p>Live - {chartLines.filter((c) => c.isLive && c.isServer).length}</p>
         <p>Limit - {chartLines.filter((c) => !c.isLive && c.isServer).length}</p>
         <p>Chart - {chartLines.filter((c) => !c.isLive && !c.isServer).length}</p>
-      </div>
+        <p>restingOrders - {restingOrders.length}</p>
+      </div> */}
     </div>
   );
 };

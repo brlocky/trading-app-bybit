@@ -55,11 +55,21 @@ const tradeSetupSlice = createSlice({
         return o;
       });
     },
+    setRestingOrders(state, action: PayloadAction<IRestingOrder[]>) {
+      state.restingOrders = [...action.payload];
+    },
   },
 });
 
-export const { updatePositionSize, updateLeverage, updateOrderSettings, addRestingOrder, removeRestingOrder, updateRestingOrder } =
-  tradeSetupSlice.actions;
+export const {
+  updatePositionSize,
+  updateLeverage,
+  updateOrderSettings,
+  addRestingOrder,
+  removeRestingOrder,
+  updateRestingOrder,
+  setRestingOrders,
+} = tradeSetupSlice.actions;
 
 export const tradeSetupReducer = tradeSetupSlice.reducer;
 

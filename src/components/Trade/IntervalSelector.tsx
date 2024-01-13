@@ -1,12 +1,12 @@
 import { ChevronDownIcon } from '@heroicons/react/24/solid';
 import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 import tw from 'twin.macro';
-import { selectInterval, selectSymbol } from '../../store/slices/uiSlice';
-import { loadSymbol } from '../../store/actions';
 import { useApi } from '../../providers';
 import { AppDispatch } from '../../store';
-import { Link, useNavigate } from 'react-router-dom';
+import { loadSymbol } from '../../store/actions';
+import { selectInterval, selectSymbol } from '../../store/slices/uiSlice';
 
 const intervals = [
   { label: '1m', value: '1' },
@@ -28,7 +28,6 @@ export const IntervalSelector: React.FunctionComponent = () => {
   const apiClient = useApi();
   const symbol = useSelector(selectSymbol);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const navigate = useNavigate();
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
@@ -37,7 +36,7 @@ export const IntervalSelector: React.FunctionComponent = () => {
   const dispatch = useDispatch<AppDispatch>();
   const setInterval = (interval: string) => {
     if (symbol && interval !== selectedInterval) {
-      dispatch(loadSymbol(apiClient, navigate, symbol, interval));
+      dispatch(loadSymbol(apiClient, symbol, interval));
     }
 
     setIsDropdownOpen(false);

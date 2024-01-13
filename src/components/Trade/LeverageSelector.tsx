@@ -1,20 +1,33 @@
 import { debounce } from 'lodash';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { useApi } from '../../providers';
-import { selectLeverage, selectTicker, updateLeverage } from '../../store/slices';
+import { selectCurrentPosition, selectLeverage, selectTicker, updateLeverage } from '../../store/slices';
 import { SlidePicker } from '../Forms';
 
 export const LeverageSelector: React.FC = () => {
   const dispatch = useDispatch();
   const api = useApi();
   const leverage = useSelector(selectLeverage);
+  const currentPosition = useSelector(selectCurrentPosition);
   const tickerInfo = useSelector(selectTicker)?.tickerInfo;
 
   const max = tickerInfo?.leverageFilter.maxLeverage || '100';
   const min = tickerInfo?.leverageFilter.minLeverage || '1';
   const step = 1;
+
+  const [currentPositionLeverage, setCurrentPositionLeverage] = useState(Number(currentPosition?.leverage) || leverage);
+
+  useEffect(() => {
+    if (!currentPosition) {
+      setCurrentPositionLeverage(0);
+      onValueChanged(1);
+    } else {
+      const leverage = Number(currentPosition.leverage);
+      setCurrentPositionLeverage(leverage);
+    }
+  }, [currentPosition]);
 
   const onValueChanged = (v: number) => {
     dispatch(updateLeverage(v));
@@ -43,10 +56,11 @@ export const LeverageSelector: React.FC = () => {
     [],
   );
 
+  const currentLeverage = currentPositionLeverage || leverage;
   return (
     <div className="flex flex-col rounded-md bg-gray-200 p-3">
-      <h1>Leverage {leverage}x</h1>
-      <SlidePicker value={leverage} min={Number(min)} max={Number(max)} step={Number(step)} onValueChanged={onValueChanged} />
+      <h1>Leverage {currentLeverage}x</h1>
+      <SlidePicker value={currentLeverage} min={Number(min)} max={Number(max)} step={Number(step)} onValueChanged={onValueChanged} />
     </div>
   );
 };
