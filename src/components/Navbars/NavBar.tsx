@@ -14,7 +14,8 @@ export default function NavBar() {
             <div className="mx-auto flex w-full flex-wrap items-center justify-between px-4">
               <div className="relative flex w-full justify-between lg:static lg:block lg:w-auto lg:justify-start">
                 <Link to="/" className="flex items-center gap-x-1 py-2 leading-snug text-white hover:opacity-75">
-                  <i className="fas fa-globe leading-lg"></i> <span className="text-xs font-bold uppercase">Trading</span><span className="text-xs ">v{version}</span>
+                  <i className="fas fa-globe leading-lg"></i> <span className="text-xs font-bold uppercase">Scalp Trading</span>
+                  <span className="text-xs ">v{version}</span>
                 </Link>
                 <button
                   className="block cursor-pointer border border-solid border-transparent bg-transparent px-3 py-1 text-xl leading-none text-white outline-none focus:outline-none lg:hidden"
