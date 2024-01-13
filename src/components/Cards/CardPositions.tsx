@@ -1,13 +1,13 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { selectOrders, selectPositions, selectSymbol, selectTicker, selectTickers } from '../../store/slices';
-import { calculatePositionPnL, formatCurrency, formatCurrencyValue } from '../../utils/tradeUtils';
-import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
-import Button from '../Button/Button';
-import { IClosePosition, IPositionSide, TradingService } from '../../services';
+import { useNavigate } from 'react-router-dom';
 import { useApi } from '../../providers';
+import { IClosePosition, IPositionSide, TradingService } from '../../services';
 import { AppDispatch } from '../../store';
 import { loadSymbol } from '../../store/actions';
-import { useNavigate } from 'react-router-dom';
+import { selectOrders, selectPositions, selectTicker, selectTickers } from '../../store/slices';
+import { calculatePositionPnL, formatCurrency, formatCurrencyValue } from '../../utils/tradeUtils';
+import Button from '../Button/Button';
+import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
 
 export default function CardPositions() {
   const apiClient = useApi();
@@ -15,7 +15,6 @@ export default function CardPositions() {
   const tickerInfo = useSelector(selectTicker)?.tickerInfo;
   const positions = useSelector(selectPositions);
   const orders = useSelector(selectOrders);
-  const symbol = useSelector(selectSymbol);
   const { closePosition } = TradingService(useApi());
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();

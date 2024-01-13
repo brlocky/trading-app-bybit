@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import { AppThunk } from '..';
 import { mapKlineToCandleStickData } from '../../mappers';
 import {
+  addRestingOrder,
   setAppStarted,
   setSymbol,
   updateExecutions,
@@ -161,29 +162,35 @@ export const createMartketOrder = (apiClient: RestClientV5, order: ICreateOrder)
     }
     const tradingService = TradingService(apiClient);
     try {
-      const position = await tradingService.openPosition({
+      const orderId = await tradingService.openPosition({
         symbol: order.symbol,
         qty: entry.qty.toString(),
         side: order.side,
         type: 'Market',
       });
 
-      if (position) {
-        const stoplosses = order.chartLines
-          .filter((l) => l.type === 'SL')
-          .map((l) => {
-            return tradingService.addStopLoss(position, l.price.toString(), l.qty.toString());
-          });
-
+      if (orderId) {
         const takeProfits = order.chartLines
           .filter((l) => l.type === 'TP')
           .map((l) => {
-            return tradingService.addTakeProfit(position, l.price.toString(), l.qty.toString());
+            return tradingService.addTakeProfit(order.symbol, l);
           });
 
-        Promise.all([...stoplosses, ...takeProfits]).then((allOrders) => {
+        const stoplosses = order.chartLines
+          .filter((l) => l.type === 'SL')
+          .map((l) => {
+            return tradingService.addStopLoss(order.symbol, l);
+          });
+
+        const sucessMessage = () => {
           toast.success('Market Order Open');
-        });
+        };
+        const orders = [...takeProfits, ...stoplosses];
+        orders.length
+          ? Promise.all(orders).then(() => {
+              sucessMessage();
+            })
+          : sucessMessage();
       } else {
         toast.error('Fail to Open Market Order');
       }
@@ -202,7 +209,7 @@ export const createLimitOrder = (apiClient: RestClientV5, order: ICreateOrder): 
 
     const tradingService = TradingService(apiClient);
     try {
-      const position = await tradingService.openPosition({
+      const orderId = await tradingService.openPosition({
         symbol: order.symbol,
         qty: entry.qty.toString(),
         side: order.side,
@@ -210,38 +217,18 @@ export const createLimitOrder = (apiClient: RestClientV5, order: ICreateOrder): 
         price: entry.price.toString(),
       });
 
-      if (position) {
+      if (orderId) {
         toast.success('Limit Order Open');
-        // Find created position
-        /* const order = currentOrdersRef.current.find(
-          (o) =>
-            o.symbol === createLimitOrder.symbol &&
-            o.orderStatus === 'New' &&
-            o.orderType === 'Limit' &&
-            o.side === createLimitOrder.side &&
-            o.qty === entry.qty.toString(),
-        );
 
-        if (!order) {
-          console.error('Could not find Order');
-          return;
-        }
-
-        const newEntry = { ...entry, orderId: order.orderId, isServer: true, isLive: false };
-        const updatedChartLines = order.chartLines.map((l) => (l.type === 'ENTRY' ? newEntry : l));
-
-        const newChartLines = [...chartLinesRef.current.filter((c) => c.id !== entry.id && c.parentId !== entry.id), ...updatedChartLines];
-
-        dispatch(setChartLines(newChartLines)); */
-        /* dispatch(
+        dispatch(
           addRestingOrder({
-            orderId: newEntry.orderId,
-            symbol: createLimitOrder.symbol,
+            orderId: orderId,
+            symbol: order.symbol,
             price: entry.price.toString(),
             qty: entry.qty.toString(),
-            chartLines: updatedChartLines,
+            chartLines: order.chartLines,
           }),
-        ); */
+        );
       } else {
         toast.error('Fail to Create Limit Order');
       }

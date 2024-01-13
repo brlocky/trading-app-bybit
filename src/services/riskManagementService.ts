@@ -228,7 +228,7 @@ export const RiskManagementService = (): IRiskManagementService => {
         lines.push({
           id: uuidv4(),
           type: chartLineType,
-          side: orderSide,
+          side: orderSide === 'Buy' ? 'Sell' : 'Buy',
           price: entry.price,
           qty: roundedQty,
           draggable: true,

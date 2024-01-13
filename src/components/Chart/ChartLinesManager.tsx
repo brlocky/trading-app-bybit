@@ -235,9 +235,7 @@ export const ChartLinesManager: React.FC<Props> = ({ seriesInstance }) => {
     const position = currentPositionRef.current;
     const needToSync = entry.isLive && position;
     if (needToSync) {
-      line.type === 'TP'
-        ? await tradingService.addTakeProfit(position, line.price.toString(), line.qty.toString())
-        : await tradingService.addStopLoss(position, line.price.toString(), line.qty.toString());
+      line.type === 'TP' ? await tradingService.addTakeProfit(symbol, line) : await tradingService.addStopLoss(symbol, line);
     } else {
       dispatch(addChartLine(chartLine));
     }
@@ -257,22 +255,20 @@ export const ChartLinesManager: React.FC<Props> = ({ seriesInstance }) => {
     }
 
     if (chartLine.isLive && chartLine.orderId) {
-      const position = currentPositionRef.current;
       const order = orders.find((o) => o.orderId === chartLine.orderId);
-
-      if (!position || !order) return;
+      if (!order) return;
 
       const orderClosed = await tradingService.closeOrder(order);
       if (orderClosed) {
         const [order1, order2] = newLines;
         if (line.type === 'TP') {
-          await tradingService.addTakeProfit(position, order1.price.toString(), order1.qty.toString());
-          await tradingService.addTakeProfit(position, order2.price.toString(), order2.qty.toString());
+          await tradingService.addTakeProfit(symbol, order1);
+          await tradingService.addTakeProfit(symbol, order2);
         }
 
         if (line.type === 'SL') {
-          await tradingService.addStopLoss(position, order1.price.toString(), order1.qty.toString());
-          await tradingService.addStopLoss(position, order2.price.toString(), order2.qty.toString());
+          await tradingService.addStopLoss(symbol, order1);
+          await tradingService.addStopLoss(symbol, order2);
         }
       }
     } else {
@@ -293,6 +289,7 @@ export const ChartLinesManager: React.FC<Props> = ({ seriesInstance }) => {
         chartLines: tradeChartLines,
       }),
     );
+    dispatch(setChartLines([...chartLinesRef.current.filter((l) => !tradeChartLines.find((c) => c.id === l.id))]));
   };
 
   const dispatchAddBE = () => {

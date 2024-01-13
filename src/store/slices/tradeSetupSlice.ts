@@ -22,6 +22,7 @@ interface IRestingOrder {
   symbol: string;
   price: string;
   qty: string;
+  chartLines: IChartLine[];
 }
 
 const tradeSetupSlice = createSlice({

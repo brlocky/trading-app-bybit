@@ -114,7 +114,7 @@ function withTradingControl<P extends WithTradingControlProps>(
      * Sync Current Position and Orders with Chart Lines
      */
     useEffect(() => {
-      console.log('curren po', currentPosition)
+      console.log('curren po', currentPosition);
       if (currentPosition) {
         const parentId = uuidv4();
 
@@ -127,7 +127,7 @@ function withTradingControl<P extends WithTradingControlProps>(
             return {
               id: uuidv4(),
               type: orderType,
-              side: currentPosition.side as TradingLineSide,
+              side: currentPosition.side === 'Buy' ? 'Sell' : 'Buy',
               price: price,
               qty: Number(o.qty),
               draggable: true,
@@ -199,9 +199,7 @@ function withTradingControl<P extends WithTradingControlProps>(
 
     useEffect(() => {
       currentOrdersRef.current = currentOrders;
-      if (currentOrders.length) {
-        console.log('as')
-      }
+
       const lines2Remove = chartLinesRef.current.filter(
         (c) => c.isLive && c.type !== 'ENTRY' && !currentOrders.find((o) => o.orderId === c.orderId),
       );
@@ -210,11 +208,12 @@ function withTradingControl<P extends WithTradingControlProps>(
         dispatch(setChartLines(newChartLines));
       }
 
-      /*       const missingOrders = currentOrders.filter((o) => {
+      /*
+      const missingOrders = currentOrders.filter((o) => {
         return !chartLinesRef.current.find((l) => l.orderId === o.orderId);
       });
 
-      const newLines: IChartLine[] = [];
+       const newLines: IChartLine[] = [];
       missingOrders.forEach((o) => {
         const restingOrder = restingOrders.find((r) => r.orderId === o.orderId);
         restingOrder?.chartLines.forEach((c) => {

@@ -2,7 +2,10 @@ import { OrderSideV5 } from 'bybit-api';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
+import { useApi } from '../../providers';
 import { RiskManagementService } from '../../services';
+import { AppDispatch } from '../../store';
+import { createMartketOrder } from '../../store/actions';
 import {
   addChartLines,
   selectChartLines,
@@ -14,13 +17,10 @@ import {
   updateOrderSettings,
   updatePositionSize,
 } from '../../store/slices';
+import { formatCurrencyValue } from '../../utils/tradeUtils';
 import Button from '../Button/Button';
 import { SlidePicker } from '../Forms';
-import { RedText, SmallText } from '../Text';
-import { formatCurrencyValue } from '../../utils/tradeUtils';
-import { useApi } from '../../providers';
-import { AppDispatch } from '../../store';
-import { createMartketOrder } from '../../store/actions';
+import { SmallText } from '../Text';
 
 export const PositionSizeSelector: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
