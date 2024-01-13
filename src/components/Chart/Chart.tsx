@@ -5,10 +5,10 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { mapKlineToCandleStickData } from '../../mappers';
 import { useApi } from '../../providers';
-import { selectInterval, selectKlines, selectLastKline, selectSymbol, selectTicker } from '../../slices/symbolSlice';
+import { selectInterval, selectKlines, selectLastKline, selectSymbol, selectTicker } from '../../store/slices/uiSlice';
 import { CandlestickDataWithVolume } from '../../types';
 import { ChartTimer } from './ChartTimer';
-import { TradeControlManager } from './TradeControlManager';
+import { ChartLinesManager } from './ChartLinesManager';
 
 interface Props {
   colors?: {
@@ -247,18 +247,22 @@ export const Chart: React.FC<Props> = (props) => {
               end: Number(barsInfo.from) * 1000,
             })
             .then((r) => {
-              const candleStickData = r.result.list.map(mapKlineToCandleStickData).sort((a, b) => (a.time as number) - (b.time as number));
-              const allData = [...candleStickData, ...loadedCandlesRef.current].sort((a, b) => (a.time as number) - (b.time as number));
-              const uniqueArr = allData.filter((item, index) => {
-                return (
-                  index ===
-                  allData.findIndex((t) => {
-                    return t.time === item.time;
-                  })
-                );
-              });
+              if (r.result?.list) {
+                const candleStickData = r.result.list
+                  .map(mapKlineToCandleStickData)
+                  .sort((a, b) => (a.time as number) - (b.time as number));
+                const allData = [...candleStickData, ...loadedCandlesRef.current].sort((a, b) => (a.time as number) - (b.time as number));
+                const uniqueArr = allData.filter((item, index) => {
+                  return (
+                    index ===
+                    allData.findIndex((t) => {
+                      return t.time === item.time;
+                    })
+                  );
+                });
 
-              setLoadedCandles(uniqueArr);
+                setLoadedCandles(uniqueArr);
+              }
             });
         }
       }
@@ -269,11 +273,11 @@ export const Chart: React.FC<Props> = (props) => {
   return (
     <div>
       <div ref={chartContainerRef} className="relative">
-        {!isLoading && chartInstanceRef.current && newSeries.current ? (
+        {symbol && !isLoading && chartInstanceRef.current && newSeries.current ? (
           <>
             <ChartTimer />
             {/* <IndicatorsChartControlManager chartInstance={chartInstanceRef.current} seriesInstance={newSeries.current} /> */}
-            <TradeControlManager chartInstance={chartInstanceRef.current} seriesInstance={newSeries.current} />
+            <ChartLinesManager chartInstance={chartInstanceRef.current} seriesInstance={newSeries.current} />
           </>
         ) : null}
       </div>

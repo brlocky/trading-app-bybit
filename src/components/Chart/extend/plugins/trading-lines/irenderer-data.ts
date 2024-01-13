@@ -10,6 +10,7 @@ export interface LineRendererData {
   text: string;
   line: TradingLineInfo;
   pnl: string;
+  positivePnl: boolean;
   hoverRemove: boolean;
   hoverLabel: boolean;
   hoverTP: boolean;

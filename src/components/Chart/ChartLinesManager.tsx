@@ -2,34 +2,34 @@ import { AccountOrderV5, OrderSideV5, PositionV5 } from 'bybit-api';
 import { IChartApi, ISeriesApi, SeriesType } from 'lightweight-charts';
 import React, { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { toast } from 'react-toastify';
 import { useApi } from '../../providers';
-import { IOrderOptionsSettingsData, RiskManagementService, TradingService } from '../../services';
+import { IAmendOrder, IOrderOptionsSettingsData, RiskManagementService, TradingService } from '../../services';
+import { AppDispatch } from '../../store';
+import { createLimitOrder } from '../../store/actions';
 import {
   SubTicker,
+  addChartLine,
   removeChartLine,
+  selectChartLines,
   selectCurrentOrders,
   selectCurrentPosition,
-  selectChartLines,
   selectOrderSettings,
+  selectPositionSize,
   selectSymbol,
   selectTicker,
   setChartLines,
-  setCreateLimitOrder,
-  addChartLine,
-  selectPositionSize,
-} from '../../slices';
+} from '../../store/slices';
 import { IChartLine } from '../../types';
 import { TradingLineInfo, TradingLinedDragInfo } from './extend/plugins/trading-lines/state';
 import { TradingLines } from './extend/plugins/trading-lines/trading-lines';
-import { toast } from 'react-toastify';
-import { getOrderPrice } from '../../utils/tradeUtils';
 
-interface LineControlManagerProps {
+interface Props {
   chartInstance: IChartApi;
   seriesInstance: ISeriesApi<SeriesType>;
 }
 
-export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesInstance }) => {
+export const ChartLinesManager: React.FC<Props> = ({ seriesInstance }) => {
   const chartLines = useSelector(selectChartLines);
   const currentPosition = useSelector(selectCurrentPosition);
   const currentOrders = useSelector(selectCurrentOrders);
@@ -38,19 +38,18 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
   const ticker = useSelector(selectTicker);
   const positionSize = useSelector(selectPositionSize);
 
-  const linePluginRef = useRef<TradingLines | undefined>(undefined);
+  const linePluginRef = useRef<TradingLines>(new TradingLines());
   const chartLinesRef = useRef<IChartLine[]>(chartLines);
   const currentPositionRef = useRef<PositionV5 | undefined>(currentPosition);
   const currentOrdersRef = useRef<AccountOrderV5[]>(currentOrders);
   const orderSettingsRef = useRef<IOrderOptionsSettingsData>(orderSettings);
   const tickerRef = useRef<SubTicker | undefined>(ticker);
-  const riskManagementService = RiskManagementService();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const apiClient = useApi();
+  const riskManagementService = RiskManagementService();
   const tradingService = TradingService(apiClient);
 
   useEffect(() => {
-    linePluginRef.current = new TradingLines();
     seriesInstance.attachPrimitive(linePluginRef.current);
 
     linePluginRef.current.lineDragged().subscribe(dispatchChartLineUpdate, this);
@@ -111,17 +110,70 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
     }
   }, [positionSize]);
 
-  const dispatchChartLineUpdate = (lineDragInfo: TradingLinedDragInfo) => {
-    const lineIndex = chartLinesRef.current.findIndex((l) => l.id === lineDragInfo.to.id);
-    if (lineIndex !== -1) {
-      const changedLine = { ...chartLinesRef.current[lineIndex] };
-      const newLines = [...chartLinesRef.current];
-      changedLine.price = lineDragInfo.to.price;
-      newLines[lineIndex] = changedLine;
-      dispatch(setChartLines(newLines));
+  interface IChartLineDiff {
+    added: IChartLine[];
+    removed: IChartLine[];
+    updated: IChartLine[];
+  }
+
+  const getChartLinesDiff = (arr1: IChartLine[], arr2: IChartLine[]): IChartLineDiff => {
+    const result: IChartLineDiff = {
+      added: [],
+      removed: [],
+      updated: [],
+    };
+
+    for (const obj1 of arr1) {
+      const obj2 = arr2.find((obj2) => obj1.id === obj2.id);
+
+      if (!obj2) {
+        result.removed.push(obj1);
+      } else if (obj1.price !== obj2.price || obj1.qty !== obj2.qty) {
+        result.updated.push(obj1);
+      }
     }
+
+    for (const obj2 of arr2) {
+      const obj1 = arr1.find((obj1) => obj1.id === obj2.id);
+
+      if (!obj1) {
+        result.added.push(obj2);
+      }
+    }
+
+    return result;
   };
 
+  // Update ChartLine
+  const dispatchChartLineUpdate = async (lineDragInfo: TradingLinedDragInfo) => {
+    const lineToUpdate = chartLinesRef.current.find((l) => l.id === lineDragInfo.to.id);
+
+    if (!lineToUpdate) {
+      return;
+    }
+
+    const needToSync = lineToUpdate.isServer && lineToUpdate.orderId;
+    const canUpdateLines = !needToSync
+      ? true
+      : await tradingService.amendOrder({
+          symbol,
+          type: lineToUpdate.type,
+          orderId: lineToUpdate.orderId as string,
+          qty: lineToUpdate.qty.toString(),
+          price: lineDragInfo.to.price.toString(),
+        });
+
+    if (!canUpdateLines) {
+      linePluginRef.current?.updateLine(lineDragInfo.from.id, lineDragInfo.from);
+      return;
+    }
+
+    const updatedLines = chartLinesRef.current.map((l) => (l.id === lineDragInfo.to.id ? { ...l, price: lineDragInfo.to.price } : l));
+
+    dispatch(setChartLines(updatedLines));
+  };
+
+  // Use for limit order when moving several lines at the same time
   const dispatchChartLinesUpdate = (lineDragsInfo: TradingLinedDragInfo[]) => {
     const currentChartLines = [...chartLinesRef.current];
     lineDragsInfo.forEach((dragInfo) => {
@@ -137,8 +189,31 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
     dispatch(setChartLines(currentChartLines));
   };
 
-  const dispatchChartLineRemoved = (line: TradingLineInfo) => {
+  // Remove Chart Line
+  const dispatchChartLineRemoved = async (line: TradingLineInfo) => {
+    const chartLine = chartLinesRef.current.find((l) => l.id === line.id);
+    if (!chartLine || !symbol) return;
+
     dispatch(removeChartLine(line.id));
+
+    // Close Server Trades
+    if (line.isServer) {
+      if (line.type === 'ENTRY') {
+        await tradingService.closePosition({
+          symbol,
+          side: line.side,
+          qty: line.qty.toString(),
+        });
+      } else {
+        chartLine.orderId &&
+          (await tradingService.closeOrder({
+            symbol,
+            orderId: chartLine.orderId,
+          }));
+      }
+    }
+
+    // Remove childrens when type is Entry
     if (line.type === 'ENTRY') {
       const lines2Delete = chartLinesRef.current.filter((l) => l.parentId === line.id);
       lines2Delete.forEach((l) => {
@@ -147,8 +222,8 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
     }
   };
 
-  const dispatchAddTPSL = (line: TradingLineInfo) => {
-    if (!symbol) return;
+  // Add TP and SL to Chart Lines
+  const dispatchAddTPSL = async (line: TradingLineInfo) => {
     if (!tickerRef.current || !tickerRef.current.ticker || !tickerRef.current.tickerInfo) return;
 
     const entry = chartLinesRef.current.find((c) => c.id === line.parentId && c.type === 'ENTRY');
@@ -158,9 +233,11 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
     if (!chartLine) return;
 
     const position = currentPositionRef.current;
-    if (position) {
-      line.type === 'TP' && tradingService.addTakeProfit(position, chartLine.price.toString(), chartLine.qty.toString());
-      line.type === 'SL' && tradingService.addStopLoss(position, chartLine.price.toString(), chartLine.qty.toString());
+    const needToSync = entry.isLive && position;
+    if (needToSync) {
+      line.type === 'TP'
+        ? await tradingService.addTakeProfit(position, line.price.toString(), line.qty.toString())
+        : await tradingService.addStopLoss(position, line.price.toString(), line.qty.toString());
     } else {
       dispatch(addChartLine(chartLine));
     }
@@ -168,7 +245,6 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
 
   // TODO move to service or action
   const dispatchSplitOrder = async (line: TradingLineInfo) => {
-    if (!symbol) return;
     const orders = currentOrdersRef.current;
     if (!tickerRef.current || !tickerRef.current.ticker || !tickerRef.current.tickerInfo) return;
     const chartLine = chartLinesRef.current.find((c) => c.id === line.id);
@@ -179,24 +255,26 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
       toast.error('Cannot Split order probably already using lowest size');
       return;
     }
-    if (line.isLive) {
+
+    if (chartLine.isLive && chartLine.orderId) {
       const position = currentPositionRef.current;
       const order = orders.find((o) => o.orderId === chartLine.orderId);
 
       if (!position || !order) return;
 
-      await tradingService.closeOrder(order);
-      const promises = newLines.map(async (l) => {
+      const orderClosed = await tradingService.closeOrder(order);
+      if (orderClosed) {
+        const [order1, order2] = newLines;
         if (line.type === 'TP') {
-          return tradingService.addTakeProfit(position, l.price.toString(), l.qty.toString());
+          await tradingService.addTakeProfit(position, order1.price.toString(), order1.qty.toString());
+          await tradingService.addTakeProfit(position, order2.price.toString(), order2.qty.toString());
         }
 
         if (line.type === 'SL') {
-          return tradingService.addStopLoss(position, l.price.toString(), l.qty.toString());
+          await tradingService.addStopLoss(position, order1.price.toString(), order1.qty.toString());
+          await tradingService.addStopLoss(position, order2.price.toString(), order2.qty.toString());
         }
-      });
-
-      await Promise.all(promises);
+      }
     } else {
       const newChartLines = chartLinesRef.current.filter((c) => c.id !== line.id).concat(newLines);
       dispatch(setChartLines(newChartLines));
@@ -204,12 +282,12 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
   };
 
   const dispatchAddSend = (line: TradingLineInfo) => {
-    if (!symbol || !chartLinesRef.current) return;
+    if (!chartLinesRef.current) return;
 
     const tradeChartLines = chartLinesRef.current.filter((c) => c.id === line.id || c.parentId === line.id);
     if (!tradeChartLines.length) return;
     dispatch(
-      setCreateLimitOrder({
+      createLimitOrder(apiClient, {
         side: line.side as OrderSideV5,
         symbol: symbol,
         chartLines: tradeChartLines,
@@ -222,21 +300,7 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
     console.log('add be');
   };
 
-  let lastCallTime: number | null = null;
-
-  const updateAllViewsThrottled = () => {
-    const now = Date.now();
-
-    // If there's no last call time or if 100ms have passed since the last call
-    if (!lastCallTime || now - lastCallTime >= 100) {
-      linePluginRef.current?.updateAllViews();
-      lastCallTime = now;
-    }
-  };
-
   const setupChartLines = () => {
-    if (!linePluginRef.current) return;
-
     const currentPluginLines = linePluginRef.current.lines();
 
     const lines2Delete = currentPluginLines.filter((l) => {
@@ -256,7 +320,7 @@ export const TradeControlManager: React.FC<LineControlManagerProps> = ({ seriesI
     lines2Add.length && linePluginRef.current.setLines(lines2Add);
     lines2Update.length && lines2Update.forEach((l) => linePluginRef.current?.updateLine(l.id, l));
 
-    updateAllViewsThrottled();
+    linePluginRef.current.updateAllViews();
   };
 
   return null; // Since this component doesn't render anything, we return null

@@ -8,6 +8,7 @@ import {
   SeriesType,
   Time,
 } from 'lightweight-charts';
+import { formatCurrencyValue } from '../../../../../utils/tradeUtils';
 import {
   averageWidthPerCharacter,
   buttonHeight,
@@ -372,7 +373,7 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
 
       const entry = tradingLines.find((tl) => tl.type === 'ENTRY' && (tl.id === l.parentId || tl.id === l.id));
       const text = ` ${l.qty}@${l.price} `;
-      const pnl = entry ? calculatePnl(entry, l) : '';
+      const pnl = entry ? calculatePnl(entry, l) : '0';
       const movingLine = tradingLines.find((tl) => tl.id === 'moving-line');
       const isDraggedLine = this._draggingID === 'moving-line' && movingLine && l.id === movingLine.parentId ? true : false;
 
@@ -394,7 +395,8 @@ export class TradingLines extends TradingLinesState implements ISeriesPrimitive<
         hoverBE: false,
         hoverSend: false,
         hoverSplit: false,
-        pnl: pnl,
+        pnl: formatCurrencyValue(pnl),
+        positivePnl: Number(pnl) > 0,
         line: l,
         showSend: !l.isLive && l.type === 'ENTRY',
         price: price,

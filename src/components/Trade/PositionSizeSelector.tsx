@@ -1,5 +1,5 @@
 import { OrderSideV5 } from 'bybit-api';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { RiskManagementService } from '../../services';
@@ -11,17 +11,20 @@ import {
   selectPositionSize,
   selectTicker,
   selectWallet,
-  setCreateMarketOrder,
   updateOrderSettings,
   updatePositionSize,
-} from '../../slices';
+} from '../../store/slices';
 import Button from '../Button/Button';
 import { SlidePicker } from '../Forms';
 import { RedText, SmallText } from '../Text';
 import { formatCurrencyValue } from '../../utils/tradeUtils';
+import { useApi } from '../../providers';
+import { AppDispatch } from '../../store';
+import { createMartketOrder } from '../../store/actions';
 
 export const PositionSizeSelector: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
+  const apiClient = useApi();
   const ticker = useSelector(selectTicker)?.ticker;
   const tickerInfo = useSelector(selectTicker)?.tickerInfo;
   const leverage = useSelector(selectLeverage);
@@ -30,6 +33,14 @@ export const PositionSizeSelector: React.FC = () => {
   const chartLines = useSelector(selectChartLines);
   const orderSettings = useSelector(selectOrderSettings);
   const riskManagementService = RiskManagementService();
+
+  useEffect(() => {
+    if (!tickerInfo || !tickerInfo?.lotSizeFilter?.minOrderQty) return;
+    const minSminOrderQtyize = Number(tickerInfo.lotSizeFilter.minOrderQty);
+    if (positionSize !== minSminOrderQtyize) {
+      dispatch(updatePositionSize(minSminOrderQtyize));
+    }
+  }, [tickerInfo]);
 
   const getMaxOrderQty = (): number => {
     if (!wallet || !tickerInfo || !ticker) {
@@ -63,7 +74,7 @@ export const PositionSizeSelector: React.FC = () => {
     } else {
       // Market Order
       dispatch(
-        setCreateMarketOrder({
+        createMartketOrder(apiClient, {
           symbol: tickerInfo.symbol,
           side: orderSide,
           chartLines: newChartLines,
@@ -78,9 +89,6 @@ export const PositionSizeSelector: React.FC = () => {
     lotSizeFilter: { minOrderQty, qtyStep },
   } = tickerInfo;
 
-  <SmallText className="self-end text-right">
-    <RedText>Fee {((positionSize * Number(ticker.lastPrice) * 0.055) / 100).toFixed(2)} USDT</RedText>
-  </SmallText>;
   const feeValue = orderSettings.armed ? 0.06 : 0.01;
   const orderFeeValue = ((positionSize * Number(ticker.lastPrice) * feeValue) / 100).toFixed(2);
 
@@ -118,20 +126,11 @@ export const PositionSizeSelector: React.FC = () => {
         </div>
       </div>
 
-      {/* <div className="inline-flex h-12 w-full content-center gap-x-4 p-2">
-        <Button
-          onClick={() => {
-            const liveLines = chartLines.filter((c) => c.isLive);
-            dispatch(setChartLines(liveLines));
-          }}
-          className={orderSide === 'Buy' ? 'bg-red-300' : ''}
-        >
-          Clear Chart Lines
-        </Button>
+      <div className="inline-flex h-12 w-full content-center gap-x-4 p-2">
         <p>Live - {chartLines.filter((c) => c.isLive && c.isServer).length}</p>
         <p>Limit - {chartLines.filter((c) => !c.isLive && c.isServer).length}</p>
         <p>Chart - {chartLines.filter((c) => !c.isLive && !c.isServer).length}</p>
-      </div> */}
+      </div>
     </div>
   );
 };

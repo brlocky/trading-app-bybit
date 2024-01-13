@@ -273,10 +273,7 @@ export class PaneRenderer extends PaneRendererBase {
 
     const radius = 4 * scope.horizontalPixelRatio;
 
-    const pnl = Number(activeLabel.pnl);
-
-    
-    const positivePnl = pnl >= 0;
+    const positivePnl = activeLabel.positivePnl;
     const isEntry = activeLabel.line.type === 'ENTRY';
 
     if (isEntry && !activeLabel.line.isLive) return;
@@ -296,7 +293,7 @@ export class PaneRenderer extends PaneRendererBase {
     ctx.font = `${Math.round(10 * scope.verticalPixelRatio)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(pnl.toString(), xDimensions.position + xDimensions.length / 2, yDimensions.position + yDimensions.length / 2);
+    ctx.fillText(activeLabel.pnl, xDimensions.position + xDimensions.length / 2, yDimensions.position + yDimensions.length / 2);
     ctx.restore();
   }
 

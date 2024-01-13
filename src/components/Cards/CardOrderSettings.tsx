@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { IOrderOptionData } from '../../services';
 import { NumericInput, SlidePicker } from '../Forms';
 import { SmallText } from '../Text';
-import { selectOrderSettings, updateOrderSettings } from '../../slices';
+import { selectOrderSettings, updateOrderSettings } from '../../store/slices';
 import { useDispatch, useSelector } from 'react-redux';
 
 // components

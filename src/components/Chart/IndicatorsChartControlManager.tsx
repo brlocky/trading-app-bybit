@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import { selectLastKline, selectKlines } from '../../slices';
+import { selectLastKline, selectKlines } from '../../store/slices';
 import { CandlestickDataWithVolume, ChartLine } from '../../types';
 
 interface LineControlManagerProps {

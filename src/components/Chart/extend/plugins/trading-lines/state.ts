@@ -1,7 +1,7 @@
 import { Delegate } from '../../helpers/delegate';
 
 export type TradingLineType = 'ENTRY' | 'SL' | 'TP';
-export type TradingLineSide = 'Buy' | 'Sell' | 'None';
+export type TradingLineSide = 'Buy' | 'Sell';
 
 export interface TradingLineInfo {
   id: string;
@@ -220,7 +220,7 @@ export class TradingLinesState {
         });
         this._linesDragged.fire(dragsInfo);
       } else {
-        this._lineDragged.fire({ from: fromLine, to: existingLine });
+        this._lineDragged.fire({ from: fromLine, to: existingLine })
       }
     }
   }

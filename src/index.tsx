@@ -1,18 +1,17 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import reportWebVitals from './reportWebVitals';
-import { HashRouter } from 'react-router-dom';
 import App from './App';
+import reportWebVitals from './reportWebVitals';
 
-import './index.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import { ApiProvider, SocketProvider } from './providers';
 import { Provider } from 'react-redux';
-import { persistor, store } from './store';
+import { ToastContainer } from 'react-toastify';
+import { PersistGate } from 'redux-persist/integration/react';
+import './index.css';
+import { ApiProvider, SocketProvider } from './providers';
 import { SettingsService } from './services';
 import { SocketListener } from './socket/socketListener';
-import { PersistGate } from 'redux-persist/integration/react';
-import { ToastContainer } from 'react-toastify';
+import { persistor, store } from './store';
 
 const { apiKey, apiSecret, testnet } = SettingsService.loadSettings();
 
@@ -21,18 +20,16 @@ const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 const CommonRoot = () => (
   <React.Fragment>
     <ToastContainer />
-    <HashRouter>
-      <Provider store={store}>
-        <PersistGate loading={null} persistor={persistor}>
-          <ApiProvider apiKey={apiKey} apiSecret={apiSecret} testnet={testnet}>
-            <App />
-          </ApiProvider>
-          <SocketProvider socketKey={apiKey} socketSecret={apiSecret} testnet={testnet}>
-            <SocketListener />
-          </SocketProvider>
-        </PersistGate>
-      </Provider>
-    </HashRouter>
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <ApiProvider apiKey={apiKey} apiSecret={apiSecret} testnet={testnet}>
+          <App />
+        </ApiProvider>
+        <SocketProvider socketKey={apiKey} socketSecret={apiSecret} testnet={testnet}>
+          <SocketListener />
+        </SocketProvider>
+      </PersistGate>
+    </Provider>
   </React.Fragment>
 );
 

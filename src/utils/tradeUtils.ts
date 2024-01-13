@@ -17,6 +17,7 @@ export const isEntry = (o: AccountOrderV5): boolean => o.orderStatus === 'New' &
 export const getOrderType = (o: AccountOrderV5): TradingLineType => {
   if (isOrderSL(o)) return 'SL';
   if (isOrderTP(o)) return 'TP';
+  if (isEntry(o)) return 'ENTRY';
 
   return 'ENTRY';
 };

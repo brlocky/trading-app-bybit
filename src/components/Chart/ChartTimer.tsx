@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { selectInterval } from '../../slices/symbolSlice';
+import { selectInterval } from '../../store/slices/uiSlice';
 
 export const ChartTimer: React.FC = () => {
   const selectedInterval = useSelector(selectInterval);

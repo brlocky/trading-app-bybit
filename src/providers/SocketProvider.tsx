@@ -1,5 +1,7 @@
 import { DefaultLogger, WebsocketClient } from 'bybit-api';
 import React, { ReactNode, useContext, useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { selectIsAppStarted } from '../store/slices';
 
 // Define the SOCKET context
 const SocketContext = React.createContext<WebsocketClient | null>(null);
@@ -14,6 +16,7 @@ interface ISocketProviderProps {
 // Create the SOCKET provider component
 export const SocketProvider: React.FC<ISocketProviderProps> = ({ children, socketKey, socketSecret, testnet }: ISocketProviderProps) => {
   const [socketClient, setSocketClient] = useState<WebsocketClient>();
+  const isAppStarted = useSelector(selectIsAppStarted);
 
   // Disable all logging on the silly level
   const customLogger = {
@@ -23,6 +26,11 @@ export const SocketProvider: React.FC<ISocketProviderProps> = ({ children, socke
   };
 
   useEffect(() => {
+    closeConnection();
+    if (!isAppStarted) {
+      return;
+    }
+
     // Connect Socket
     const ws = new WebsocketClient(
       {
@@ -35,12 +43,19 @@ export const SocketProvider: React.FC<ISocketProviderProps> = ({ children, socke
     );
     setSocketClient(ws);
 
+    console.log('Socket connected');
+
     return () => {
-      if (socketClient) {
-        socketClient.closeAll();
-      }
+      closeConnection();
     };
-  }, []);
+  }, [isAppStarted]);
+
+  const closeConnection = () => {
+    if (socketClient) {
+      console.log('Socket disconnected');
+      socketClient.closeAll();
+    }
+  };
 
   return socketClient ? <SocketContext.Provider value={socketClient}>{children}</SocketContext.Provider> : null;
 };

@@ -1,7 +1,7 @@
 import { LinearInverseInstrumentInfoV5, OrderSideV5, PositionV5 } from 'bybit-api';
 import { v4 as uuidv4 } from 'uuid';
 import { TradingLineInfo, TradingLineType } from '../components/Chart/extend/plugins/trading-lines/state';
-import { SubTicker } from '../slices';
+import { SubTicker } from '../store/slices';
 import { IChartLine, ITicker } from '../types';
 import { IOrderOptionData, IOrderOptionsSettingsData } from './settingsService';
 

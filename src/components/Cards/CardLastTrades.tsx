@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectLastTrades, selectSymbol, updateLastTrades } from '../../slices';
+import { selectLastTrades, selectSymbol, updateLastTrades } from '../../store/slices';
 import { useApi } from '../../providers';
 import { PublicTradeV5 } from 'bybit-api';
 

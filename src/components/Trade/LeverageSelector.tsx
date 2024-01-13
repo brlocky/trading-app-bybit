@@ -3,7 +3,7 @@ import React, { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { useApi } from '../../providers';
-import { selectLeverage, selectTicker, updateLeverage } from '../../slices';
+import { selectLeverage, selectTicker, updateLeverage } from '../../store/slices';
 import { SlidePicker } from '../Forms';
 
 export const LeverageSelector: React.FC = () => {

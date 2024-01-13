@@ -3,7 +3,7 @@ import { Input } from '../Forms/Input';
 import { Card } from './Card';
 import { SettingsService } from '../../services';
 import Button from '../Button/Button';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 
 // components
 

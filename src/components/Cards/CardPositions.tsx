@@ -1,22 +1,26 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { selectOrders, selectPositions, selectTicker, selectTickers, updateSymbol } from '../../slices';
+import { selectOrders, selectPositions, selectSymbol, selectTicker, selectTickers } from '../../store/slices';
 import { calculatePositionPnL, formatCurrency, formatCurrencyValue } from '../../utils/tradeUtils';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
 import Button from '../Button/Button';
-import { PositionV5 } from 'bybit-api';
-import { TradingService } from '../../services';
+import { IClosePosition, IPositionSide, TradingService } from '../../services';
 import { useApi } from '../../providers';
+import { AppDispatch } from '../../store';
+import { loadSymbol } from '../../store/actions';
+import { useNavigate } from 'react-router-dom';
 
 export default function CardPositions() {
+  const apiClient = useApi();
   const tickers = useSelector(selectTickers);
   const tickerInfo = useSelector(selectTicker)?.tickerInfo;
   const positions = useSelector(selectPositions);
   const orders = useSelector(selectOrders);
+  const symbol = useSelector(selectSymbol);
   const { closePosition } = TradingService(useApi());
+  const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
 
-  const dispatch = useDispatch();
-
-  const closePositionHandler = (p: PositionV5) => {
+  const closePositionHandler = (p: IClosePosition) => {
     closePosition(p);
   };
 
@@ -47,7 +51,7 @@ export default function CardPositions() {
       const time = new Date(parseInt(p.createdTime, 10)).toTimeString().split(' ')[0];
       return (
         <Row key={index}>
-          <Col onClick={() => dispatch(updateSymbol(p.symbol))}>
+          <Col onClick={() => dispatch(loadSymbol(apiClient, navigate, p.symbol))}>
             <i className={p.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {p.symbol} (
             {p.leverage}x)
           </Col>
@@ -70,7 +74,11 @@ export default function CardPositions() {
           <Col>
             <Button
               onClick={() => {
-                closePositionHandler(p);
+                closePositionHandler({
+                  symbol: p.symbol,
+                  qty: p.size,
+                  side: p.side as IPositionSide,
+                });
               }}
             >
               <i className={'fas fa-close'}></i>

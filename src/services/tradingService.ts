@@ -1,5 +1,5 @@
 import {
-  AccountOrderV5,
+  CategoryV5,
   LinearPositionIdx,
   OrderParamsV5,
   OrderSideV5,
@@ -9,13 +9,37 @@ import {
   SetTradingStopParamsV5,
 } from 'bybit-api';
 import { toast } from 'react-toastify';
+import { TradingLineType } from '../components/Chart/extend/plugins/trading-lines/state';
 
 export interface ITradingService {
   addStopLoss: (position: PositionV5, price: string, size?: string) => Promise<boolean>;
   addTakeProfit: (position: PositionV5, price: string, size: string) => Promise<boolean>;
-  closePosition: (position: PositionV5, qty?: string, price?: string) => Promise<void>;
-  closeOrder: (o: AccountOrderV5) => Promise<boolean>;
+  closePosition: (position: IClosePosition) => Promise<void>;
+  closeOrder: (o: ICloseOrder) => Promise<boolean>;
   openPosition: (props: INewPosition) => Promise<PositionV5 | null>;
+  amendOrder: (props: IAmendOrder) => Promise<boolean>;
+}
+
+export interface IAmendOrder {
+  type: TradingLineType;
+  symbol: string;
+  orderId: string;
+  qty: string;
+  price: string;
+}
+
+export interface ICloseOrder {
+  orderId: string;
+  symbol: string;
+}
+
+export type IPositionSide = 'Buy' | 'Sell';
+
+export interface IClosePosition {
+  symbol: string;
+  qty: string;
+  side: IPositionSide;
+  price?: string;
 }
 
 interface INewPosition {
@@ -29,7 +53,7 @@ interface INewPosition {
 export const TradingService = (apiClient: RestClientV5): ITradingService => {
   const addStopLoss = async (p: PositionV5, price: string, size?: string): Promise<boolean> => {
     const order: SetTradingStopParamsV5 = {
-      positionIdx: p.positionIdx,
+      positionIdx: LinearPositionIdx.OneWayMode,
       category: 'linear',
       symbol: p.symbol,
       stopLoss: price,
@@ -43,11 +67,10 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
     return apiClient
       .setTradingStop(order)
       .then((r) => {
-        if (r.retCode !== 0) {
-          toast.error(r.retMsg);
-        } else {
+        if (r.retCode === 0) {
           return true;
         }
+        toast.error(r.retMsg);
         return false;
       })
       .catch((e) => {
@@ -58,7 +81,7 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
 
   const addTakeProfit = async (p: PositionV5, price: string, size: string): Promise<boolean> => {
     const order: OrderParamsV5 = {
-      positionIdx: p.positionIdx,
+      positionIdx: LinearPositionIdx.OneWayMode,
       category: 'linear',
       symbol: p.symbol,
       isLeverage: 1,
@@ -74,11 +97,10 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
     return apiClient
       .submitOrder(order)
       .then((r) => {
-        if (r.retCode !== 0) {
-          toast.error(r.retMsg);
-        } else {
+        if (r.retCode === 0) {
           return true;
         }
+        toast.error(r.retMsg);
         return false;
       })
       .catch((e) => {
@@ -87,18 +109,18 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
       });
   };
 
-  const closePosition = async (position: PositionV5, qty?: string, price?: string) => {
+  const closePosition = async (position: IClosePosition) => {
     apiClient
       .submitOrder({
-        positionIdx: position.positionIdx,
+        positionIdx: LinearPositionIdx.OneWayMode,
         category: 'linear',
         symbol: position.symbol,
         side: position.side === 'Buy' ? 'Sell' : 'Buy',
-        orderType: price ? 'Limit' : 'Market',
-        qty: qty ? qty : position.size,
-        price: price || undefined,
-        timeInForce: price ? 'PostOnly' : 'GTC',
-        reduceOnly: true,
+        orderType: position.price ? 'Limit' : 'Market',
+        qty: position.qty,
+        price: position.price || undefined,
+        timeInForce: position.price ? 'PostOnly' : undefined,
+        reduceOnly: position.price ? true : undefined,
       })
       .then((r) => {
         if (r.retCode !== 0) {
@@ -110,7 +132,7 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
       });
   };
 
-  const closeOrder = async (order: AccountOrderV5): Promise<boolean> => {
+  const closeOrder = async (order: ICloseOrder): Promise<boolean> => {
     return apiClient
       .cancelOrder({
         category: 'linear',
@@ -118,11 +140,10 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
         orderId: order.orderId,
       })
       .then((r) => {
-        if (r.retCode !== 0) {
-          toast.error(r.retMsg);
-        } else {
+        if (r.retCode === 0) {
           return true;
         }
+        toast.error(r.retMsg);
         return false;
       });
   };
@@ -163,11 +184,32 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
     return loadPositionBySymbol(props.symbol);
   };
 
+  const amendOrder = async (order: IAmendOrder): Promise<boolean> => {
+    const params = {
+      category: 'linear' as CategoryV5,
+      symbol: order.symbol,
+      orderId: order.orderId,
+      qty: order.qty,
+      price: order.type !== 'SL' ? order.price : undefined,
+      triggerPrice: order.type === 'SL' ? order.price : undefined,
+    };
+
+    return apiClient.amendOrder(params).then((r) => {
+      if (r.retCode !== 0) {
+        toast.error(r.retMsg);
+      } else {
+        return true;
+      }
+      return false;
+    });
+  };
+
   return {
     openPosition,
     addStopLoss,
     addTakeProfit,
     closePosition,
     closeOrder,
+    amendOrder,
   };
 };

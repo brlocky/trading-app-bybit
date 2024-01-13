@@ -2,15 +2,19 @@ import { ClosedPnLV5 } from 'bybit-api';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '../../providers';
-import { selectCurrentOrders, updateSymbol } from '../../slices';
+import { selectCurrentOrders } from '../../store/slices';
 import { formatCurrencyValue } from '../../utils/tradeUtils';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
+import { AppDispatch } from '../../store';
+import { loadSymbol } from '../../store/actions';
+import { useNavigate } from 'react-router-dom';
 
 export default function CardClosedPnLs() {
   const [list, setList] = useState<ClosedPnLV5[] | undefined>();
   const apiClient = useApi();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const currentOrders = useSelector(selectCurrentOrders);
+  const navigate = useNavigate();
 
   const [ordersLength, setOrdersLength] = useState(currentOrders.length);
 
@@ -52,7 +56,7 @@ export default function CardClosedPnLs() {
               const time = new Date(parseInt(l.createdTime, 10)).toTimeString().split(' ')[0];
               return (
                 <Row key={index}>
-                  <Col onClick={() => dispatch(updateSymbol(l.symbol))}>
+                  <Col onClick={() => dispatch(loadSymbol(apiClient, navigate, l.symbol))}>
                     <i className={l.side === 'Sell' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {l.symbol} (
                     {l.leverage}x)
                   </Col>

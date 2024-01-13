@@ -1,17 +1,17 @@
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
-import { configureStore } from '@reduxjs/toolkit';
-import { symbolReducer } from '../slices/symbolSlice';
-import { tradeSetupReducer } from '../slices/tradeSetupSlice';
+import { Action, ThunkAction, configureStore } from '@reduxjs/toolkit';
+import { uiReducer } from './slices/uiSlice';
+import { tradeSetupReducer } from './slices/tradeSetupSlice';
 
 // Create the persisted Symbol reducer
-const persistedSymbolReducer = persistReducer(
+const persistedUIReducer = persistReducer(
   {
     key: 'root',
     storage,
     whitelist: [], // Specify the slices to persist
   },
-  symbolReducer,
+  uiReducer,
 );
 
 // Create the persisted TradeSetup reducer
@@ -27,7 +27,7 @@ const persistedTradeReducer = persistReducer(
 // Configure the store with the persisted reducer
 export const store = configureStore({
   reducer: {
-    symbol: persistedSymbolReducer,
+    ui: persistedUIReducer,
     tradeSetup: persistedTradeReducer,
   },
   middleware: (getDefaultMiddleware) =>
@@ -43,3 +43,5 @@ export const persistor = persistStore(store);
 export type RootState = ReturnType<typeof store.getState>;
 // Inferred type: { symbol: ISymbolState }
 export type AppDispatch = typeof store.dispatch;
+
+export type AppThunk<ReturnType = Promise<unknown>> = ThunkAction<ReturnType, RootState, unknown, Action<string>>;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { LeverageSelector, PositionSizeSelector } from '../Trade';
 import { useSelector } from 'react-redux';
-import { selectCurrentPosition, selectSymbol } from '../../slices';
+import { selectCurrentPosition, selectSymbol } from '../../store/slices';
 import { CardLastTrades } from './CardLastTrades';
 import { Tabs } from '../Tabs';
 import CardOrderSettings from './CardOrderSettings';

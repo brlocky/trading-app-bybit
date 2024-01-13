@@ -1,2 +1,2 @@
-export * from './symbolSlice';
+export * from './uiSlice';
 export * from './tradeSetupSlice';

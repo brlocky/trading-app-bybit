@@ -4,8 +4,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import tw from 'twin.macro';
 import { useApi } from '../../providers';
-import { selectSymbol, updateSymbol } from '../../slices/symbolSlice';
+import { selectPositions, selectSymbol } from '../../store/slices/uiSlice';
 import { SmallText } from '../Text';
+import { loadSymbol } from '../../store/actions';
+import { AppDispatch } from '../../store';
+import { useNavigate } from 'react-router-dom';
 
 const SymbolCol = tw.div`
 absolute 
@@ -43,7 +46,11 @@ export const SymbolSelector: React.FunctionComponent = () => {
   const [tickers, setTickers] = useState<TickerLinearInverseV5[]>([]);
   const [filterValue, setFilterValue] = useState('');
   const symbol = useSelector(selectSymbol);
+  const positions = useSelector(selectPositions);
   const apiClient = useApi();
+  const selectedSymbol = useSelector(selectSymbol);
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadTicker();
@@ -62,8 +69,13 @@ export const SymbolSelector: React.FunctionComponent = () => {
       const sorted = tickers.filter((item) => item.symbol.endsWith('USDT')).sort((a, b) => Number(b.price24hPcnt) - Number(a.price24hPcnt));
 
       setTickers(sorted);
-      if (!symbol && sorted.length) {
-        dispatch(updateSymbol(sorted[0].symbol));
+      if (!symbol) {
+        if (positions.length) {
+          const sortedPositions = [...positions].sort((p1, p2) => Number(p1.unrealisedPnl) - Number(p2.unrealisedPnl));
+          setSymbol(sortedPositions[0].symbol);
+        } else if (sorted.length) {
+          setSymbol(sorted[0].symbol);
+        }
       }
     });
   };
@@ -73,11 +85,9 @@ export const SymbolSelector: React.FunctionComponent = () => {
     setFilterValue('');
   };
 
-  const selectedSymbol = useSelector(selectSymbol);
-  const dispatch = useDispatch();
   const setSymbol = (s: string) => {
     if (s !== selectedSymbol) {
-      dispatch(updateSymbol(s));
+      dispatch(loadSymbol(apiClient, navigate, s));
     }
 
     setIsDropdownOpen(false);
@@ -105,13 +115,6 @@ export const SymbolSelector: React.FunctionComponent = () => {
 
   return (
     <div className="z-20 flex flex-row justify-center gap-x-2 self-center">
-      <div className=" hidden flex-row gap-x-2 lg:flex">
-        {tickers.slice(0, 3).map((t, index) => (
-          <SymbolLine onClick={() => setSymbol(t.symbol)} href="#" key={index} className="bg-green-50">
-            <SmallText>{t.symbol}</SmallText>
-          </SymbolLine>
-        ))}
-      </div>
       <div className="relative flex justify-center">
         <SymbolAction type="button" onClick={toggleDropdown}>
           <SymbolText>{selectedSymbol ? selectedSymbol : 'Dropdown'}</SymbolText>
@@ -140,6 +143,13 @@ export const SymbolSelector: React.FunctionComponent = () => {
             </SymbolCol>
           </>
         )}
+      </div>
+      <div className=" hidden flex-row gap-x-2 lg:flex">
+        {tickers.slice(0, 3).map((t, index) => (
+          <SymbolLine onClick={() => setSymbol(t.symbol)} href="#" key={index} className="bg-green-50">
+            <SmallText>{t.symbol}</SmallText>
+          </SymbolLine>
+        ))}
       </div>
     </div>
   );

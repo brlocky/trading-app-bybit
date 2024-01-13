@@ -1,6 +1,6 @@
 import React, { HtmlHTMLAttributes } from 'react';
 import { useSelector } from 'react-redux';
-import { selectLeverage, selectWallet } from '../../slices';
+import { selectLeverage, selectWallet } from '../../store/slices';
 import { formatCurrency } from '../../utils/tradeUtils';
 
 type Props = HtmlHTMLAttributes<HTMLDivElement>;

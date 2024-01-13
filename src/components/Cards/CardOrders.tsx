@@ -2,17 +2,22 @@ import { AccountOrderV5 } from 'bybit-api';
 import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '../../providers';
 import { TradingService } from '../../services';
-import { selectOrders, selectPositions, selectTicker, updateSymbol } from '../../slices';
+import { selectOrders, selectPositions, selectTicker } from '../../store/slices';
 import { calculateOrderPnL, formatCurrencyValue, getOrderPrice, getOrderType, getPositionFromOrder } from '../../utils/tradeUtils';
 import Button from '../Button/Button';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
+import { AppDispatch } from '../../store';
+import { loadSymbol } from '../../store/actions';
+import { useNavigate } from 'react-router-dom';
 
 export default function CardOrders() {
+  const apiClient = useApi();
   const tradingService = TradingService(useApi());
   const orders = useSelector(selectOrders);
   const positions = useSelector(selectPositions);
   const tickerInfo = useSelector(selectTicker)?.tickerInfo;
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
 
   const cancelOrder = (o: AccountOrderV5) => {
     tradingService.closeOrder(o);
@@ -34,7 +39,7 @@ export default function CardOrders() {
       const tradeDirection = orderType === 'ENTRY' ? o.side : o.side === 'Buy' ? 'Sell' : 'Buy';
       return (
         <Row key={index}>
-          <Col onClick={() => dispatch(updateSymbol(o.symbol))}>
+          <Col onClick={() => dispatch(loadSymbol(apiClient, navigate, o.symbol))}>
             <i className={tradeDirection === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {o.symbol}
           </Col>
           <Col>{orderType}</Col>
