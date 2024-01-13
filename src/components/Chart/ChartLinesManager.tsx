@@ -4,13 +4,14 @@ import React, { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { useApi } from '../../providers';
-import { IAmendOrder, IOrderOptionsSettingsData, RiskManagementService, TradingService } from '../../services';
+import { IOrderOptionsSettingsData, RiskManagementService, TradingService } from '../../services';
 import { AppDispatch } from '../../store';
 import { createLimitOrder } from '../../store/actions';
 import {
   SubTicker,
   addChartLine,
   removeChartLine,
+  removeRestingOrder,
   selectChartLines,
   selectCurrentOrders,
   selectCurrentPosition,
@@ -173,6 +174,8 @@ export const ChartLinesManager: React.FC<Props> = ({ seriesInstance }) => {
     dispatch(setChartLines(updatedLines));
   };
 
+
+  
   // Use for limit order when moving several lines at the same time
   const dispatchChartLinesUpdate = (lineDragsInfo: TradingLinedDragInfo[]) => {
     const currentChartLines = [...chartLinesRef.current];
@@ -189,6 +192,8 @@ export const ChartLinesManager: React.FC<Props> = ({ seriesInstance }) => {
     dispatch(setChartLines(currentChartLines));
   };
 
+
+
   // Remove Chart Line
   const dispatchChartLineRemoved = async (line: TradingLineInfo) => {
     const chartLine = chartLinesRef.current.find((l) => l.id === line.id);
@@ -197,20 +202,32 @@ export const ChartLinesManager: React.FC<Props> = ({ seriesInstance }) => {
     dispatch(removeChartLine(line.id));
 
     // Close Server Trades
-    if (line.isServer) {
-      if (line.type === 'ENTRY') {
+
+    if (chartLine.type === 'ENTRY') {
+      if (chartLine.isLive) {
+        // Close Live Position
         await tradingService.closePosition({
           symbol,
-          side: line.side,
-          qty: line.qty.toString(),
+          side: chartLine.side,
+          qty: chartLine.qty.toString(),
         });
-      } else {
-        chartLine.orderId &&
-          (await tradingService.closeOrder({
-            symbol,
-            orderId: chartLine.orderId,
-          }));
       }
+
+      if (!chartLine.isLive && chartLine.isServer && chartLine.orderId) {
+        await tradingService.closeOrder({
+          symbol,
+          orderId: chartLine.orderId,
+        });
+        // Remove resting order
+        chartLine.orderId && dispatch(removeRestingOrder(chartLine.orderId));
+      }
+    }
+
+    if (line.type !== 'ENTRY' && chartLine.orderId) {
+      await tradingService.closeOrder({
+        symbol,
+        orderId: chartLine.orderId,
+      });
     }
 
     // Remove childrens when type is Entry

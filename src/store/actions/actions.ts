@@ -80,7 +80,7 @@ export const initApp = (apiClient: RestClientV5, navigate: NavigateFunction, par
 
       dispatch(setAppStarted(true));
       return true;
-    } catch (e: any) {
+    } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'Wrong API Credentials';
       toast.error(errorMessage);
     }
@@ -226,7 +226,13 @@ export const createLimitOrder = (apiClient: RestClientV5, order: ICreateOrder): 
             symbol: order.symbol,
             price: entry.price.toString(),
             qty: entry.qty.toString(),
-            chartLines: order.chartLines,
+            chartLines: order.chartLines.map((c) => {
+              if (c.type !== 'ENTRY') return c;
+              return {
+                ...c,
+                orderId: orderId,
+              };
+            }),
           }),
         );
       } else {
