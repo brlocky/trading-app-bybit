@@ -1,15 +1,16 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { selectExecutions } from '../../store/slices';
+import { selectExecutions, selectInterval } from '../../store/slices';
 import { formatCurrencyValue } from '../../utils/tradeUtils';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
 import { AppDispatch } from '../../store';
 import { loadSymbol } from '../../store/actions';
 import { useApi } from '../../providers';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function CardExecutions() {
   const apiClient = useApi();
   const executions = useSelector(selectExecutions);
+  const interval = useSelector(selectInterval);
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   return (
@@ -35,10 +36,12 @@ export default function CardExecutions() {
             return (
               <Row key={index}>
                 <Col onClick={() => dispatch(loadSymbol(apiClient, navigate, e.symbol))}>
-                  <i
-                    className={tradeOpenCloseDirection === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}
-                  ></i>{' '}
-                  {e.symbol}
+                  <Link to={`/${e.symbol}/${interval}`}>
+                    <i
+                      className={tradeOpenCloseDirection === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}
+                    ></i>{' '}
+                    {e.symbol}
+                  </Link>
                 </Col>
                 <Col>
                   <span className={actionIsOpen ? '' : 'text-green-200'}>{actionIsOpen ? 'Open' : 'Close'}</span>{' '}

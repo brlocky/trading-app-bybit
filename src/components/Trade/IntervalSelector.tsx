@@ -6,7 +6,7 @@ import { selectInterval, selectSymbol } from '../../store/slices/uiSlice';
 import { loadSymbol } from '../../store/actions';
 import { useApi } from '../../providers';
 import { AppDispatch } from '../../store';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const intervals = [
   { label: '1m', value: '1' },
@@ -67,7 +67,7 @@ export const IntervalSelector: React.FunctionComponent = () => {
       {isDropdownOpen && (
         <IntervalCol ref={dropdownRef}>
           {intervals.map((t, index) => (
-            <IntervalLine onClick={() => setInterval(t.value)} href="#" key={index}>
+            <IntervalLine onClick={() => setInterval(t.value)} to={`/${symbol}/${t.value}`} key={index}>
               {t.label}
             </IntervalLine>
           ))}
@@ -95,7 +95,7 @@ overflow-scroll
 z-10
 `;
 
-const IntervalLine = tw.a`
+const IntervalLine = tw(Link)`
 block px-2 py-2 text-sm text-gray-700 hover:bg-gray-100
 `;
 

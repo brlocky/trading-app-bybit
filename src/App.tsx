@@ -1,11 +1,11 @@
 import GuestLayout from './layouts/GuestLayout';
 import SettingsPage from './pages/SettingsPage';
 import HomePage from './pages/HomePage';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { HashRouter, Route, Routes } from 'react-router-dom';
 
 function App() {
   return (
-    <Router>
+    <HashRouter>
       <Routes>
         <Route element={<GuestLayout />}>
           <Route path="/:symbol?/:interval?" element={<HomePage />} />
@@ -13,7 +13,7 @@ function App() {
           <Route path="*" element={<h1>Not Found</h1>} />
         </Route>
       </Routes>
-    </Router>
+    </HashRouter>
   );
 }
 

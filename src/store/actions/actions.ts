@@ -92,17 +92,20 @@ export const initApp = (apiClient: RestClientV5, navigate: NavigateFunction, par
 export const loadSymbol = (apiClient: RestClientV5, navigate: NavigateFunction, symbol: string, interval = ''): AppThunk => {
   return async (dispatch, getState) => {
     try {
-      dispatch(updateLoading(true));
-
       const stateInterval = getState().ui.interval;
       const isIntervalChanged = interval !== '' && stateInterval !== interval;
+      const isSymbolChanged = getState().ui.symbol !== symbol ? true : false;
+
+      if (!isIntervalChanged && !isSymbolChanged) return;
+
+      dispatch(updateLoading(true));
       if (isIntervalChanged) {
         dispatch(updateInterval(interval));
       }
       const newInterval = isIntervalChanged ? interval : stateInterval;
 
       // Update URL
-      navigate(`/${symbol}/${newInterval}`);
+      // navigate(`/${symbol}/${newInterval}`);
 
       // Get cancle sticks
       const kLine = await apiClient.getKline({

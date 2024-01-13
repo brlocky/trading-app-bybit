@@ -4,11 +4,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import tw from 'twin.macro';
 import { useApi } from '../../providers';
-import { selectPositions, selectSymbol } from '../../store/slices/uiSlice';
+import { selectInterval, selectPositions, selectSymbol } from '../../store/slices/uiSlice';
 import { SmallText } from '../Text';
 import { loadSymbol } from '../../store/actions';
 import { AppDispatch } from '../../store';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const SymbolCol = tw.div`
 absolute 
@@ -28,7 +29,7 @@ overflow-scroll
 z-10
 `;
 
-const SymbolLine = tw.a`
+const SymbolLine = tw(Link)`
 flex justify-between px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 items-center
 `;
 
@@ -46,6 +47,7 @@ export const SymbolSelector: React.FunctionComponent = () => {
   const [tickers, setTickers] = useState<TickerLinearInverseV5[]>([]);
   const [filterValue, setFilterValue] = useState('');
   const symbol = useSelector(selectSymbol);
+  const interval = useSelector(selectInterval);
   const positions = useSelector(selectPositions);
   const apiClient = useApi();
   const selectedSymbol = useSelector(selectSymbol);
@@ -87,6 +89,7 @@ export const SymbolSelector: React.FunctionComponent = () => {
 
   const setSymbol = (s: string) => {
     if (s !== selectedSymbol) {
+      // Update URL
       dispatch(loadSymbol(apiClient, navigate, s));
     }
 
@@ -134,7 +137,7 @@ export const SymbolSelector: React.FunctionComponent = () => {
               {tickers
                 .filter((ticker) => ticker.symbol.toUpperCase().includes(filterValue.toUpperCase()))
                 .map((t, index) => (
-                  <SymbolLine onClick={() => setSymbol(t.symbol)} href="#" key={index}>
+                  <SymbolLine onClick={() => setSymbol(t.symbol)} to={`/${t.symbol}/${interval}`} key={index}>
                     <SmallText>{t.symbol}</SmallText>
                     <SmallText>{(Number(t.price24hPcnt) * 100).toFixed(2)}%</SmallText>
                     <SmallText>{(Number(t.volume24h) / 1000000).toLocaleString(undefined, { maximumFractionDigits: 2 })}M</SmallText>
@@ -146,7 +149,7 @@ export const SymbolSelector: React.FunctionComponent = () => {
       </div>
       <div className=" hidden flex-row gap-x-2 lg:flex">
         {tickers.slice(0, 3).map((t, index) => (
-          <SymbolLine onClick={() => setSymbol(t.symbol)} href="#" key={index} className="bg-green-50">
+          <SymbolLine onClick={() => setSymbol(t.symbol)} to={`/${t.symbol}/${interval}`} key={index} className="bg-green-50">
             <SmallText>{t.symbol}</SmallText>
           </SymbolLine>
         ))}

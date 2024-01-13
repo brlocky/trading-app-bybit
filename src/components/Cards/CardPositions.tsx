@@ -4,10 +4,11 @@ import { useApi } from '../../providers';
 import { IClosePosition, IPositionSide, TradingService } from '../../services';
 import { AppDispatch } from '../../store';
 import { loadSymbol } from '../../store/actions';
-import { selectOrders, selectPositions, selectTicker, selectTickers } from '../../store/slices';
+import { selectInterval, selectOrders, selectPositions, selectTicker, selectTickers } from '../../store/slices';
 import { calculatePositionPnL, formatCurrency, formatCurrencyValue } from '../../utils/tradeUtils';
 import Button from '../Button/Button';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
+import { Link } from 'react-router-dom';
 
 export default function CardPositions() {
   const apiClient = useApi();
@@ -15,6 +16,7 @@ export default function CardPositions() {
   const tickerInfo = useSelector(selectTicker)?.tickerInfo;
   const positions = useSelector(selectPositions);
   const orders = useSelector(selectOrders);
+  const interval = useSelector(selectInterval);
   const { closePosition } = TradingService(useApi());
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
@@ -51,8 +53,10 @@ export default function CardPositions() {
       return (
         <Row key={index}>
           <Col onClick={() => dispatch(loadSymbol(apiClient, navigate, p.symbol))}>
-            <i className={p.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {p.symbol} (
-            {p.leverage}x)
+            <Link to={`/${p.symbol}/${interval}`}>
+              <i className={p.side === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {p.symbol} (
+              {p.leverage}x)
+            </Link>
           </Col>
           <Col>{formatCurrency(p.avgPrice, currentTickerInfo?.priceScale || '0')}</Col>
           <Col>{p.size}</Col>

@@ -2,19 +2,20 @@ import { AccountOrderV5 } from 'bybit-api';
 import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '../../providers';
 import { TradingService } from '../../services';
-import { selectOrders, selectPositions, selectTicker } from '../../store/slices';
+import { selectInterval, selectOrders, selectPositions, selectTicker } from '../../store/slices';
 import { calculateOrderPnL, formatCurrencyValue, getOrderPrice, getOrderType, getPositionFromOrder } from '../../utils/tradeUtils';
 import Button from '../Button/Button';
 import { Col, HeaderCol, HeaderRow, Row, Table } from '../Tables';
 import { AppDispatch } from '../../store';
 import { loadSymbol } from '../../store/actions';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function CardOrders() {
   const apiClient = useApi();
   const tradingService = TradingService(useApi());
   const orders = useSelector(selectOrders);
   const positions = useSelector(selectPositions);
+  const interval = useSelector(selectInterval);
   const tickerInfo = useSelector(selectTicker)?.tickerInfo;
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
@@ -40,7 +41,9 @@ export default function CardOrders() {
       return (
         <Row key={index}>
           <Col onClick={() => dispatch(loadSymbol(apiClient, navigate, o.symbol))}>
-            <i className={tradeDirection === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {o.symbol}
+            <Link to={`/${o.symbol}/${interval}`}>
+              <i className={tradeDirection === 'Buy' ? 'fas fa-arrow-up text-green-600' : 'fas fa-arrow-down text-red-600'}></i> {o.symbol}
+            </Link>
           </Col>
           <Col>{orderType}</Col>
           <Col>{o.qty}</Col>
