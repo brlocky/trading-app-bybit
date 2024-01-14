@@ -6,8 +6,7 @@ import tw from 'twin.macro';
 const PageComponent = tw.div`
 flex
 flex-col
-mx-auto
-max-w-screen-2xl
+w-full
 min-h-screen
 m-0
 p-0

@@ -89,7 +89,7 @@ export const Chart: React.FC<Props> = (props) => {
         mode: CrosshairMode.Normal,
       },
       width: chartContainerRef.current.clientWidth,
-      height: 500,
+      height: 800,
     });
 
     newSeries.current = chartInstanceRef.current.addCandlestickSeries({

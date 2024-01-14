@@ -73,7 +73,7 @@ export const CardLastTrades: React.FC = () => {
           <div className="col-span-1">Time</div>
         </div>
       </div>
-      <div className="h-52 overflow-y-scroll">
+      <div className="h-96 overflow-y-scroll">
         {lastTrades.slice(0, 20).map((trade, index) => {
           const { colorClass, time } = getColorBasedOnTrade(trade, averageSize);
           const formattedSize = parseFloat(trade.size).toLocaleString();
