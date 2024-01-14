@@ -14,7 +14,7 @@ import { IChartLine } from '../types';
 
 export interface ITradingService {
   openPosition: (props: INewPosition) => Promise<string | null>;
-  addTakeProfit: (symbol: string, line: IChartLine) => Promise<boolean>;
+  addTakeProfit: (symbol: string, line: IChartLine) => Promise<string | null>;
   addStopLoss: (symbol: string, line: IChartLine) => Promise<boolean>;
   closePosition: (position: IClosePosition) => Promise<void>;
   closeOrder: (o: ICloseOrder) => Promise<boolean>;
@@ -52,7 +52,7 @@ interface INewPosition {
 }
 
 export const TradingService = (apiClient: RestClientV5): ITradingService => {
-  const addTakeProfit = async (symbol: string, line: IChartLine): Promise<boolean> => {
+  const addTakeProfit = async (symbol: string, line: IChartLine): Promise<string | null> => {
     const order: OrderParamsV5 = {
       positionIdx: LinearPositionIdx.OneWayMode,
       category: 'linear',
@@ -69,10 +69,10 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
 
     return apiClient.submitOrder(order).then((r) => {
       if (r.retCode === 0) {
-        return true;
+        return r.result.orderId;
       }
       toast.error(r.retMsg);
-      return false;
+      return null;
     });
   };
 

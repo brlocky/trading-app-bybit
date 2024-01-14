@@ -3,8 +3,10 @@ import { toast } from 'react-toastify';
 import { AppThunk } from '..';
 import { mapKlineToCandleStickData } from '../../mappers';
 import {
+  addChartLines,
   addRestingOrder,
   setAppStarted,
+  setChartLines,
   setRestingOrders,
   setSymbol,
   updateExecutions,
@@ -13,12 +15,12 @@ import {
   updateLoading,
   updateOrders,
   updatePositions,
-  updateRestingOrder,
   updateTickerInfo,
   updateWallet,
 } from '../slices';
-import { ICreateOrder, TradingService } from '../../services';
+import { ChartLinesService, ICreateOrder, TradingService } from '../../services';
 import { Params } from 'react-router-dom';
+import { isOrderTPorSL } from '../../utils/tradeUtils';
 
 export interface IAppParams {
   symbol: string;
@@ -28,15 +30,6 @@ export interface IAppParams {
 export const initApp = (apiClient: RestClientV5, params: Readonly<Params<string>>): AppThunk => {
   return async (dispatch, getState) => {
     try {
-      const { symbol, interval } = params;
-      if (symbol) {
-        dispatch(loadSymbol(apiClient, symbol, interval));
-      }
-
-      if (interval) {
-        dispatch(updateInterval(interval));
-      }
-
       const [resultWallet, resultOrders, resultPositions, resultExecutions] = await Promise.all([
         apiClient.getWalletBalance({
           accountType: 'CONTRACT',
@@ -77,16 +70,19 @@ export const initApp = (apiClient: RestClientV5, params: Readonly<Params<string>
         throw Error('Error loading executions');
       }
 
-      // Force One Way Mode
-      await apiClient.switchPositionMode({
-        category: 'linear',
-        symbol: symbol,
-        mode: 0,
-      });
-
-      // Resting Orders
+      // Resting Orders - Before symbol to ensure that chart lines are generated when all data is loaded
       const restingOrders = getState().tradeSetup.restingOrders.filter((r) => orders.find((o) => o.orderId === r.orderId));
       dispatch(setRestingOrders([...restingOrders]));
+
+      // Load Symbol After loading orders, so we can access new data
+      const { symbol, interval } = params;
+      if (symbol) {
+        await dispatch(loadSymbol(apiClient, symbol, interval));
+      }
+
+      if (interval) {
+        dispatch(updateInterval(interval));
+      }
 
       dispatch(setAppStarted(true));
       return true;
@@ -101,6 +97,7 @@ export const initApp = (apiClient: RestClientV5, params: Readonly<Params<string>
 
 export const loadSymbol = (apiClient: RestClientV5, symbol: string, interval = ''): AppThunk => {
   return async (dispatch, getState) => {
+    dispatch(updateLoading(true));
     try {
       const stateInterval = getState().ui.interval;
       const isIntervalChanged = interval !== '' && stateInterval !== interval;
@@ -108,7 +105,6 @@ export const loadSymbol = (apiClient: RestClientV5, symbol: string, interval = '
 
       if (!isIntervalChanged && !isSymbolChanged) return;
 
-      dispatch(updateLoading(true));
       if (isIntervalChanged) {
         dispatch(updateInterval(interval));
       }
@@ -135,17 +131,51 @@ export const loadSymbol = (apiClient: RestClientV5, symbol: string, interval = '
         sellLeverage: '1',
       });
 
+      // Force One Way Mode
+      await apiClient.switchPositionMode({
+        category: 'linear',
+        symbol: symbol,
+        mode: 0,
+      });
+
       const instrumentsResult = await apiClient.getInstrumentsInfo({
         category: 'linear',
         symbol: symbol,
       });
       const tickerInfo = instrumentsResult.result.list[0] as LinearInverseInstrumentInfoV5;
       dispatch(updateTickerInfo(tickerInfo));
+
+      // Load Initial ChartLines
+      await dispatch(loadAllChartLines(symbol));
     } catch (e) {
       console.error('Something went wrong', e);
     }
-
     dispatch(updateLoading(false));
+  };
+};
+
+export const loadAllChartLines = (symbol: string): AppThunk => {
+  return async (dispatch, getState) => {
+    try {
+      const position = getState().ui.positions.find((p) => p.symbol === symbol);
+      const orders = getState().ui.orders.filter((o) => o.symbol === symbol);
+      const restingChartLines = getState()
+        .tradeSetup.restingOrders.filter((r) => orders.find((o) => o.orderId === r.orderId))
+        .map((r) => r.chartLines)
+        .flat();
+
+      const chartLinesService = ChartLinesService();
+
+      const positionOrders = position ? orders.filter((o) => o.symbol === position.symbol && isOrderTPorSL(o)) : [];
+      const currentPositionLines = position ? chartLinesService.generateInitialChartLines(position, positionOrders) : [];
+
+      const allNewLines = [...currentPositionLines, ...restingChartLines];
+      if (!allNewLines.length) return;
+
+      dispatch(setChartLines(allNewLines));
+    } catch (e) {
+      console.error('Something went wrong', e);
+    }
   };
 };
 
@@ -215,21 +245,26 @@ export const createLimitOrder = (apiClient: RestClientV5, order: ICreateOrder): 
       if (orderId) {
         toast.success('Limit Order Open');
 
+        const updatedChartLines = order.chartLines.map((c) => {
+          if (c.type !== 'ENTRY') return c;
+          return {
+            ...c,
+            orderId: orderId,
+            isServer: true,
+          };
+        });
+
         dispatch(
           addRestingOrder({
             orderId: orderId,
             symbol: order.symbol,
             price: entry.price.toString(),
             qty: entry.qty.toString(),
-            chartLines: order.chartLines.map((c) => {
-              if (c.type !== 'ENTRY') return c;
-              return {
-                ...c,
-                orderId: orderId,
-              };
-            }),
+            chartLines: updatedChartLines,
           }),
         );
+
+        dispatch(addChartLines(updatedChartLines));
       } else {
         toast.error('Fail to Create Limit Order');
       }

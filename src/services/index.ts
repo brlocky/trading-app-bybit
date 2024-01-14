@@ -1,3 +1,3 @@
 export * from './settingsService';
 export * from './tradingService';
-export * from './riskManagementService';
+export * from './chartLinesService';

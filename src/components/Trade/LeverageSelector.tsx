@@ -39,19 +39,12 @@ export const LeverageSelector: React.FC = () => {
 
   const updateApiLeverage = useCallback(
     debounce((v, s) => {
-      api
-        .setLeverage({
-          category: 'linear',
-          symbol: s,
-          buyLeverage: v.toString(),
-          sellLeverage: v.toString(),
-        })
-        .then((r) => {
-          if (r.retCode !== 0) {
-            toast.error(r.retMsg);
-          }
-        })
-        .catch(console.error);
+      api.setLeverage({
+        category: 'linear',
+        symbol: s,
+        buyLeverage: v.toString(),
+        sellLeverage: v.toString(),
+      });
     }, 300),
     [],
   );

@@ -4,7 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { useApi } from '../../providers';
-import { IOrderOptionsSettingsData, RiskManagementService, TradingService } from '../../services';
+import { IOrderOptionsSettingsData, ChartLinesService, TradingService } from '../../services';
 import { AppDispatch } from '../../store';
 import { createLimitOrder } from '../../store/actions';
 import {
@@ -51,7 +51,7 @@ export const ChartLinesManager: React.FC<Props> = ({ seriesInstance }) => {
   const tickerRef = useRef<SubTicker | undefined>(ticker);
   const dispatch = useDispatch<AppDispatch>();
   const apiClient = useApi();
-  const riskManagementService = RiskManagementService();
+  const riskManagementService = ChartLinesService();
   const tradingService = TradingService(apiClient);
 
   useEffect(() => {

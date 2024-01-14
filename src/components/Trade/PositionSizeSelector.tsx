@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { useApi } from '../../providers';
-import { RiskManagementService } from '../../services';
+import { ChartLinesService } from '../../services';
 import { AppDispatch } from '../../store';
 import { createMartketOrder } from '../../store/actions';
 import {
@@ -34,7 +34,7 @@ export const PositionSizeSelector: React.FC = () => {
   const wallet = useSelector(selectWallet);
   const chartLines = useSelector(selectChartLines);
   const orderSettings = useSelector(selectOrderSettings);
-  const riskManagementService = RiskManagementService();
+  const riskManagementService = ChartLinesService();
 
   useEffect(() => {
     if (!tickerInfo || !tickerInfo?.lotSizeFilter?.minOrderQty) return;

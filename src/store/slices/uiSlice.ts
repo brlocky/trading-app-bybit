@@ -2,6 +2,7 @@ import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { AccountOrderV5, ExecutionV5, LinearInverseInstrumentInfoV5, PositionV5, PublicTradeV5, WalletBalanceV5 } from 'bybit-api';
 import { RootState } from '..';
 import { CandlestickDataWithVolume, IChartLine, ITicker } from '../../types';
+import { IRestingOrder, selectRestingOrders } from './tradeSetupSlice';
 
 export interface SubTicker {
   ticker: ITicker | undefined;
@@ -220,13 +221,20 @@ export const selectTakeProfits = (state: RootState) => state.ui.chartLines.filte
 export const selectStopLosses = (state: RootState) => state.ui.chartLines.filter((l) => l.type === 'SL');
 export const selectChartLines = (state: RootState) => state.ui.chartLines;
 
-export const selectCurrentPosition = createSelector(
-  [selectPositions, selectSymbol],
-  (positions: PositionV5[], symbol: string | undefined) => {
-    return positions.find((o) => o.symbol === symbol);
-  },
-);
+export const selectCurrentPosition = createSelector([selectPositions, selectSymbol], (positions: PositionV5[], symbol: string) => {
+  return positions.find((o) => o.symbol === symbol);
+});
 
-export const selectCurrentOrders = createSelector([selectOrders, selectSymbol], (orders: AccountOrderV5[], symbol: string | undefined) => {
+export const selectCurrentOrders = createSelector([selectOrders, selectSymbol], (orders: AccountOrderV5[], symbol: string) => {
   return orders.filter((o) => o.symbol === symbol);
 });
+
+export const selectCurrentPositionAndOrders = createSelector(
+  [selectPositions, selectOrders, selectRestingOrders, selectSymbol],
+  (positions: PositionV5[], orders: AccountOrderV5[], restingOrders:IRestingOrder[],  symbol: string) => {
+    const currentPosition = positions.find((o) => o.symbol === symbol);
+    const currentOrders = currentPosition ? orders.filter((o) => o.symbol === symbol) : [];
+    const currentRestingOrders = restingOrders.filter((o) => o.symbol === symbol);
+    return { currentPosition, currentOrders, currentRestingOrders };
+  },
+);

@@ -1,9 +1,10 @@
-import { LinearInverseInstrumentInfoV5, OrderSideV5, PositionV5 } from 'bybit-api';
+import { AccountOrderV5, LinearInverseInstrumentInfoV5, OrderSideV5, PositionV5 } from 'bybit-api';
 import { v4 as uuidv4 } from 'uuid';
-import { TradingLineInfo, TradingLineType } from '../components/Chart/extend/plugins/trading-lines/state';
+import { TradingLineInfo, TradingLineSide, TradingLineType } from '../components/Chart/extend/plugins/trading-lines/state';
 import { SubTicker } from '../store/slices';
 import { IChartLine, ITicker } from '../types';
 import { IOrderOptionData, IOrderOptionsSettingsData } from './settingsService';
+import { getOrderPrice, getOrderType, isEntryLimitOrder } from '../utils/tradeUtils';
 
 interface PriceLine {
   number: number;
@@ -11,7 +12,7 @@ interface PriceLine {
   percentage: number;
 }
 
-export interface IRiskManagementService {
+export interface IChartLinesService {
   getChartLines: (
     orderSide: OrderSideV5,
     settings: IOrderOptionsSettingsData,
@@ -22,9 +23,10 @@ export interface IRiskManagementService {
   convertToPositionSize: (entry: IChartLine, tpLines: IChartLine[], slLines: IChartLine[], qty: number, qtyStep: string) => IChartLine[];
   getTPSLLine: (parentLine: IChartLine, line: TradingLineInfo, ticker: SubTicker) => IChartLine | null;
   splitOrder: (line: TradingLineInfo, ticker: SubTicker) => IChartLine[];
+  generateInitialChartLines: (position: PositionV5, orders: AccountOrderV5[]) => IChartLine[];
 }
 
-export const RiskManagementService = (): IRiskManagementService => {
+export const ChartLinesService = (): IChartLinesService => {
   const getChartLines = (
     orderSide: OrderSideV5,
     settings: IOrderOptionsSettingsData,
@@ -269,10 +271,49 @@ export const RiskManagementService = (): IRiskManagementService => {
     return priceLines;
   };
 
+  const generateInitialChartLines = (position: PositionV5, orders: AccountOrderV5[]): IChartLine[] => {
+    const liveOrderParentId = uuidv4();
+
+    // ChartLines from Orders
+    const newChartLines: IChartLine[] = orders.map((o) => {
+      const orderType = getOrderType(o);
+      const price = getOrderPrice(o);
+      const isEntry = isEntryLimitOrder(o);
+      return {
+        id: uuidv4(),
+        type: orderType,
+        side: o.side,
+        price: price,
+        qty: Number(o.qty),
+        draggable: true,
+        orderId: o.orderId,
+        isServer: true,
+        isLive: isEntry ? false : true,
+        parentId: isEntry ? '' : liveOrderParentId,
+      };
+    });
+
+    const newEntry: IChartLine = {
+      id: liveOrderParentId,
+      type: 'ENTRY',
+      side: position.side as TradingLineSide,
+      price: Number(position.avgPrice),
+      qty: Number(position.size),
+      draggable: false,
+      isServer: true,
+      isLive: true,
+      parentId: 'ENTRY',
+    };
+    newChartLines.push(newEntry);
+
+    return newChartLines;
+  };
+
   return {
     getChartLines,
     convertToPositionSize,
     getTPSLLine,
     splitOrder,
+    generateInitialChartLines,
   };
 };
