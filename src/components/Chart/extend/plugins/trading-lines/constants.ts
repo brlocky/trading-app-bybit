@@ -4,8 +4,8 @@ export const buttonHeight = 21;
 export const showButtonDistance = 50;
 export const labelHeight = 17;
 export const borderRadius = 2;
-export const iconPadding = 4;
-export const iconSize = 9;
+export const iconPadding = 5;
+export const iconSize = 8;
 
 export const showCentreLabelDistance = 50;
 export const averageWidthPerCharacter = 6; // doesn't need to be exact, just roughly correct. 12px sans-serif

@@ -99,10 +99,14 @@ export class PaneRenderer extends PaneRendererBase {
       ctx.fillStyle = '#FFFFFF';
       ctx.fill();
 
-      // draw Direction Button
-      const startArrowIcon = labelXDimensions.position + removeButtonWidth / 2;
+      // Calculate the start position for the first icon
+      const startFirstIcon = labelXDimensions.position + iconPadding * scope.horizontalPixelRatio;
+
+      // Calculate the end position for the first vertical separator
+      const endFirstSeparator = labelXDimensions.position + (iconSize + 2 * iconPadding) * scope.horizontalPixelRatio;
+
       ctx.beginPath();
-      ctx.translate(startArrowIcon, (activeLabel.y - 6) * scope.verticalPixelRatio);
+      ctx.translate(startFirstIcon, (activeLabel.y - 6) * scope.verticalPixelRatio);
       ctx.scale(scalingArrow, scalingArrow);
       if (activeLabel.line.type === 'ENTRY') {
         ctx.fillStyle = activeLabel.line.side === 'Buy' ? 'green' : 'red';
@@ -114,15 +118,13 @@ export class PaneRenderer extends PaneRendererBase {
       ctx.resetTransform();
 
       // draw button divider
-      const endArrowIcon = labelXDimensions.position + removeButtonWidth * scope.horizontalPixelRatio;
       ctx.beginPath();
-      const directionDividerDimensions = positionsLine(endArrowIcon / scope.horizontalPixelRatio, scope.horizontalPixelRatio, 1);
       ctx.fillStyle = '#000000';
-      ctx.fillRect(directionDividerDimensions.position, yDimensions.position, directionDividerDimensions.length, yDimensions.length);
-      ctx.resetTransform();
+      ctx.fillRect(endFirstSeparator, yDimensions.position, scope.horizontalPixelRatio, yDimensions.length);
 
       // draw Status Indicator
-      const startStatusIcon = directionDividerDimensions.position + directionDividerDimensions.length + iconPadding;
+      const startStatusIcon = endFirstSeparator + iconPadding * scope.horizontalPixelRatio;
+      const endStatusIcon = endFirstSeparator + (iconSize + 2 * iconPadding) * scope.horizontalPixelRatio;
       ctx.beginPath();
       ctx.translate(startStatusIcon, (activeLabel.y - 6) * scope.verticalPixelRatio);
       ctx.scale(scalingArrow, scalingArrow);
@@ -131,23 +133,20 @@ export class PaneRenderer extends PaneRendererBase {
       ctx.resetTransform();
 
       // draw button divider
-      const statusIconEndX = startStatusIcon + (removeButtonWidth / 2) * scope.horizontalPixelRatio;
       ctx.beginPath();
-      const statusIconDividerDimensions = positionsLine(statusIconEndX / scope.horizontalPixelRatio, scope.horizontalPixelRatio, 1);
       ctx.fillStyle = '#000000';
-      ctx.fillRect(statusIconDividerDimensions.position, yDimensions.position, statusIconDividerDimensions.length, yDimensions.length);
+      ctx.fillRect(endStatusIcon, yDimensions.position, scope.horizontalPixelRatio, yDimensions.length);
 
       // write text
-      ctx.beginPath();
+      const textMiddle =
+        endStatusIcon + ((activeLabel.text.length * averageWidthPerCharacter) / 2 + centreLabelInlinePadding) * scope.horizontalPixelRatio;
       ctx.fillStyle = '#131722';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.font = `${Math.round(12 * scope.verticalPixelRatio)}px sans-serif`;
-      ctx.fillText(
-        activeLabel.text,
-        labelXDimensions.position + 2 * removeButtonWidth + centreLabelInlinePadding + labelWidth / 2,
-        activeLabel.y * scope.verticalPixelRatio,
-      );
+      ctx.fillText(activeLabel.text, textMiddle, activeLabel.y * scope.verticalPixelRatio);
+
+      // return centreLabelInlinePadding * 2 + 3 * removeButtonWidth + textLength * averageWidthPerCharacter;
 
       // draw button divider
       const removeButtonStartX = labelXDimensions.position + labelXDimensions.length - removeButtonWidth * scope.horizontalPixelRatio;
