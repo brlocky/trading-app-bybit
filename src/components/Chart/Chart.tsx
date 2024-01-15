@@ -88,6 +88,14 @@ export const Chart: React.FC<Props> = (props) => {
       crosshair: {
         mode: CrosshairMode.Normal,
       },
+      grid: {
+        vertLines: {
+          visible: false,
+        },
+        horzLines: {
+          visible: false,
+        },
+      },
       width: chartContainerRef.current.clientWidth,
       height: 800,
     });
