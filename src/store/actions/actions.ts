@@ -103,50 +103,50 @@ export const loadSymbol = (apiClient: RestClientV5, symbol: string, interval = '
       const isIntervalChanged = interval !== '' && stateInterval !== interval;
       const isSymbolChanged = getState().ui.symbol !== symbol ? true : false;
 
-      if (!isIntervalChanged && !isSymbolChanged) return;
+      if (isIntervalChanged || isSymbolChanged) {
+        if (isIntervalChanged) {
+          dispatch(updateInterval(interval));
+        }
+        const newInterval = isIntervalChanged ? interval : stateInterval;
 
-      if (isIntervalChanged) {
-        dispatch(updateInterval(interval));
+        dispatch(setSymbol(symbol));
+
+        // Get cancle sticks
+        const kLine = await apiClient.getKline({
+          category: 'linear',
+          symbol: symbol,
+          interval: newInterval as KlineIntervalV3,
+        });
+
+        const candleStickData = kLine.result.list.map(mapKlineToCandleStickData).sort((a, b) => (a.time as number) - (b.time as number));
+        dispatch(updateKlines(candleStickData));
+
+        // Force Cross Mode
+        apiClient.switchIsolatedMargin({
+          category: 'linear',
+          symbol: symbol,
+          tradeMode: 0,
+          buyLeverage: '1',
+          sellLeverage: '1',
+        });
+
+        // Force One Way Mode
+        await apiClient.switchPositionMode({
+          category: 'linear',
+          symbol: symbol,
+          mode: 0,
+        });
+
+        const instrumentsResult = await apiClient.getInstrumentsInfo({
+          category: 'linear',
+          symbol: symbol,
+        });
+        const tickerInfo = instrumentsResult.result.list[0] as LinearInverseInstrumentInfoV5;
+        dispatch(updateTickerInfo(tickerInfo));
+
+        // Load Initial ChartLines
+        await dispatch(loadAllChartLines(symbol));
       }
-      const newInterval = isIntervalChanged ? interval : stateInterval;
-
-      dispatch(setSymbol(symbol));
-
-      // Get cancle sticks
-      const kLine = await apiClient.getKline({
-        category: 'linear',
-        symbol: symbol,
-        interval: newInterval as KlineIntervalV3,
-      });
-
-      const candleStickData = kLine.result.list.map(mapKlineToCandleStickData).sort((a, b) => (a.time as number) - (b.time as number));
-      dispatch(updateKlines(candleStickData));
-
-      // Force Cross Mode
-      apiClient.switchIsolatedMargin({
-        category: 'linear',
-        symbol: symbol,
-        tradeMode: 0,
-        buyLeverage: '1',
-        sellLeverage: '1',
-      });
-
-      // Force One Way Mode
-      await apiClient.switchPositionMode({
-        category: 'linear',
-        symbol: symbol,
-        mode: 0,
-      });
-
-      const instrumentsResult = await apiClient.getInstrumentsInfo({
-        category: 'linear',
-        symbol: symbol,
-      });
-      const tickerInfo = instrumentsResult.result.list[0] as LinearInverseInstrumentInfoV5;
-      dispatch(updateTickerInfo(tickerInfo));
-
-      // Load Initial ChartLines
-      await dispatch(loadAllChartLines(symbol));
     } catch (e) {
       console.error('Something went wrong', e);
     }
