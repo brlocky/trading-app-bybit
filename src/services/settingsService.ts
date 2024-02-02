@@ -39,8 +39,8 @@ export interface IOrderOptionData {
 export const SettingsService = {
   getDefaultSettings() {
     return {
-      apiKey: 'pSRedbNSxAkaofeF4k',
-      apiSecret: 'yEBVX8CHLNAxNwaFAJOvW6qdhpyy9u6ea527',
+      apiKey: process.env.API_KEY || '',
+      apiSecret: process.env.API_SECRET || '',
       testnet: true,
     };
   },
