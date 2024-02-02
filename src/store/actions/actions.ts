@@ -30,9 +30,13 @@ export interface IAppParams {
 export const initApp = (apiClient: RestClientV5, params: Readonly<Params<string>>): AppThunk => {
   return async (dispatch, getState) => {
     try {
-      const [resultWallet, resultOrders, resultPositions, resultExecutions] = await Promise.all([
+      const [resultWallet, resultWalletUnified, resultOrders, resultPositions, resultExecutions] = await Promise.all([
         apiClient.getWalletBalance({
           accountType: 'CONTRACT',
+          coin: 'USDT',
+        }),
+        apiClient.getWalletBalance({
+          accountType: 'UNIFIED',
           coin: 'USDT',
         }),
         apiClient.getActiveOrders({
@@ -48,9 +52,12 @@ export const initApp = (apiClient: RestClientV5, params: Readonly<Params<string>
         }),
       ]);
 
-      const usdtWallet = resultWallet.result?.list?.[0] ?? null;
+      let usdtWallet = resultWallet.result?.list?.[0] ?? null;
       if (!usdtWallet) {
-        throw Error('Could not find USDT wallet');
+        usdtWallet = resultWalletUnified.result?.list?.[0] ?? null;
+        if (!usdtWallet) {
+          throw Error('Could not find USDT wallet');
+        }
       }
       dispatch(updateWallet(usdtWallet));
 

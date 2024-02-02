@@ -13,8 +13,8 @@ export const CardWallet: React.FC<Props> = (props: Props) => {
     return <>no wallet</>;
   }
 
-  const coin = wallet.coin[0];
-
+  const coin = wallet.coin.find((c) => c.coin === 'USDT');
+  if (!coin) return <></>;
   return (
     <div className={`flex w-fit gap-x-5 p-1 ${props.className}`}>
       <div className="flex flex-col">

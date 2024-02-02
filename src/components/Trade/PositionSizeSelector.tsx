@@ -12,7 +12,6 @@ import {
   selectLeverage,
   selectOrderSettings,
   selectPositionSize,
-  selectRestingOrders,
   selectTicker,
   selectWallet,
   updateOrderSettings,
@@ -30,7 +29,6 @@ export const PositionSizeSelector: React.FC = () => {
   const tickerInfo = useSelector(selectTicker)?.tickerInfo;
   const leverage = useSelector(selectLeverage);
   const positionSize = useSelector(selectPositionSize);
-  const restingOrders = useSelector(selectRestingOrders);
   const wallet = useSelector(selectWallet);
   const chartLines = useSelector(selectChartLines);
   const orderSettings = useSelector(selectOrderSettings);
@@ -48,7 +46,8 @@ export const PositionSizeSelector: React.FC = () => {
     if (!wallet || !tickerInfo || !ticker) {
       return 0;
     }
-    const coin = wallet.coin[0];
+    const coin = wallet.coin.find((c) => c.coin === 'USDT');
+    if (!coin) return 0;
     const maxWalletOrderAmmount = (Number(coin.availableToWithdraw) / Number(ticker.lastPrice)) * leverage;
     return Math.min(Number(tickerInfo.lotSizeFilter.maxOrderQty), maxWalletOrderAmmount || 0);
   };
