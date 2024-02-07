@@ -48,13 +48,14 @@ export const initApp = (apiClient: RestClientV5, params: Readonly<Params<string>
         }),
       ]);
 
-      const usdtWallet = resultWallet.result?.list?.[0] ?? null;
+      let usdtWallet = resultWallet.result?.list?.[0] ?? null;
       if (!usdtWallet) {
         const resultWalletUnified = await apiClient.getWalletBalance({
-            accountType: 'UNIFIED',
-            coin: 'USDT',
-          }),
-          usdtWallet = resultWalletUnified.result?.list?.[0] ?? null;
+          accountType: 'UNIFIED',
+          coin: 'USDT',
+        });
+
+        usdtWallet = resultWalletUnified.result?.list?.[0] ?? null;
         if (!usdtWallet) {
           throw Error('Could not find USDT wallet');
         }
