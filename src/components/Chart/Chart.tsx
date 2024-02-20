@@ -148,24 +148,15 @@ export const Chart: React.FC<Props> = (props) => {
     timeScaleRef.current = chartInstanceRef.current.timeScale();
     timeScaleRef.current.subscribeVisibleLogicalRangeChange(listenChartTimeScale);
     timeScaleRef.current.fitContent();
-
-    console.log('initChart chart - ok');
   };
 
   const destroyChart = () => {
-    console.log('Destroy chart');
-    if (!chartInstanceRef.current) {
-      console.log('Destroy chart - fail');
-      return;
-    }
-
-    timeScaleRef.current.unsubscribeVisibleLogicalRangeChange(listenChartTimeScale);
+    timeScaleRef.current?.unsubscribeVisibleLogicalRangeChange(listenChartTimeScale);
     newSeries.current = null;
     newVolumeSeries.current = null;
-    chartInstanceRef.current.remove();
+    chartInstanceRef.current?.remove();
     chartInstanceRef.current = null;
     timeScaleRef.current = null;
-    console.log('Destroy chart - ok');
   };
 
   // Handle Resize
@@ -193,7 +184,6 @@ export const Chart: React.FC<Props> = (props) => {
   // Update Kline
   useEffect(() => {
     if (isLoading || !kline || !lastCandle) {
-      console.log('skipkline', isLoading, !!kline, !!lastCandle);
       return;
     }
     const parsedKline = JSON.parse(JSON.stringify(kline)) as CandlestickDataWithVolume;

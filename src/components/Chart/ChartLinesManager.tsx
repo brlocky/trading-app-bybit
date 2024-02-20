@@ -27,6 +27,7 @@ import {
 import { IChartLine } from '../../types';
 import { TradingLineInfo, TradingLinedDragInfo } from './extend/plugins/trading-lines/state';
 import { TradingLines } from './extend/plugins/trading-lines/trading-lines';
+import { ProfitRiskPreview } from './extend/plugins/profit-risk-preview/profit-risk-preview';
 
 interface Props {
   chartInstance: IChartApi;
@@ -43,6 +44,7 @@ export const ChartLinesManager: React.FC<Props> = ({ seriesInstance }) => {
   const positionSize = useSelector(selectPositionSize);
   const restingOrders = useSelector(selectRestingOrders);
   const linePluginRef = useRef<TradingLines>(new TradingLines());
+  const profitPluginRef = useRef<ProfitRiskPreview>(new ProfitRiskPreview({}));
   const chartLinesRef = useRef<IChartLine[]>(chartLines);
   const currentPositionRef = useRef<PositionV5 | undefined>(currentPosition);
   const currentOrdersRef = useRef<AccountOrderV5[]>(currentOrders);
@@ -56,6 +58,7 @@ export const ChartLinesManager: React.FC<Props> = ({ seriesInstance }) => {
 
   useEffect(() => {
     seriesInstance.attachPrimitive(linePluginRef.current);
+    seriesInstance.attachPrimitive(profitPluginRef.current);
 
     linePluginRef.current.lineDragged().subscribe(dispatchChartLineUpdate, this);
     linePluginRef.current.linesDragged().subscribe(dispatchChartLinesUpdate, this);
@@ -121,34 +124,6 @@ export const ChartLinesManager: React.FC<Props> = ({ seriesInstance }) => {
     removed: IChartLine[];
     updated: IChartLine[];
   }
-
-  const getChartLinesDiff = (arr1: IChartLine[], arr2: IChartLine[]): IChartLineDiff => {
-    const result: IChartLineDiff = {
-      added: [],
-      removed: [],
-      updated: [],
-    };
-
-    for (const obj1 of arr1) {
-      const obj2 = arr2.find((obj2) => obj1.id === obj2.id);
-
-      if (!obj2) {
-        result.removed.push(obj1);
-      } else if (obj1.price !== obj2.price || obj1.qty !== obj2.qty) {
-        result.updated.push(obj1);
-      }
-    }
-
-    for (const obj2 of arr2) {
-      const obj1 = arr1.find((obj1) => obj1.id === obj2.id);
-
-      if (!obj1) {
-        result.added.push(obj2);
-      }
-    }
-
-    return result;
-  };
 
   // Update ChartLine
   const dispatchChartLineUpdate = async (lineDragInfo: TradingLinedDragInfo) => {
