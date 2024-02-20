@@ -42,7 +42,7 @@ export default function CardOrderSettings() {
     };
 
     return (
-      <div className="flex flex-col pb-5">
+      <div className="flex flex-col pb-5" key={n}>
         <div className="rounded-t-md bg-gray-700 p-1 text-xs text-white">#{n}</div>
         <div className="rounded-b-md border-2 border-t-0 border-solid border-gray-600 p-2">
           <div className="grid grid-cols-12 gap-4">
