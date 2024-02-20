@@ -2,18 +2,12 @@ import { PositionV5 } from 'bybit-api';
 import React, { ComponentType, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '../providers';
-import { ChartLinesService, TradingService } from '../services';
+import { TradingService } from '../services';
 import { AppDispatch } from '../store';
-import { IRestingOrder, removeRestingOrder, selectChartLines, selectRestingOrders, setChartLines } from '../store/slices';
-import {
-  removeChartLines,
-  selectCurrentPositionAndOrders,
-  selectFilledOrders,
-  selectIsAppStarted,
-  selectPositions,
-} from '../store/slices/uiSlice';
-import { IChartLine } from '../types';
 import { loadAllChartLines } from '../store/actions';
+import { IRestingOrder, removeRestingOrder, selectChartLines, selectRestingOrders, setChartLines } from '../store/slices';
+import { selectCurrentPositionAndOrders, selectFilledOrders, selectIsAppStarted, selectPositions } from '../store/slices/uiSlice';
+import { IChartLine } from '../types';
 
 export interface WithTradingControlProps {
   isLoading: boolean;
@@ -92,22 +86,6 @@ function withTradingControl<P extends WithTradingControlProps>(
         dispatch(setChartLines([...notLiveChartLines]));
       }
     }, [currentPosition]);
-
-    const checkLineDiffs = (arr1: IChartLine[], arr2: IChartLine[]): boolean => {
-      for (const obj1 of arr1) {
-        const obj2 = arr2.find((obj2) => obj1.orderId === obj2.orderId);
-
-        if (!obj2) {
-          return false;
-        }
-
-        if (obj1.price !== obj2.price || obj1.qty !== obj2.qty || obj1.isServer !== obj2.isServer || obj1.isLive !== obj2.isLive) {
-          return false;
-        }
-      }
-
-      return true;
-    };
 
     // Remove chart lines from removed orders
     useEffect(() => {

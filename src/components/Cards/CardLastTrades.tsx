@@ -12,7 +12,6 @@ export const CardLastTrades: React.FC = () => {
 
   useEffect(() => {
     if (!symbol) return;
-    console.log('Load last trades');
     apiClient
       .getPublicTradingHistory({
         category: 'linear',
@@ -65,7 +64,7 @@ export const CardLastTrades: React.FC = () => {
 
   const averageSize = calculateAverageSize(lastTrades);
   return (
-    <div className="justify-top flex flex-col rounded-lg bg-gray-200">
+    <div className="justify-top flex h-full flex-col overflow-hidden rounded-lg bg-gray-200">
       <div className="border-b border-gray-200 p-1">
         <div className="grid grid-cols-3 gap-1 text-center text-sm">
           <div className="col-span-1">Price</div>
@@ -73,21 +72,23 @@ export const CardLastTrades: React.FC = () => {
           <div className="col-span-1">Time</div>
         </div>
       </div>
-      <div className="h-96 overflow-y-scroll">
-        {lastTrades.slice(0, 20).map((trade, index) => {
-          const { colorClass, time } = getColorBasedOnTrade(trade, averageSize);
-          const formattedSize = parseFloat(trade.size).toLocaleString();
+      <div className="h-full overflow-y-scroll">
+        <div className="h-96">
+          {lastTrades.map((trade, index) => {
+            const { colorClass, time } = getColorBasedOnTrade(trade, averageSize);
+            const formattedSize = parseFloat(trade.size).toLocaleString();
 
-          return (
-            <div className={`border-b border-gray-200 p-1 ${colorClass}`} key={index}>
-              <div className="grid grid-cols-3 gap-1 text-center text-xs">
-                <div className="col-span-1">{trade.price}</div>
-                <div className="col-span-1">{formattedSize}</div>
-                <div className="col-span-1">{time}</div>
+            return (
+              <div className={`border-b border-gray-200 p-1 ${colorClass}`} key={index}>
+                <div className="grid grid-cols-3 gap-1 text-center text-xs">
+                  <div className="col-span-1">{trade.price}</div>
+                  <div className="col-span-1">{formattedSize}</div>
+                  <div className="col-span-1">{time}</div>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
       <div className="border-b border-gray-200 p-2" />
     </div>
