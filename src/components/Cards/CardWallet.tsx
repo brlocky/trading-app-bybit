@@ -18,15 +18,10 @@ export const CardWallet: React.FC<Props> = (props: Props) => {
   return (
     <div className={`flex w-fit gap-x-5 p-1 ${props.className}`}>
       <div className="flex flex-col">
-        <span className="text-xs font-light">Equity</span>
-        <span className="w-full justify-end">
-          <b>{formatCurrency(Number(coin.equity) * leverage)}</b> <span className="text-xs font-light">USDT</span>
-        </span>
-      </div>
-      <div className="flex flex-col">
-        <span className="text-xs font-light">Balance</span>
+        <span className="text-xs font-light">Balance / Available</span>
         <span>
-          <b>{formatCurrency(coin.availableToWithdraw)}</b> <span className="text-xs font-light">USDT</span>
+          <b>{formatCurrency(Number(coin.equity))}</b> / <b>{formatCurrency(coin.availableToWithdraw)}</b>{' '}
+          <span className="text-xs font-light">USDT</span>
         </span>
       </div>
     </div>
