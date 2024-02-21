@@ -235,19 +235,22 @@ export const createMartketOrder = (apiClient: RestClientV5, order: ICreateOrder)
 
 export const createLimitOrder = (apiClient: RestClientV5, order: ICreateOrder): AppThunk => {
   return async (dispatch, getState) => {
-    const entry = order.chartLines.find((c) => c.type === 'ENTRY');
+    const entry = order.chartLines.find((c) => c.type === 'ENTRY' && c.isLive === false && c.isServer === false);
     if (!entry) {
       return null;
     }
 
     const tradingService = TradingService(apiClient);
     try {
+      const sl = order.chartLines.find((c) => c.type === 'SL' && c.isLive === false && c.isServer === false);
+      const slPrice = sl ? sl.price : undefined;
       const orderId = await tradingService.openPosition({
         symbol: order.symbol,
         qty: entry.qty.toString(),
         side: order.side,
         type: 'Limit',
         price: entry.price.toString(),
+        stopLoss: slPrice,
       });
 
       if (orderId) {

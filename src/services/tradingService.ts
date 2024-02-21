@@ -49,6 +49,7 @@ interface INewPosition {
   side: OrderSideV5;
   type: OrderTypeV5;
   price?: string;
+  stopLoss?: number;
 }
 
 export const TradingService = (apiClient: RestClientV5): ITradingService => {
@@ -160,6 +161,7 @@ export const TradingService = (apiClient: RestClientV5): ITradingService => {
       orderType: props.type,
       price: props.price,
       isLeverage: 1,
+      stopLoss: props.stopLoss ? props.stopLoss.toString() : undefined,
     });
 
     if (response.retCode !== 0) {
