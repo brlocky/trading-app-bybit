@@ -67,7 +67,7 @@ function withTradingControl<P extends WithTradingControlProps>(
           });
 
         Promise.all([...stoplosses, ...takeProfits]).then((allOrders) => {
-          console.log('All Set', allOrders);
+          console.log('Load ok', allOrders);
         });
 
         dispatch(removeRestingOrder(restingOrder.orderId));

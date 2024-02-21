@@ -26,7 +26,6 @@ export default function CardClosedPnLs() {
     if (ordersLength !== currentOrders.length) {
       setOrdersLength(currentOrders.length);
       reloadList();
-      console.log('Order lenght changed');
     }
   }, [currentOrders]);
 

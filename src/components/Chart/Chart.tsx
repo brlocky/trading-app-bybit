@@ -188,7 +188,6 @@ export const Chart: React.FC<Props> = (props) => {
     }
     const parsedKline = JSON.parse(JSON.stringify(kline)) as CandlestickDataWithVolume;
     if (parsedKline.time < lastCandle.time) {
-      console.log('skip candle update');
       return;
     }
     newSeries.current.update(parsedKline);

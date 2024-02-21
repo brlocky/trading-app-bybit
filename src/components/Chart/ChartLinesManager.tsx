@@ -96,9 +96,13 @@ export const ChartLinesManager: React.FC<Props> = ({ seriesInstance }) => {
       linePluginRef.current?.setMarketPrice(Number(ticker.ticker.lastPrice));
     }
     tickerRef.current = ticker;
+
+    profitPluginRef.current.updateVisibility(!currentPosition);
   }, [currentPosition, currentOrders, orderSettings, ticker, restingOrders]);
 
   useEffect(() => {
+    profitPluginRef.current?.updateQty(positionSize);
+
     if (!ticker || !ticker.tickerInfo) return;
     const entries = chartLinesRef.current.filter((c) => c.type === 'ENTRY' && !c.isServer);
     if (entries.length === 1) {

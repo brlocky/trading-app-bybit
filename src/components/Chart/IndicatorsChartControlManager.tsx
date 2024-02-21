@@ -49,7 +49,6 @@ export const IndicatorsChartControlManager: React.FC<LineControlManagerProps> = 
   };
 
   useEffect(() => {
-    console.log('Klines detected', klines.length);
     setupChartLines(klines);
   }, [klines]);
 

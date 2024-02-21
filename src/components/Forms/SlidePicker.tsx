@@ -66,8 +66,6 @@ export const SlidePicker = ({ value, min, max, step, onValueChanged, showValue, 
   };
 
   const handleClickLine = (value: number) => {
-    console.log('sliderValue', value);
-
     setCurrentValue(value);
     onValueChanged && onValueChanged(value);
   };
